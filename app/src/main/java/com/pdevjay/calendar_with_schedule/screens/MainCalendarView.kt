@@ -1,15 +1,11 @@
 package com.pdevjay.calendar_with_schedule.screens
 
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,6 +17,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.pdevjay.calendar_with_schedule.datamodels.CalendarListItem
 import com.pdevjay.calendar_with_schedule.datamodels.CalendarMonth
 import com.pdevjay.calendar_with_schedule.intents.CalendarIntent
 import com.pdevjay.calendar_with_schedule.ui.theme.Calendar_with_scheduleTheme
@@ -29,10 +26,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
-import java.time.YearMonth
 
-@OptIn(ExperimentalMaterial3Api::class)
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MainCalendarView(
     viewModel: CalendarViewModel = hiltViewModel(),
@@ -81,7 +75,9 @@ fun MainCalendarView(
 
                     }
                     // 뒤쪽으로 스크롤 시 (현재 달이 리스트의 후반부에 가까워지면)
-                    if (currentMonthIndex > months.size - 2) {
+                    Log.d("LazyColumn", "months.size: ${months.size}")
+
+                    if (currentMonthIndex > months.last().yearMonth.monthValue - 2) {
                         val lastMonth = months.last().yearMonth.plusMonths(6)
                         val newMonths = viewModel.generateCalendarMonths(lastMonth)
                         months.addAll(newMonths)

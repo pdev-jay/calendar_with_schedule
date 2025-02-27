@@ -42,12 +42,6 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-// 1. 달력 리스트 항목을 나타내기 위한 sealed class 정의
-sealed class CalendarListItem {
-    data class WeekItem(val week: CalendarWeek) : CalendarListItem()
-}
-
-// 2. 플래튼드 달력 뷰: months 리스트를 평탄화하여 단일 LazyColumn에 표시
 @Composable
 fun DaysGrid(
     months: List<CalendarMonth>,

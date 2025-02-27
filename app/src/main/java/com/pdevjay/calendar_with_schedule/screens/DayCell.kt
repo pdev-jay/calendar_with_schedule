@@ -31,12 +31,12 @@ fun DayCell(
         modifier = modifier
             .aspectRatio(1f)
             .clickable { if (calendarDay.isCurrentMonth) onDateSelected(calendarDay.date) }
+            .padding(top = 4.dp)
             .drawBehind {
                 if (calendarDay.isCurrentMonth){
                     drawTopBorder(borderThickness = 2.dp, borderColor = Color.LightGray.copy(alpha = 0.5f))
                 }
             }
-            .padding(4.dp)
             .background(if (isSelected) Color.Red.copy(alpha = 0.6f) else Color.Transparent, shape = CircleShape),
         contentAlignment = Alignment.Center
     ) {

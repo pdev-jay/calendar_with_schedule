@@ -19,3 +19,8 @@ data class CalendarDay(
     val isFirstDayOfMonth: Boolean = false,
     val isToday: Boolean = false
 )
+
+// calendar를 주 단위로 컨트롤하기 위한 class
+sealed class CalendarListItem {
+    data class WeekItem(val week: CalendarWeek) : CalendarListItem()
+}
