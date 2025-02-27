@@ -16,16 +16,9 @@ import java.time.YearMonth
 import javax.inject.Inject
 
 @HiltViewModel
-@RequiresApi(Build.VERSION_CODES.O)
 class CalendarViewModel @Inject constructor() : ViewModel() {
     private val _state = MutableStateFlow(CalendarState())
     val state: StateFlow<CalendarState> = _state
-
-    private val monthsData = generateCalendarMonths()
-
-    fun getMonthData(yearMonth: YearMonth): CalendarMonth? {
-        return monthsData.find { it.yearMonth == yearMonth }
-    }
 
     fun processIntent(intent: CalendarIntent) {
         when (intent) {
@@ -59,9 +52,8 @@ class CalendarViewModel @Inject constructor() : ViewModel() {
 
     fun generateCalendarMonths(currentMonth: YearMonth = YearMonth.now()): List<CalendarMonth> {
         val months = mutableListOf<CalendarMonth>()
-//        val currentMonth = YearMonth.now()
 
-        for (i in -6..6) {
+        for (i in -5..5) {
             val month = currentMonth.plusMonths(i.toLong())
             val firstDayOfMonth = month.atDay(1)
             val firstDayOffset = firstDayOfMonth.dayOfWeek.value % 7

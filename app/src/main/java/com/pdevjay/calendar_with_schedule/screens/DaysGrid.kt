@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,6 +20,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +32,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.pdevjay.calendar_with_schedule.datamodels.CalendarMonth
+import com.pdevjay.calendar_with_schedule.datamodels.CalendarWeek
 import com.pdevjay.calendar_with_schedule.ui.theme.Calendar_with_scheduleTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
@@ -37,75 +42,69 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-@SuppressLint("UnusedBoxWithConstraintsScope")
-@RequiresApi(Build.VERSION_CODES.O)
-@Composable
-fun DaysGrid(
-    calendarMonth: CalendarMonth,
-    selectedDate: LocalDate?,
-    onDateSelected: (LocalDate) -> Unit
-) {
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        for (week in calendarMonth.weeks) {
-            WeekRow(
-                modifier = Modifier.weight(1f),
-                week = week,
-                selectedDate = selectedDate,
-                onDateSelected = onDateSelected
-            )
-        }
-    }
+// 1. 달력 리스트 항목을 나타내기 위한 sealed class 정의
+sealed class CalendarListItem {
+    data class WeekItem(val week: CalendarWeek) : CalendarListItem()
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+// 2. 플래튼드 달력 뷰: months 리스트를 평탄화하여 단일 LazyColumn에 표시
 @Composable
-fun DaysGridWithScrolling(
-    calendarMonth: CalendarMonth,
+fun DaysGrid(
+    months: List<CalendarMonth>,
     selectedDate: LocalDate?,
     onDateSelected: (LocalDate) -> Unit,
-    weekListState: LazyListState,
+    listState: LazyListState,
 ) {
-    LaunchedEffect(selectedDate) {
-        selectedDate?.let { date ->
-            val weekIndex = calendarMonth.weeks.indexOfFirst { week ->
-                week.days.any { it.date == date }
-            }
-            Log.d("WeekScroll", "Selected week index: $weekIndex")
-            if (weekIndex >= 0) {
-                snapshotFlow { weekListState.layoutInfo.visibleItemsInfo }
-                    .filter { it.isNotEmpty() }
-                    .first()
-                // 약간의 추가 delay를 줄 수도 있습니다.
-                delay(300)
-                weekListState.animateScrollToItem(weekIndex)
-            }
+    // derivedStateOf를 사용해 months 내용이 변경될 때마다 calendarItems를 재계산
+    val weeks by remember {
+        derivedStateOf {
+            months.flatMap { month -> month.weeks }
         }
     }
 
-    BoxWithConstraints(
-        modifier = Modifier
-            .fillMaxSize()
+    LazyColumn(
+        state = listState,
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(bottom = 16.dp)
     ) {
-
-        LazyColumn(
-            state = weekListState,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            itemsIndexed(calendarMonth.weeks) { index, week ->
-                Box(
-                    modifier = Modifier.height(maxHeight/calendarMonth.weeks.size)
-                ){
-                    WeekRow(
-                        week = week,
-                        selectedDate = selectedDate,
-                        onDateSelected = onDateSelected
-                    )
-                }
+        itemsIndexed(weeks) { index, week ->
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp)
+            ) {
+                WeekRow(
+                    modifier = Modifier.fillMaxSize(),
+                    week = week,
+                    selectedDate = selectedDate,
+                    onDateSelected = onDateSelected
+                )
             }
         }
     }
+
+}
+
+// 3. flatIndex를 month 인덱스로 변환하는 헬퍼 함수
+fun findMonthIndexFromFlatIndex(flatIndex: Int, months: List<CalendarMonth>): Int {
+    var count = 0
+    for ((i, month) in months.withIndex()) {
+        val itemsForMonth = month.weeks.size // 주 항목 수
+        if (flatIndex < count + itemsForMonth) {
+            return i
+        }
+        count += itemsForMonth
+    }
+    return months.size - 1
+}
+
+
+// 현재 달의 평탄화(flattened) 인덱스를 계산하는 헬퍼 함수
+fun getFlatIndexForCurrentMonth(months: List<CalendarMonth>, currentMonth: YearMonth): Int {
+    val monthIndex = months.indexOfFirst { it.yearMonth == currentMonth }
+    return if (monthIndex >= 0) {
+        months.take(monthIndex).sumOf { it.weeks.size }
+    } else 0
 }
 
 
