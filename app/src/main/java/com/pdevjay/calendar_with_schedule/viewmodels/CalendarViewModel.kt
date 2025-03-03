@@ -50,28 +50,47 @@ class CalendarViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    fun generateCalendarMonths(currentMonth: YearMonth = YearMonth.now()): List<CalendarMonth> {
+    fun generateCalendarMonths(currentMonth: YearMonth = YearMonth.now(), existingMonths: List<CalendarMonth> = emptyList()): List<CalendarMonth> {
         val months = mutableListOf<CalendarMonth>()
 
         for (i in -5..5) {
-            val month = currentMonth.plusMonths(i.toLong())
-            val firstDayOfMonth = month.atDay(1)
+            val candidateMonth = currentMonth.plusMonths(i.toLong())
+            // 이미 existingMonths에 해당 candidateMonth가 있으면 건너뜁니다.
+            if (existingMonths.any { it.yearMonth == candidateMonth }) continue
+
+            val firstDayOfMonth = candidateMonth.atDay(1)
             val firstDayOffset = firstDayOfMonth.dayOfWeek.value % 7
-            val daysInMonth = month.lengthOfMonth()
+            val daysInMonth = candidateMonth.lengthOfMonth()
             val totalSlots = ((firstDayOffset + daysInMonth + 6) / 7) * 7
 
             val days = mutableListOf<CalendarDay>()
             for (index in 0 until totalSlots) {
                 val dayNumber = index - firstDayOffset + 1
                 val isCurrentMonth = dayNumber in 1..daysInMonth
-                val date = if (isCurrentMonth) month.atDay(dayNumber) else LocalDate.MIN
-                days.add(CalendarDay(date, isCurrentMonth, isFirstDayOfMonth = if (dayNumber == 1) true else false, isToday = date == LocalDate.now()))
+                val date = if (isCurrentMonth) candidateMonth.atDay(dayNumber) else LocalDate.MIN
+                days.add(
+                    CalendarDay(
+                        date = date,
+                        isCurrentMonth = isCurrentMonth,
+                        isFirstDayOfMonth = (dayNumber == 1),
+                        isToday = date == LocalDate.now()
+                    )
+                )
             }
 
-            val weeks = days.chunked(7).map { CalendarWeek(it) }
-            months.add(CalendarMonth(month, weeks))
+            val weeks = days.chunked(7).mapIndexed { index, weekDays ->
+                CalendarWeek(id = "${candidateMonth.year}-${candidateMonth.monthValue}-week-$index", days = weekDays)
+            }
+            months.add(CalendarMonth(candidateMonth, weeks))
         }
+
 
         return months
     }
+
+    // 전체 주(week)의 개수를 구하는 헬퍼 함수
+    fun getTotalWeeks(months: List<CalendarMonth>): Int {
+        return months.sumOf { it.weeks.size }
+    }
+
 }

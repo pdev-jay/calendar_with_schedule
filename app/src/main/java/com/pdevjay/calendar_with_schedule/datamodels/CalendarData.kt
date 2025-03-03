@@ -9,6 +9,7 @@ data class CalendarMonth(
 )
 
 data class CalendarWeek(
+    val id: String,
     val days: List<CalendarDay>
 )
 
