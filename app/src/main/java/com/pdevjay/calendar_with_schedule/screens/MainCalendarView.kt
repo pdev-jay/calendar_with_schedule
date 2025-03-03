@@ -1,24 +1,42 @@
 package com.pdevjay.calendar_with_schedule.screens
 
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pdevjay.calendar_with_schedule.datamodels.CalendarListItem
 import com.pdevjay.calendar_with_schedule.datamodels.CalendarMonth
+import com.pdevjay.calendar_with_schedule.datamodels.CalendarWeek
 import com.pdevjay.calendar_with_schedule.intents.CalendarIntent
 import com.pdevjay.calendar_with_schedule.ui.theme.Calendar_with_scheduleTheme
 import com.pdevjay.calendar_with_schedule.viewmodels.CalendarViewModel
@@ -103,7 +121,7 @@ fun MainCalendarView(
                         month.weeks.map { CalendarListItem.WeekItem(it) }
             }
             val targetIndex = flatItems.indexOfFirst { item ->
-                item is CalendarListItem.WeekItem && item.week.days.any { it.date == date }
+                item is CalendarListItem.WeekItem && item.week.days.any { it.isCurrentMonth && it.date == date }
             }
             if (targetIndex >= 0) {
                 listState.animateScrollToItem(targetIndex, scrollOffset = 0)
@@ -116,6 +134,40 @@ fun MainCalendarView(
             Column {
                 CalendarHeader(state)
                 WeekHeader()
+                AnimatedVisibility(
+                    visible = state.selectedDate != null,
+                    enter = fadeIn(animationSpec = tween(durationMillis = 300)) + expandVertically(animationSpec = tween(durationMillis = 300)),
+                    exit = fadeOut(animationSpec = tween(durationMillis = 300)) + shrinkVertically(animationSpec = tween(durationMillis = 300))
+                    ) {
+                    // 선택된 날짜가 속한 주를 계산합니다.
+                    val selectedWeek = months
+                        .flatMap { it.weeks }
+                        .find { week -> week.days.any {
+                            it.isCurrentMonth && it.date == state.selectedDate
+                        } }
+                        // 선택된 주를 TopAppBar 영역 하단에 추가 (원하는 스타일 적용 가능)
+                        BoxWithConstraints {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(maxHeight * 0.1f)
+                                    .background(color = Color.LightGray),
+                            ) {
+                                WeekRow(
+                                    isInTopBar = true,
+                                    modifier = Modifier.fillMaxSize(),
+                                    week = selectedWeek ?: CalendarWeek("", emptyList()),
+                                    selectedDate = state.selectedDate,
+                                    onDateSelected = { date ->
+                                        if (state.selectedDate == date)
+                                            viewModel.processIntent(CalendarIntent.DateUnselected)
+                                        else
+                                            viewModel.processIntent(CalendarIntent.DateSelected(date))
+                                    }
+                                )
+                            }
+                        }
+                }
             }
         }
     ) { innerPadding ->

@@ -1,6 +1,7 @@
 package com.pdevjay.calendar_with_schedule.viewmodels
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import com.pdevjay.calendar_with_schedule.datamodels.CalendarDay
@@ -59,31 +60,53 @@ class CalendarViewModel @Inject constructor() : ViewModel() {
             if (existingMonths.any { it.yearMonth == candidateMonth }) continue
 
             val firstDayOfMonth = candidateMonth.atDay(1)
+            // ISO 기준: 월요일=1, 일요일=7; 만약 일요일부터 시작하려면 % 7를 사용.
+            // 여기서는 일요일=0, 월요일=1 ... 토요일=6 로 가정.
             val firstDayOffset = firstDayOfMonth.dayOfWeek.value % 7
             val daysInMonth = candidateMonth.lengthOfMonth()
+            // totalSlots: 몇 주가 필요한지 계산
             val totalSlots = ((firstDayOffset + daysInMonth + 6) / 7) * 7
 
             val days = mutableListOf<CalendarDay>()
             for (index in 0 until totalSlots) {
-                val dayNumber = index - firstDayOffset + 1
-                val isCurrentMonth = dayNumber in 1..daysInMonth
-                val date = if (isCurrentMonth) candidateMonth.atDay(dayNumber) else LocalDate.MIN
-                days.add(
-                    CalendarDay(
-                        date = date,
-                        isCurrentMonth = isCurrentMonth,
-                        isFirstDayOfMonth = (dayNumber == 1),
-                        isToday = date == LocalDate.now()
-                    )
-                )
+                val (date, isCurrentMonth) = when {
+                    // 이전 달의 날짜
+                    index < firstDayOffset -> {
+                        val prevMonth = candidateMonth.minusMonths(1)
+                        val daysInPrevMonth = prevMonth.lengthOfMonth()
+                        // 예: firstDayOffset=3 이면, index 0→prevMonth.atDay(daysInPrevMonth-2),
+                        // index 1→prevMonth.atDay(daysInPrevMonth-1), index 2→prevMonth.atDay(daysInPrevMonth)
+                        val day = daysInPrevMonth - (firstDayOffset - index - 1)
+                        prevMonth.atDay(day) to false
+                    }
+                    // 현재 달의 날짜
+                    index < firstDayOffset + daysInMonth -> {
+                        val day = index - firstDayOffset + 1
+                        candidateMonth.atDay(day) to true
+                    }
+                    // 다음 달의 날짜
+                    else -> {
+                        val nextMonth = candidateMonth.plusMonths(1)
+                        val day = index - (firstDayOffset + daysInMonth) + 1
+                        nextMonth.atDay(day) to false
+                    }
+                }
+
+                // isFirstDayOfMonth: 현재 달에서만 1일인 경우 true, 그렇지 않으면 false.
+                val isFirstDayOfMonth = isCurrentMonth && date.dayOfMonth == 1
+
+                // isToday: 오늘과 같은지 비교
+                val isToday = date == LocalDate.now()
+
+                days.add(CalendarDay(date = date, isCurrentMonth = isCurrentMonth, isFirstDayOfMonth = isFirstDayOfMonth, isToday = isToday))
             }
 
             val weeks = days.chunked(7).mapIndexed { index, weekDays ->
+                // week에 고유 id 부여 (예: "YYYY-M-week-INDEX")
                 CalendarWeek(id = "${candidateMonth.year}-${candidateMonth.monthValue}-week-$index", days = weekDays)
             }
             months.add(CalendarMonth(candidateMonth, weeks))
         }
-
 
         return months
     }

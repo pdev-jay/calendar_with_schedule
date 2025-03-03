@@ -1,6 +1,7 @@
 package com.pdevjay.calendar_with_schedule.screens
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,25 +24,28 @@ import java.util.Locale
 @Composable
 fun WeekRow(
     modifier: Modifier = Modifier,
+    isInTopBar: Boolean = false,
     week: CalendarWeek,
     selectedDate: LocalDate?,
     onDateSelected: (LocalDate) -> Unit
 ) {
     val formatter = DateTimeFormatter.ofPattern("MMM", Locale.ENGLISH)
     Row(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize(),
     ) {
         for (day in week.days) {
+
             Column (modifier = Modifier.weight(1f).fillMaxHeight()){
-                if (day.isFirstDayOfMonth){
+                if (day.isFirstDayOfMonth && !isInTopBar){
                     Text(text = "${day.date.format(formatter)}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.CenterHorizontally))
+                } else if (isInTopBar){
                 } else {
                     Text(text = "", style = MaterialTheme.typography.titleLarge)
                 }
                 Box(modifier = Modifier.fillMaxWidth()){
-
                     DayCell(
                         modifier = Modifier.fillMaxSize(),
+                        isInTopBar = isInTopBar,
                         calendarDay = day,
                         isSelected = selectedDate == day.date,
                         onDateSelected = onDateSelected
