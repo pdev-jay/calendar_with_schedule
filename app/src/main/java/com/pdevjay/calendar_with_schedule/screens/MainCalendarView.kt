@@ -27,6 +27,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,7 +38,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.pdevjay.calendar_with_schedule.datamodels.CalendarListItem
 import com.pdevjay.calendar_with_schedule.datamodels.CalendarMonth
 import com.pdevjay.calendar_with_schedule.datamodels.CalendarWeek
+import com.pdevjay.calendar_with_schedule.datamodels.DummyToDoListView
+import com.pdevjay.calendar_with_schedule.datamodels.getDummyTasksForDate
 import com.pdevjay.calendar_with_schedule.intents.CalendarIntent
+import com.pdevjay.calendar_with_schedule.states.CalendarState
 import com.pdevjay.calendar_with_schedule.ui.theme.Calendar_with_scheduleTheme
 import com.pdevjay.calendar_with_schedule.viewmodels.CalendarViewModel
 import kotlinx.coroutines.flow.collectLatest
@@ -131,44 +135,7 @@ fun MainCalendarView(
 
     Scaffold(
         topBar = {
-            Column {
-                CalendarHeader(state)
-                WeekHeader()
-                AnimatedVisibility(
-                    visible = state.selectedDate != null,
-                    enter = fadeIn(animationSpec = tween(durationMillis = 300)) + expandVertically(animationSpec = tween(durationMillis = 300)),
-                    exit = fadeOut(animationSpec = tween(durationMillis = 300)) + shrinkVertically(animationSpec = tween(durationMillis = 300))
-                    ) {
-                    // 선택된 날짜가 속한 주를 계산합니다.
-                    val selectedWeek = months
-                        .flatMap { it.weeks }
-                        .find { week -> week.days.any {
-                            it.isCurrentMonth && it.date == state.selectedDate
-                        } }
-                        // 선택된 주를 TopAppBar 영역 하단에 추가 (원하는 스타일 적용 가능)
-                        BoxWithConstraints {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(maxHeight * 0.1f)
-                                    .background(color = Color.LightGray),
-                            ) {
-                                WeekRow(
-                                    isInTopBar = true,
-                                    modifier = Modifier.fillMaxSize(),
-                                    week = selectedWeek ?: CalendarWeek("", emptyList()),
-                                    selectedDate = state.selectedDate,
-                                    onDateSelected = { date ->
-                                        if (state.selectedDate == date)
-                                            viewModel.processIntent(CalendarIntent.DateUnselected)
-                                        else
-                                            viewModel.processIntent(CalendarIntent.DateSelected(date))
-                                    }
-                                )
-                            }
-                        }
-                }
-            }
+            CalendarTopBar(months, viewModel)
         }
     ) { innerPadding ->
         BoxWithConstraints(
@@ -176,22 +143,39 @@ fun MainCalendarView(
                 .padding(innerPadding)
                 .fillMaxSize()
         ) {
-            DaysGrid(
-                maxHeight = maxHeight,
-                months = months,
-                selectedDate = state.selectedDate,
-                onDateSelected = { date ->
-                    if (state.selectedDate == null || state.selectedDate != date) {
-                        viewModel.processIntent(CalendarIntent.DateSelected(date))
-                    } else {
-                        viewModel.processIntent(CalendarIntent.DateUnselected)
-                    }
-                },
-                listState = listState
-            )
+            AnimatedVisibility(
+                visible = state.selectedDate == null,
+                enter = fadeIn(animationSpec = tween(durationMillis = 200)) + expandVertically(animationSpec = tween(durationMillis = 200)),
+                exit = fadeOut(animationSpec = tween(durationMillis = 200)) + shrinkVertically(animationSpec = tween(durationMillis = 200))
+            ) {
+
+                DaysGrid(
+                    maxHeight = maxHeight,
+                    months = months,
+                    selectedDate = state.selectedDate,
+                    onDateSelected = { date ->
+                        if (state.selectedDate == null || state.selectedDate != date) {
+                            viewModel.processIntent(CalendarIntent.DateSelected(date))
+                        } else {
+                            viewModel.processIntent(CalendarIntent.DateUnselected)
+                        }
+                    },
+                    listState = listState
+                )
+            }
+            AnimatedVisibility(
+                visible = state.selectedDate != null,
+                enter = fadeIn(animationSpec = tween(durationMillis = 200)) + expandVertically(animationSpec = tween(durationMillis = 200)),
+                exit = fadeOut(animationSpec = tween(durationMillis = 200)) + shrinkVertically(animationSpec = tween(durationMillis = 200))
+            ) {
+                val tasks = state.selectedDate?.let { getDummyTasksForDate(it) }
+                DummyToDoListView(tasks ?: emptyList())
+            }
         }
     }
 }
+
+
 
 // 현재 달의 평탄화(flattened) 인덱스를 계산하는 헬퍼 함수
 fun getFlatIndexForCurrentMonth(months: List<CalendarMonth>, currentMonth: YearMonth): Int {
