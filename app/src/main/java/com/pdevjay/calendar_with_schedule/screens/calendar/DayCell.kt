@@ -1,4 +1,4 @@
-package com.pdevjay.calendar_with_schedule.screens
+package com.pdevjay.calendar_with_schedule.screens.calendar
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

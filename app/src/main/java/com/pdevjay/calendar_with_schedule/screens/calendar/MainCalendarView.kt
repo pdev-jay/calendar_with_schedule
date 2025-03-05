@@ -1,4 +1,4 @@
-package com.pdevjay.calendar_with_schedule.screens
+package com.pdevjay.calendar_with_schedule.screens.calendar
 
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
@@ -7,17 +7,10 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,27 +20,24 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pdevjay.calendar_with_schedule.datamodels.CalendarListItem
 import com.pdevjay.calendar_with_schedule.datamodels.CalendarMonth
-import com.pdevjay.calendar_with_schedule.datamodels.CalendarWeek
-import com.pdevjay.calendar_with_schedule.datamodels.DummyToDoListView
-import com.pdevjay.calendar_with_schedule.datamodels.getDummyTasksForDate
+import com.pdevjay.calendar_with_schedule.datamodels.ScheduleData
+import com.pdevjay.calendar_with_schedule.datamodels.dummyCalendarEvents
 import com.pdevjay.calendar_with_schedule.intents.CalendarIntent
-import com.pdevjay.calendar_with_schedule.states.CalendarState
+import com.pdevjay.calendar_with_schedule.screens.schedule.AddScheduleScreen
+//import com.pdevjay.calendar_with_schedule.screens.schedule.AddScheduleModal
+import com.pdevjay.calendar_with_schedule.screens.schedule.ScheduleView
 import com.pdevjay.calendar_with_schedule.ui.theme.Calendar_with_scheduleTheme
 import com.pdevjay.calendar_with_schedule.viewmodels.CalendarViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import java.time.LocalTime
 import java.time.YearMonth
 
 @Composable
@@ -59,6 +49,8 @@ fun MainCalendarView(
     val listState = rememberLazyListState()
     // months 상태 리스트
     val months = remember { mutableStateListOf<CalendarMonth>() }
+
+    val openModal = remember { mutableStateOf(false) }
 
     // 초기 데이터 로드
     LaunchedEffect(Unit) {
@@ -135,7 +127,7 @@ fun MainCalendarView(
 
     Scaffold(
         topBar = {
-            CalendarTopBar(months, viewModel)
+            CalendarTopBar(months, viewModel, openModal)
         }
     ) { innerPadding ->
         BoxWithConstraints(
@@ -168,10 +160,24 @@ fun MainCalendarView(
                 enter = fadeIn(animationSpec = tween(durationMillis = 200)) + expandVertically(animationSpec = tween(durationMillis = 200)),
                 exit = fadeOut(animationSpec = tween(durationMillis = 200)) + shrinkVertically(animationSpec = tween(durationMillis = 200))
             ) {
-                val tasks = state.selectedDate?.let { getDummyTasksForDate(it) }
-                DummyToDoListView(tasks ?: emptyList())
+                if (state.selectedDate != null) {
+                    ScheduleView(
+                        selectedDay = state.selectedDate!!,
+                        events = dummyCalendarEvents
+                    )
+                }
             }
         }
+    }
+
+    if (openModal.value) {
+        AddScheduleScreen(
+            onDismiss = { openModal.value = false },
+            onSave = { newSchedule ->
+                // 새 스케줄 저장 처리
+                // 예: viewModel.addSchedule(newSchedule)
+            }
+        )
     }
 }
 

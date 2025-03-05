@@ -1,4 +1,4 @@
-package com.pdevjay.calendar_with_schedule.screens
+package com.pdevjay.calendar_with_schedule.screens.calendar
 
 import android.os.Build
 import androidx.annotation.RequiresApi

@@ -1,4 +1,4 @@
-package com.pdevjay.calendar_with_schedule.screens
+package com.pdevjay.calendar_with_schedule.screens.calendar
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -27,12 +28,13 @@ import com.pdevjay.calendar_with_schedule.viewmodels.CalendarViewModel
 @Composable
 fun CalendarTopBar(
     months: SnapshotStateList<CalendarMonth>,
-    viewModel: CalendarViewModel
+    viewModel: CalendarViewModel,
+    openModal: MutableState<Boolean>
 ) {
     val state by viewModel.state.collectAsState()
 
     Column {
-        CalendarHeader(state)
+        CalendarHeader(state, openModal, onClick = { viewModel.processIntent(CalendarIntent.DateUnselected) })
         WeekHeader()
         AnimatedVisibility(
             visible = state.selectedDate != null,
