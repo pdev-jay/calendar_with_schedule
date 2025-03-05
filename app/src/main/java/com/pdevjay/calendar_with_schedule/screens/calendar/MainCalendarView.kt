@@ -33,6 +33,7 @@ import com.pdevjay.calendar_with_schedule.screens.schedule.AddScheduleScreen
 import com.pdevjay.calendar_with_schedule.screens.schedule.ScheduleView
 import com.pdevjay.calendar_with_schedule.ui.theme.Calendar_with_scheduleTheme
 import com.pdevjay.calendar_with_schedule.viewmodels.CalendarViewModel
+import com.pdevjay.calendar_with_schedule.viewmodels.TaskViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -42,9 +43,19 @@ import java.time.YearMonth
 
 @Composable
 fun MainCalendarView(
-    viewModel: CalendarViewModel = hiltViewModel(),
+    calendarViewModel: CalendarViewModel = hiltViewModel(),
+    taskViewModel: TaskViewModel = hiltViewModel()
 ) {
-    val state by viewModel.state.collectAsState()
+    val calendarState by calendarViewModel.state.collectAsState()
+    val taskState by taskViewModel.state.collectAsState()
+
+    // 선택된 날짜의 일정 필터링
+    val selectedDate = calendarState.selectedDate
+    val events = remember(selectedDate, taskState.schedules) {
+        selectedDate?.let { date ->
+            taskViewModel.getSchedulesForDate(date)
+        } ?: emptyList()
+    }
     // 단일 LazyColumn 스크롤 상태 사용
     val listState = rememberLazyListState()
     // months 상태 리스트
@@ -54,7 +65,7 @@ fun MainCalendarView(
 
     // 초기 데이터 로드
     LaunchedEffect(Unit) {
-        months.addAll(viewModel.generateCalendarMonths())
+        months.addAll(calendarViewModel.generateCalendarMonths())
     }
 
     // 초기 데이터가 로드된 후 한번만 실행
@@ -63,7 +74,7 @@ fun MainCalendarView(
         snapshotFlow { months.isNotEmpty() }
             .filter { it }
             .first() // 처음 true가 될 때 한 번만 실행
-        val startIndex = getFlatIndexForCurrentMonth(months, state.currentMonth)
+        val startIndex = getFlatIndexForCurrentMonth(months, calendarState.currentMonth)
         listState.scrollToItem(startIndex)
     }
 
@@ -74,7 +85,7 @@ fun MainCalendarView(
             .distinctUntilChanged()
             .collectLatest { (flatIndex, isDragging, visibleItems) ->
                 // 전체 주 수를 계산합니다.
-                val totalWeeks = viewModel.getTotalWeeks(months)
+                val totalWeeks = calendarViewModel.getTotalWeeks(months)
                 Log.d("LazyColumn", "Total weeks: $totalWeeks, Current flat index: $flatIndex")
 
                 val prevFirstIndex = visibleItems.first().index
@@ -85,7 +96,7 @@ fun MainCalendarView(
                 val currentMonthIndex = findMonthIndexFromFlatIndex(flatIndex, months)
 
                 // ViewModel에 현재 달 변경 이벤트 전달
-                viewModel.processIntent(CalendarIntent.MonthChanged(months[currentMonthIndex].yearMonth))
+                calendarViewModel.processIntent(CalendarIntent.MonthChanged(months[currentMonthIndex].yearMonth))
 
                 // 임계값(threshold)을 주 단위로 설정 (예: 10주)
                 val threshold = 10
@@ -93,7 +104,7 @@ fun MainCalendarView(
                 // 앞쪽으로 스크롤: 현재 보이는 주가 threshold 미만이면 이전 데이터를 추가
                 if (flatIndex < threshold) {
                     val firstMonth = months.first().yearMonth.minusMonths(6)
-                    val newMonths = viewModel.generateCalendarMonths(firstMonth, months)
+                    val newMonths = calendarViewModel.generateCalendarMonths(firstMonth, months)
                     months.addAll(0, newMonths)
                     val newWeeks = newMonths.sumOf { it.weeks.size }
                     // 이전 데이터를 추가하면 스크롤 오프셋 보정
@@ -102,7 +113,7 @@ fun MainCalendarView(
                 // 뒤쪽으로 스크롤: 현재 주 인덱스가 전체 주 개수에서 threshold 미만이면 이후 데이터를 추가
                 if (lastVisibleIndex >= totalWeeks - threshold) {
                     val lastMonth = months.last().yearMonth.plusMonths(6)
-                    val newMonths = viewModel.generateCalendarMonths(lastMonth, months)
+                    val newMonths = calendarViewModel.generateCalendarMonths(lastMonth, months)
                     months.addAll(newMonths)
                 }
             }
@@ -110,8 +121,8 @@ fun MainCalendarView(
 
 
     // 선택한 날짜가 변경되면, 해당 날짜가 속한 주(WeekRow)로 애니메이션 스크롤
-    LaunchedEffect(state.selectedDate) {
-        state.selectedDate?.let { date ->
+    LaunchedEffect(calendarState.selectedDate) {
+        calendarState.selectedDate?.let { date ->
             // week list로 변환
             val flatItems = months.flatMap { month ->
                         month.weeks.map { CalendarListItem.WeekItem(it) }
@@ -127,7 +138,7 @@ fun MainCalendarView(
 
     Scaffold(
         topBar = {
-            CalendarTopBar(months, viewModel, openModal)
+            CalendarTopBar(months, calendarViewModel, openModal)
         }
     ) { innerPadding ->
         BoxWithConstraints(
@@ -136,7 +147,7 @@ fun MainCalendarView(
                 .fillMaxSize()
         ) {
             AnimatedVisibility(
-                visible = state.selectedDate == null,
+                visible = calendarState.selectedDate == null,
                 enter = fadeIn(animationSpec = tween(durationMillis = 200)) + expandVertically(animationSpec = tween(durationMillis = 200)),
                 exit = fadeOut(animationSpec = tween(durationMillis = 200)) + shrinkVertically(animationSpec = tween(durationMillis = 200))
             ) {
@@ -144,26 +155,26 @@ fun MainCalendarView(
                 DaysGrid(
                     maxHeight = maxHeight,
                     months = months,
-                    selectedDate = state.selectedDate,
+                    selectedDate = calendarState.selectedDate,
                     onDateSelected = { date ->
-                        if (state.selectedDate == null || state.selectedDate != date) {
-                            viewModel.processIntent(CalendarIntent.DateSelected(date))
+                        if (calendarState.selectedDate == null || calendarState.selectedDate != date) {
+                            calendarViewModel.processIntent(CalendarIntent.DateSelected(date))
                         } else {
-                            viewModel.processIntent(CalendarIntent.DateUnselected)
+                            calendarViewModel.processIntent(CalendarIntent.DateUnselected)
                         }
                     },
                     listState = listState
                 )
             }
             AnimatedVisibility(
-                visible = state.selectedDate != null,
+                visible = calendarState.selectedDate != null,
                 enter = fadeIn(animationSpec = tween(durationMillis = 200)) + expandVertically(animationSpec = tween(durationMillis = 200)),
                 exit = fadeOut(animationSpec = tween(durationMillis = 200)) + shrinkVertically(animationSpec = tween(durationMillis = 200))
             ) {
-                if (state.selectedDate != null) {
+                if (selectedDate != null) {
                     ScheduleView(
-                        selectedDay = state.selectedDate!!,
-                        events = dummyCalendarEvents
+                        selectedDay = selectedDate,
+                        events = events
                     )
                 }
             }
@@ -196,7 +207,7 @@ fun getFlatIndexForCurrentMonth(months: List<CalendarMonth>, currentMonth: YearM
 @Composable
 fun MainCalendarPreview() {
     Calendar_with_scheduleTheme {
-        MainCalendarView(viewModel = hiltViewModel())
+        MainCalendarView(calendarViewModel = hiltViewModel())
     }
 
 }

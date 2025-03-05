@@ -2,14 +2,19 @@ package com.pdevjay.calendar_with_schedule.screens.schedule
 
 import android.util.Log
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,10 +24,15 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -45,8 +55,12 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.pdevjay.calendar_with_schedule.datamodels.DateTimePeriod
 import com.pdevjay.calendar_with_schedule.datamodels.ScheduleData
+import com.pdevjay.calendar_with_schedule.intents.TaskIntent
+import com.pdevjay.calendar_with_schedule.viewmodels.TaskViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
@@ -56,14 +70,52 @@ import kotlin.math.roundToInt
 @Composable
 fun AddScheduleScreen(
     onDismiss: () -> Unit,
-    onSave: (ScheduleData) -> Unit
+    onSave: (ScheduleData) -> Unit,
+    taskViewModel: TaskViewModel = hiltViewModel()
 ) {
     var title by remember { mutableStateOf("") }
     var location by remember { mutableStateOf("") }
     var start by remember { mutableStateOf(DateTimePeriod(LocalDate.now(), LocalTime.of(9, 0))) }
     var end by remember { mutableStateOf(DateTimePeriod(LocalDate.now(), LocalTime.of(10, 0))) }
 
-    ScheduleBottomSheet(onDismiss = onDismiss) { nestedScrollConnection, scrollState ->
+    var showDatePickerForStart by remember { mutableStateOf(false) }
+    var showTimePickerForStart by remember { mutableStateOf(false) }
+    var showDatePickerForEnd by remember { mutableStateOf(false) }
+    var showTimePickerForEnd by remember { mutableStateOf(false) }
+
+    ScheduleBottomSheet(onDismiss = onDismiss) { nestedScrollConnection, scrollState, controller->
+
+        if (showDatePickerForStart) {
+            DatePickerView(
+                initialDate = start.date,
+                onDateSelected = { start = start.copy(date = it) },
+                onDismiss = { showDatePickerForStart = false }
+            )
+        }
+
+        if (showTimePickerForStart) {
+            TimePickerDialogView(
+                initialTime = start.time,
+                onTimeSelected = { start = start.copy(time = it) },
+                onDismiss = { showTimePickerForStart = false }
+            )
+        }
+
+        if (showDatePickerForEnd) {
+            DatePickerView(
+                initialDate = end.date,
+                onDateSelected = { end = end.copy(date = it) },
+                onDismiss = { showDatePickerForEnd = false }
+            )
+        }
+
+        if (showTimePickerForEnd) {
+            TimePickerDialogView(
+                initialTime = end.time,
+                onTimeSelected = { end = end.copy(time = it) },
+                onDismiss = { showTimePickerForEnd = false }
+            )
+        }
 
         // 모달 내부 스크롤 가능한 입력 폼 등
         Box(modifier = Modifier.fillMaxSize()) {
@@ -74,10 +126,8 @@ fun AddScheduleScreen(
                     .nestedScroll(nestedScrollConnection)
                     .verticalScroll(scrollState)
             ) {
-                Text(
-                    text = "Add Schedule",
-                    style = MaterialTheme.typography.titleLarge
-                )
+                Text("Add Schedule", style = MaterialTheme.typography.titleLarge)
+
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
                     value = title,
@@ -93,20 +143,21 @@ fun AddScheduleScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = "${start.date} ${start.time}",
-                    onValueChange = { /* DateTimePicker 띄우고 업데이트 */ },
-                    label = { Text("Start") },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = false
+                // Start
+                DateTimeField(
+                    label = "Start",
+                    dateTime = start,
+                    onDateClick = { showDatePickerForStart = true },
+                    onTimeClick = { showTimePickerForStart = true }
                 )
+
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = "${end.date} ${end.time}",
-                    onValueChange = { /* DateTimePicker 띄우고 업데이트 */ },
-                    label = { Text("End") },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = false
+
+                DateTimeField(
+                    label = "End",
+                    dateTime = end,
+                    onDateClick = { showDatePickerForEnd = true },
+                    onTimeClick = { showTimePickerForEnd = true }
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -118,8 +169,8 @@ fun AddScheduleScreen(
                             start = start,
                             end = end
                         )
-                        onSave(newSchedule)
-                        onDismiss()
+                        taskViewModel.processIntent(TaskIntent.AddSchedule(newSchedule))
+                        controller.closeWithAnimation()  // 자연스럽게 닫기
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -134,7 +185,7 @@ fun AddScheduleScreen(
 @Composable
 fun ScheduleBottomSheet(
     onDismiss: () -> Unit,
-    content: @Composable (nestedScrollConnection: NestedScrollConnection, scrollState: ScrollState) -> Unit
+    content: @Composable (nestedScrollConnection: NestedScrollConnection, scrollState: ScrollState, controller: BottomSheetController) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     val configuration = LocalConfiguration.current
@@ -148,6 +199,10 @@ fun ScheduleBottomSheet(
     val offsetYAnim = remember { Animatable(screenHeightPx) }
 
     val scrollState = rememberScrollState()
+
+    val controller = remember {
+        BottomSheetController(coroutineScope, offsetYAnim, screenHeightPx, onDismiss)
+    }
 
     // NestedScrollConnection: 콘텐츠 스크롤이 최상단(0)일 때 아래로 드래그하면 바텀시트 오프셋을 함께 업데이트
     val nestedScrollConnection = remember {
@@ -251,8 +306,89 @@ fun ScheduleBottomSheet(
                             )
                     )
                 }
-                content(nestedScrollConnection, scrollState)
+                Box {
+                    Box(
+                        modifier = Modifier
+                            .offset { IntOffset(0, offsetYAnim.value.roundToInt()) }
+                    ) {
+                        content(nestedScrollConnection, scrollState, controller)
+                    }
+                }
             }
+        }
+    }
+}
+
+@Composable
+fun DateTimeField(
+    label: String,
+    dateTime: DateTimePeriod,
+    onDateClick: () -> Unit,
+    onTimeClick: () -> Unit
+) {
+    Row {
+        Box(modifier = Modifier.weight(1f)) {
+            OutlinedTextField(
+                value = dateTime.date.toString(),
+                onValueChange = {},
+                label = { Text("$label Date") },
+                readOnly = true,
+                modifier = Modifier.fillMaxWidth(),
+                trailingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.DateRange,
+                        contentDescription = "Pick date"
+                    )
+                }
+            )
+            // 투명 클릭 레이어
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    ) { onDateClick() }
+            )
+        }
+        Spacer(modifier = Modifier.width(4.dp))
+        Box(modifier = Modifier.weight(1f)) {
+            OutlinedTextField(
+                value = dateTime.time.toString(),
+                onValueChange = {},
+                label = { Text("$label Time") },
+                readOnly = true,
+                modifier = Modifier.fillMaxWidth(),
+                trailingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.AccessTime,
+                        contentDescription = "Pick time"
+                    )
+                }
+            )
+            // 투명 클릭 레이어
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    ) { onTimeClick() }
+            )
+        }
+    }
+}
+
+class BottomSheetController(
+    private val coroutineScope: CoroutineScope,
+    private val offsetYAnim: Animatable<Float, AnimationVector1D>,
+    private val screenHeightPx: Float,
+    private val onDismiss: () -> Unit
+) {
+    fun closeWithAnimation() {
+        coroutineScope.launch {
+            offsetYAnim.animateTo(screenHeightPx, tween(300))
+            onDismiss()  // 애니메이션 끝나고 실제 상태 변경
         }
     }
 }
