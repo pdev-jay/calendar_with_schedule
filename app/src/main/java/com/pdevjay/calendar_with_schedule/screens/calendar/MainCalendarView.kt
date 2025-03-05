@@ -210,6 +210,7 @@ fun MainCalendarView(
 
     if (openModal.value) {
         AddScheduleScreen(
+            selectedDate = calendarState.selectedDate,
             onDismiss = { openModal.value = false },
             onSave = { newSchedule ->
                 taskViewModel.processIntent(TaskIntent.AddSchedule(newSchedule))

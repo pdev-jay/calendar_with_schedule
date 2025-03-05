@@ -70,13 +70,18 @@ import kotlin.math.roundToInt
 
 @Composable
 fun AddScheduleScreen(
+    selectedDate: LocalDate?,
     onDismiss: () -> Unit,
     onSave: (ScheduleData) -> Unit,
 ) {
+    val now = LocalTime.now()
+
+    val initialDate = selectedDate ?: LocalDate.now()  // 오늘 or selectedDate
+
     var title by remember { mutableStateOf("") }
     var location by remember { mutableStateOf("") }
-    var start by remember { mutableStateOf(DateTimePeriod(LocalDate.now(), LocalTime.of(9, 0))) }
-    var end by remember { mutableStateOf(DateTimePeriod(LocalDate.now(), LocalTime.of(10, 0))) }
+    var start by remember { mutableStateOf(DateTimePeriod(initialDate, LocalTime.of(now.hour, 0))) }
+    var end by remember { mutableStateOf(DateTimePeriod(initialDate, LocalTime.of(now.plusHours(1).hour, 0))) }
 
     var showDatePickerForStart by remember { mutableStateOf(false) }
     var showTimePickerForStart by remember { mutableStateOf(false) }
@@ -88,22 +93,21 @@ fun AddScheduleScreen(
         if (showDatePickerForStart) {
             DatePickerView(
                 initialDate = start.date,
-                onDateSelected = { start = start.copy(date = it) },
+                onDateSelected = { selectedDate ->
+                    start = start.copy(date = selectedDate)
+                    if (end.date.isBefore(selectedDate)) {
+                        end = end.copy(date = selectedDate)
+                    }
+//                    showDatePickerForStart = false
+                },
                 onDismiss = { showDatePickerForStart = false }
-            )
-        }
-
-        if (showTimePickerForStart) {
-            TimePickerDialogView(
-                initialTime = start.time,
-                onTimeSelected = { start = start.copy(time = it) },
-                onDismiss = { showTimePickerForStart = false }
             )
         }
 
         if (showDatePickerForEnd) {
             DatePickerView(
                 initialDate = end.date,
+                minDate = start.date,  // ✅ startDate 이후만 선택 가능
                 onDateSelected = { end = end.copy(date = it) },
                 onDismiss = { showDatePickerForEnd = false }
             )
@@ -112,7 +116,30 @@ fun AddScheduleScreen(
         if (showTimePickerForEnd) {
             TimePickerDialogView(
                 initialTime = end.time,
-                onTimeSelected = { end = end.copy(time = it) },
+                onTimeSelected = { selectedTime ->
+                    if (end.date == start.date && selectedTime <= start.time) {
+                        end = end.copy(time = start.time.plusHours(1))
+                    } else {
+                        end = end.copy(time = selectedTime)
+                    }
+                    showTimePickerForEnd = false
+                },
+                onDismiss = { showTimePickerForEnd = false }
+            )
+        }
+
+
+        if (showTimePickerForEnd) {
+            TimePickerDialogView(
+                initialTime = end.time,
+                onTimeSelected = { selectedTime ->
+                    if (end.date == start.date && selectedTime <= start.time) {
+                        end = end.copy(time = start.time.plusHours(1))
+                    } else {
+                        end = end.copy(time = selectedTime)
+                    }
+                    showTimePickerForEnd = false
+                },
                 onDismiss = { showTimePickerForEnd = false }
             )
         }
