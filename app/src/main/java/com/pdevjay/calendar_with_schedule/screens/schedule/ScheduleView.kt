@@ -1,6 +1,8 @@
 package com.pdevjay.calendar_with_schedule.screens.schedule
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -31,12 +33,18 @@ import java.time.LocalTime
 
 @Composable
 fun ScheduleView(
+    modifier: Modifier = Modifier,
     selectedDay: LocalDate,
     events: List<ScheduleData>,
-    modifier: Modifier = Modifier
+    onEventClick: (ScheduleData) -> Unit,  // 클릭 콜백 추가
+    onBackButtonClicked: () -> Unit
 ) {
     val hourHeight = 60.dp
     val totalHeight = hourHeight * 24
+
+    BackHandler {
+        onBackButtonClicked()
+    }
 
     // 선택된 날짜에 해당하는 이벤트만 필터링
     val dayEvents = events.filter { event ->
@@ -81,6 +89,7 @@ fun ScheduleView(
                                 .height(eventHeight)
                                 .padding(horizontal = 2.dp)
                                 .background(Color(0xFF87CEFA).copy(alpha = 0.3f))
+                                .clickable { onEventClick(event) }  // 클릭 시 상세 진입
                                 .padding(4.dp)
                         ) {
                             Column {

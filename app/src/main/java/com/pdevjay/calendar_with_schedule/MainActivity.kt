@@ -22,7 +22,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             Calendar_with_scheduleTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    MainCalendarView()
+                    AppNavGraph()
                 }
             }
         }

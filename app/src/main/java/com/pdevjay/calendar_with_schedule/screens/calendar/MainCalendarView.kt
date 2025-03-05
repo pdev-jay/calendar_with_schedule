@@ -7,28 +7,38 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.pdevjay.calendar_with_schedule.datamodels.CalendarListItem
 import com.pdevjay.calendar_with_schedule.datamodels.CalendarMonth
 import com.pdevjay.calendar_with_schedule.datamodels.ScheduleData
 import com.pdevjay.calendar_with_schedule.datamodels.dummyCalendarEvents
 import com.pdevjay.calendar_with_schedule.intents.CalendarIntent
+import com.pdevjay.calendar_with_schedule.intents.TaskIntent
 import com.pdevjay.calendar_with_schedule.screens.schedule.AddScheduleScreen
+import com.pdevjay.calendar_with_schedule.screens.schedule.ScheduleDetailScreen
 //import com.pdevjay.calendar_with_schedule.screens.schedule.AddScheduleModal
 import com.pdevjay.calendar_with_schedule.screens.schedule.ScheduleView
 import com.pdevjay.calendar_with_schedule.ui.theme.Calendar_with_scheduleTheme
@@ -43,8 +53,9 @@ import java.time.YearMonth
 
 @Composable
 fun MainCalendarView(
-    calendarViewModel: CalendarViewModel = hiltViewModel(),
-    taskViewModel: TaskViewModel = hiltViewModel()
+    navController: NavController,
+    calendarViewModel: CalendarViewModel,
+    taskViewModel: TaskViewModel
 ) {
     val calendarState by calendarViewModel.state.collectAsState()
     val taskState by taskViewModel.state.collectAsState()
@@ -62,6 +73,7 @@ fun MainCalendarView(
     val months = remember { mutableStateListOf<CalendarMonth>() }
 
     val openModal = remember { mutableStateOf(false) }
+    var selectedEvent by remember { mutableStateOf<ScheduleData?>(null) }
 
     // 초기 데이터 로드
     LaunchedEffect(Unit) {
@@ -81,15 +93,22 @@ fun MainCalendarView(
 
     // 무한 스크롤 로직: listState의 첫 항목 인덱스를 보고 months 리스트에 달 데이터를 추가
     LaunchedEffect(listState) {
+
         snapshotFlow { Triple(listState.firstVisibleItemIndex, listState.isScrollInProgress, listState.layoutInfo.visibleItemsInfo) }
             .distinctUntilChanged()
             .collectLatest { (flatIndex, isDragging, visibleItems) ->
+                Log.e(null, "visibleItems size: ${visibleItems.size}")
+
                 // 전체 주 수를 계산합니다.
                 val totalWeeks = calendarViewModel.getTotalWeeks(months)
                 Log.d("LazyColumn", "Total weeks: $totalWeeks, Current flat index: $flatIndex")
 
-                val prevFirstIndex = visibleItems.first().index
+                if (visibleItems.isEmpty()) return@collectLatest  // 데이터 없어도 방어
+
+                val prevFirstItem = visibleItems.first()
+                val prevFirstIndex = prevFirstItem.index
                 val prevOffset = listState.firstVisibleItemScrollOffset
+
                 val lastVisibleIndex = visibleItems.last().index
 
                 // 현재 보이는 달 인덱스 계산 (flatIndex를 이용)
@@ -141,43 +160,51 @@ fun MainCalendarView(
             CalendarTopBar(months, calendarViewModel, openModal)
         }
     ) { innerPadding ->
-        BoxWithConstraints(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-        ) {
-            AnimatedVisibility(
-                visible = calendarState.selectedDate == null,
-                enter = fadeIn(animationSpec = tween(durationMillis = 200)) + expandVertically(animationSpec = tween(durationMillis = 200)),
-                exit = fadeOut(animationSpec = tween(durationMillis = 200)) + shrinkVertically(animationSpec = tween(durationMillis = 200))
-            ) {
 
-                DaysGrid(
-                    maxHeight = maxHeight,
-                    months = months,
-                    selectedDate = calendarState.selectedDate,
-                    onDateSelected = { date ->
-                        if (calendarState.selectedDate == null || calendarState.selectedDate != date) {
-                            calendarViewModel.processIntent(CalendarIntent.DateSelected(date))
-                        } else {
-                            calendarViewModel.processIntent(CalendarIntent.DateUnselected)
-                        }
-                    },
-                    listState = listState
-                )
-            }
-            AnimatedVisibility(
-                visible = calendarState.selectedDate != null,
-                enter = fadeIn(animationSpec = tween(durationMillis = 200)) + expandVertically(animationSpec = tween(durationMillis = 200)),
-                exit = fadeOut(animationSpec = tween(durationMillis = 200)) + shrinkVertically(animationSpec = tween(durationMillis = 200))
+            BoxWithConstraints(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize()
             ) {
-                if (selectedDate != null) {
-                    ScheduleView(
-                        selectedDay = selectedDate,
-                        events = events
-                    )
+                AnimatedVisibility(
+                    visible = calendarState.selectedDate == null,
+                    enter = fadeIn(animationSpec = tween(durationMillis = 50)) + expandVertically(animationSpec = tween(durationMillis = 50)),
+                    exit = fadeOut(animationSpec = tween(durationMillis = 50)) + shrinkVertically(animationSpec = tween(durationMillis = 50))
+                ) {
+                    key(calendarState.selectedDate){
+                        DaysGrid(
+                            maxHeight = maxHeight,
+                            months = months,
+                            selectedDate = calendarState.selectedDate,
+                            onDateSelected = { date ->
+                                if (calendarState.selectedDate == null || calendarState.selectedDate != date) {
+                                    calendarViewModel.processIntent(CalendarIntent.DateSelected(date))
+                                } else {
+                                    calendarViewModel.processIntent(CalendarIntent.DateUnselected)
+                                }
+                            },
+                            listState = listState
+                        )
+                    }
                 }
-            }
+                AnimatedVisibility(
+                    visible = calendarState.selectedDate != null,
+                    enter = fadeIn(animationSpec = tween(durationMillis = 100)) + expandVertically(animationSpec = tween(durationMillis = 100)),
+                    exit = fadeOut(animationSpec = tween(durationMillis = 100)) + shrinkVertically(animationSpec = tween(durationMillis = 100))
+                ) {
+                    if (selectedDate != null) {
+                        ScheduleView(
+                            selectedDay = selectedDate,
+                            events = events,
+                            onEventClick = { event ->
+                                navController.navigate("scheduleDetail/${event.id}")
+                            },
+                            onBackButtonClicked = {
+                                calendarViewModel.processIntent(CalendarIntent.DateUnselected)
+                            }
+                        )
+                    }
+                }
         }
     }
 
@@ -185,11 +212,11 @@ fun MainCalendarView(
         AddScheduleScreen(
             onDismiss = { openModal.value = false },
             onSave = { newSchedule ->
-                // 새 스케줄 저장 처리
-                // 예: viewModel.addSchedule(newSchedule)
+                taskViewModel.processIntent(TaskIntent.AddSchedule(newSchedule))
             }
         )
     }
+
 }
 
 
@@ -207,7 +234,7 @@ fun getFlatIndexForCurrentMonth(months: List<CalendarMonth>, currentMonth: YearM
 @Composable
 fun MainCalendarPreview() {
     Calendar_with_scheduleTheme {
-        MainCalendarView(calendarViewModel = hiltViewModel())
+        MainCalendarView(navController = NavController(LocalContext.current), calendarViewModel = hiltViewModel(), taskViewModel = hiltViewModel())
     }
 
 }

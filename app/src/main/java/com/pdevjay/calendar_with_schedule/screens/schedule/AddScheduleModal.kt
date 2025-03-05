@@ -1,6 +1,7 @@
 package com.pdevjay.calendar_with_schedule.screens.schedule
 
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.tween
@@ -71,7 +72,6 @@ import kotlin.math.roundToInt
 fun AddScheduleScreen(
     onDismiss: () -> Unit,
     onSave: (ScheduleData) -> Unit,
-    taskViewModel: TaskViewModel = hiltViewModel()
 ) {
     var title by remember { mutableStateOf("") }
     var location by remember { mutableStateOf("") }
@@ -169,7 +169,7 @@ fun AddScheduleScreen(
                             start = start,
                             end = end
                         )
-                        taskViewModel.processIntent(TaskIntent.AddSchedule(newSchedule))
+                        onSave(newSchedule)
                         controller.closeWithAnimation()  // 자연스럽게 닫기
                     },
                     modifier = Modifier.fillMaxWidth()
@@ -187,6 +187,7 @@ fun ScheduleBottomSheet(
     onDismiss: () -> Unit,
     content: @Composable (nestedScrollConnection: NestedScrollConnection, scrollState: ScrollState, controller: BottomSheetController) -> Unit
 ) {
+
     val coroutineScope = rememberCoroutineScope()
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
@@ -202,6 +203,10 @@ fun ScheduleBottomSheet(
 
     val controller = remember {
         BottomSheetController(coroutineScope, offsetYAnim, screenHeightPx, onDismiss)
+    }
+
+    BackHandler {
+        controller.closeWithAnimation()
     }
 
     // NestedScrollConnection: 콘텐츠 스크롤이 최상단(0)일 때 아래로 드래그하면 바텀시트 오프셋을 함께 업데이트
