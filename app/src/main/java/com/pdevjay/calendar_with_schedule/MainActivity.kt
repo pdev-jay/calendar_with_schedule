@@ -1,5 +1,6 @@
 package com.pdevjay.calendar_with_schedule
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -10,7 +11,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.pdevjay.calendar_with_schedule.screens.calendar.MainCalendarView
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.compose.rememberNavController
+import com.pdevjay.calendar_with_schedule.screens.calendar.viewmodels.CalendarViewModel
+import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.TaskViewModel
 import com.pdevjay.calendar_with_schedule.ui.theme.Calendar_with_scheduleTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -18,14 +22,25 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         enableEdgeToEdge()
         setContent {
             Calendar_with_scheduleTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    AppNavGraph()
-                }
+                AppRoot()
             }
         }
+    }
+}
+
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@Composable
+fun AppRoot() {
+    val navController = rememberNavController()
+    val calendarViewModel: CalendarViewModel = hiltViewModel()
+    val taskViewModel: TaskViewModel = hiltViewModel()
+
+    Scaffold(modifier = Modifier.fillMaxSize()) {
+        AppNavGraph(navController, calendarViewModel, taskViewModel)
     }
 }
 

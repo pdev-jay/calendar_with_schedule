@@ -1,16 +1,14 @@
 package com.pdevjay.calendar_with_schedule.screens.schedule
 
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateIntOffset
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Button
@@ -25,11 +23,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.pdevjay.calendar_with_schedule.intents.TaskIntent
-import com.pdevjay.calendar_with_schedule.viewmodels.TaskViewModel
+import com.pdevjay.calendar_with_schedule.screens.schedule.intents.TaskIntent
+import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.TaskViewModel
 
 @Composable
 fun ScheduleDetailScreen(
@@ -79,10 +76,14 @@ fun ScheduleDetailScreen(
         enter = slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(300)),
         exit = slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(300))
     ) {
+        // DatePicker / TimePicker
         if (showDatePickerForStart) {
             DatePickerView(
                 initialDate = start.date,
-                onDateSelected = { start = start.copy(date = it) },
+                onDateSelected = {
+                    start = start.copy(date = it)
+                    if (end.date.isBefore(it)) end = end.copy(date = it)
+                },
                 onDismiss = { showDatePickerForStart = false }
             )
         }
@@ -90,7 +91,12 @@ fun ScheduleDetailScreen(
         if (showTimePickerForStart) {
             TimePickerDialogView(
                 initialTime = start.time,
-                onTimeSelected = { start = start.copy(time = it) },
+                onTimeSelected = {
+                    start = start.copy(time = it)
+                    if (start.date == end.date && it >= end.time) {
+                        end = end.copy(time = it.plusHours(1))
+                    }
+                },
                 onDismiss = { showTimePickerForStart = false }
             )
         }
@@ -98,6 +104,7 @@ fun ScheduleDetailScreen(
         if (showDatePickerForEnd) {
             DatePickerView(
                 initialDate = end.date,
+                minDate = start.date,
                 onDateSelected = { end = end.copy(date = it) },
                 onDismiss = { showDatePickerForEnd = false }
             )
@@ -106,7 +113,13 @@ fun ScheduleDetailScreen(
         if (showTimePickerForEnd) {
             TimePickerDialogView(
                 initialTime = end.time,
-                onTimeSelected = { end = end.copy(time = it) },
+                onTimeSelected = {
+                    if (end.date == start.date && it <= start.time) {
+                        end = end.copy(time = start.time.plusHours(1))
+                    } else {
+                        end = end.copy(time = it)
+                    }
+                },
                 onDismiss = { showTimePickerForEnd = false }
             )
         }

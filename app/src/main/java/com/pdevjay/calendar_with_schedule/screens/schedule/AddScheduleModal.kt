@@ -12,7 +12,6 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -56,11 +55,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.pdevjay.calendar_with_schedule.datamodels.DateTimePeriod
-import com.pdevjay.calendar_with_schedule.datamodels.ScheduleData
-import com.pdevjay.calendar_with_schedule.intents.TaskIntent
-import com.pdevjay.calendar_with_schedule.viewmodels.TaskViewModel
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.DateTimePeriod
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -75,7 +71,6 @@ fun AddScheduleScreen(
     onSave: (ScheduleData) -> Unit,
 ) {
     val now = LocalTime.now()
-
     val initialDate = selectedDate ?: LocalDate.now()  // 오늘 or selectedDate
 
     var title by remember { mutableStateOf("") }
@@ -113,18 +108,17 @@ fun AddScheduleScreen(
             )
         }
 
-        if (showTimePickerForEnd) {
+        if (showTimePickerForStart) {
             TimePickerDialogView(
-                initialTime = end.time,
+                initialTime = start.time,
                 onTimeSelected = { selectedTime ->
-                    if (end.date == start.date && selectedTime <= start.time) {
-                        end = end.copy(time = start.time.plusHours(1))
-                    } else {
-                        end = end.copy(time = selectedTime)
+                    start = start.copy(time = selectedTime)
+                    if (start.date == end.date && selectedTime >= end.time) {
+                        end = end.copy(time = selectedTime.plusHours(1))
                     }
-                    showTimePickerForEnd = false
+                    showTimePickerForStart = false
                 },
-                onDismiss = { showTimePickerForEnd = false }
+                onDismiss = { showTimePickerForStart = false }
             )
         }
 
@@ -191,7 +185,7 @@ fun AddScheduleScreen(
                 Button(
                     onClick = {
                         val newSchedule = ScheduleData(
-                            title = title,
+                            title = if (title.isBlank()) "New Event" else title,
                             location = location,
                             start = start,
                             end = end

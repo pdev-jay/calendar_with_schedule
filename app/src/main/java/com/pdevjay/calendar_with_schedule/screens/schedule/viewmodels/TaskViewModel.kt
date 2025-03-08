@@ -1,16 +1,19 @@
-package com.pdevjay.calendar_with_schedule.viewmodels
+package com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pdevjay.calendar_with_schedule.data.entity.TaskEntity
+import com.pdevjay.calendar_with_schedule.data.entity.toScheduleData
+import com.pdevjay.calendar_with_schedule.data.entity.toTaskEntity
 import com.pdevjay.calendar_with_schedule.data.repository.TaskRepository
-import com.pdevjay.calendar_with_schedule.datamodels.ScheduleData
-import com.pdevjay.calendar_with_schedule.intents.TaskIntent
-import com.pdevjay.calendar_with_schedule.states.TaskState
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
+import com.pdevjay.calendar_with_schedule.screens.schedule.intents.TaskIntent
+import com.pdevjay.calendar_with_schedule.screens.schedule.states.TaskState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
@@ -22,6 +25,7 @@ class TaskViewModel @Inject constructor(
     val state: StateFlow<TaskState> = _state
 
     init {
+
         viewModelScope.launch {
             repository.getAllTasks()
                 .collect { entities ->
@@ -56,21 +60,4 @@ class TaskViewModel @Inject constructor(
             it.start.date <= date && it.end.date >= date
         }
     }
-
-    // ScheduleData <-> TaskEntity 변환 함수들
-    private fun ScheduleData.toTaskEntity() = TaskEntity(
-        id = id,
-        title = title,
-        location = location,
-        start = start,
-        end = end
-    )
-
-    private fun TaskEntity.toScheduleData() = ScheduleData(
-        id = id,
-        title = title,
-        location = location,
-        start = start,
-        end = end
-    )
 }

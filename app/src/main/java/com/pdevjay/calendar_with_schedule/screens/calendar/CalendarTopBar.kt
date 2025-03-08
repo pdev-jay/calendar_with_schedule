@@ -1,80 +1,126 @@
 package com.pdevjay.calendar_with_schedule.screens.calendar
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import com.pdevjay.calendar_with_schedule.datamodels.CalendarMonth
-import com.pdevjay.calendar_with_schedule.datamodels.CalendarWeek
-import com.pdevjay.calendar_with_schedule.intents.CalendarIntent
-import com.pdevjay.calendar_with_schedule.viewmodels.CalendarViewModel
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import com.pdevjay.calendar_with_schedule.screens.calendar.intents.CalendarIntent
+import com.pdevjay.calendar_with_schedule.screens.calendar.viewmodels.CalendarViewModel
+import java.time.LocalDate
 
 @Composable
 fun CalendarTopBar(
-    months: SnapshotStateList<CalendarMonth>,
     viewModel: CalendarViewModel,
-    openModal: MutableState<Boolean>
+    navController: NavController
 ) {
     val state by viewModel.state.collectAsState()
+    val weekDates = state.selectedDate?.let { getWeekDatesForDate(it) }
 
     Column {
-        CalendarHeader(state, openModal, onClick = { viewModel.processIntent(CalendarIntent.DateUnselected) })
+        CalendarHeader(
+            state,
+            navController,
+            onClick = { viewModel.processIntent(CalendarIntent.DateUnselected) }
+        )
         WeekHeader()
+
+        // 애니메이션 제대로 동작하게 key 추가
         AnimatedVisibility(
-            visible = state.selectedDate != null,
-            enter = fadeIn(animationSpec = tween(durationMillis = 100)) + expandVertically(
-                animationSpec = tween(durationMillis = 100)
-            ),
-            exit = fadeOut(animationSpec = tween(durationMillis = 100)) + shrinkVertically(
-                animationSpec = tween(durationMillis = 100)
-            )
+            visible = weekDates != null,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
         ) {
-            // 선택된 날짜가 속한 주를 계산합니다.
-            val selectedWeek = months
-                .flatMap { it.weeks }
-                .find { week ->
-                    week.days.any {
-                        it.isCurrentMonth && it.date == state.selectedDate
-                    }
-                }
-            // 선택된 주를 TopAppBar 영역 하단에 추가 (원하는 스타일 적용 가능)
-            BoxWithConstraints {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(maxHeight * 0.1f)
-                        .background(color = Color.LightGray),
-                ) {
-                    WeekRow(
-                        isInTopBar = true,
-                        modifier = Modifier.fillMaxSize(),
-                        week = selectedWeek ?: CalendarWeek("", emptyList()),
-                        selectedDate = state.selectedDate,
-                        onDateSelected = { date ->
-                            if (state.selectedDate == date)
-                                viewModel.processIntent(CalendarIntent.DateUnselected)
-                            else
-                                viewModel.processIntent(CalendarIntent.DateSelected(date))
+            weekDates?.let {
+                WeekRow(
+                    weekDates = it,
+                    selectedDate = state.selectedDate,
+                    onDateClick = { date ->
+                        if (date != state.selectedDate) {
+                            viewModel.processIntent(CalendarIntent.DateSelected(date))
+                        } else {
+                            viewModel.processIntent(CalendarIntent.DateUnselected)
                         }
-                    )
-                }
+                    }
+                )
             }
         }
+    }
+}
+
+@Composable
+fun WeekRow(
+    weekDates: List<LocalDate>,
+    selectedDate: LocalDate?,
+    onDateClick: (LocalDate) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        weekDates.forEach { date ->
+            val isSelected = date == selectedDate
+            val isToday = date == LocalDate.now()
+
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(
+                        when {
+                            isSelected -> Color.Red.copy(alpha = 0.7f)
+                            else -> Color.Transparent
+                        }
+                    )
+                    .clickable { onDateClick(date) },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = date.dayOfMonth.toString(),
+                    style = TextStyle(
+                    color = when {
+                        isSelected -> Color.White
+                        isToday -> Color.Red
+                        else -> Color.Black
+                    },
+                    )
+                )
+            }
+        }
+    }
+}
+
+
+fun getWeekDatesForDate(selectedDate: LocalDate): List<LocalDate> {
+    val dayOfWeek = selectedDate.dayOfWeek  // 월요일=1, 일요일=7
+    val startOfWeek = selectedDate.minusDays(dayOfWeek.value.toLong() % 7)
+
+    return (0 until 7).map { offset ->
+        startOfWeek.plusDays(offset.toLong())
     }
 }

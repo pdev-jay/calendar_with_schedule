@@ -2,100 +2,166 @@ package com.pdevjay.calendar_with_schedule.screens.calendar
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.pdevjay.calendar_with_schedule.datamodels.CalendarDay
+import androidx.compose.ui.unit.sp
+import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarDay
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.DateTimePeriod
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
 import java.time.LocalDate
+import java.time.LocalTime
 
 @Composable
 fun DayCell(
-    modifier: Modifier = Modifier,
-    isInTopBar: Boolean = false,
-    calendarDay: CalendarDay,
-    isSelected: Boolean,
-    onDateSelected: (LocalDate) -> Unit
+    day: CalendarDay,
+    height: Dp,
+    schedules: List<ScheduleData>,
+    onClick: (CalendarDay) -> Unit
 ) {
+    val totalCount = schedules.size
+
     Box(
-        modifier = modifier
-            .clickable (
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() }
-            ){ if (calendarDay.isCurrentMonth) onDateSelected(calendarDay.date) else if (isInTopBar) onDateSelected(calendarDay.date) }
-            .drawBehind {
-                if (calendarDay.isCurrentMonth && !isInTopBar) {
-                    drawTopBorder(borderThickness = 2.dp, borderColor = Color.LightGray.copy(alpha = 0.5f))
-                }
-            }
-            .padding(8.dp),
-        contentAlignment = if (!isInTopBar) Alignment.TopCenter else Alignment.Center
+        modifier = Modifier
+            .size(height)
+            .padding(2.dp)
+            .clickable { onClick(day) },
+        contentAlignment = Alignment.Center
     ) {
-        if (calendarDay.isCurrentMonth) {
-            Box(
-                modifier = Modifier
-                    .aspectRatio(1f)
-                    .background(
-                        color = if (isSelected) Color.Red.copy(alpha = 0.6f) else Color.Transparent,
-                        shape = CircleShape
-                    ),
-                contentAlignment = Alignment.Center
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.Top
+            ){
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = calendarDay.date.dayOfMonth.toString(),
-                    color = when {
-                        isSelected -> Color.White
-                        calendarDay.isToday -> Color.Red
-                        else -> Color.Black
-                    },
+                    text = day.date.dayOfMonth.toString(),
+                    style = TextStyle(fontStyle = MaterialTheme.typography.bodyLarge.fontStyle, color = if (day.isToday) Color.Red else Color.Black),
                     textAlign = TextAlign.Center
                 )
+
             }
-        } else if (!calendarDay.isCurrentMonth && isInTopBar){
-            Box(
-                modifier = Modifier
-                    .aspectRatio(1f)
-                    .fillMaxSize()
-                    .background(
-                        color = if (isSelected) Color.Red.copy(alpha = 0.6f) else Color.Transparent,
-                        shape = CircleShape
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = calendarDay.date.dayOfMonth.toString(),
-                    color = when {
-                        isSelected -> Color.White
-                        calendarDay.isToday -> Color.Red
-                        else -> Color.Gray
-                    },
-                    textAlign = TextAlign.Center
-                )
+
+            if (schedules.isNotEmpty()) {
+
+                Column (
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ){
+                    schedules.take(2).forEachIndexed { index, schedule ->
+                        val backgroundColor = calculateScheduleColor(index, totalCount)
+
+                        ScheduleListPreview(backgroundColor, Color.White, Alignment.CenterStart, schedule.title)
+                    }
+
+                    if (schedules.size > 2) {
+                        ScheduleListPreview(Color.Transparent, Color.LightGray, Alignment.Center, "+${schedules.size - 2} more")
+                    }
+                }
             }
         }
     }
-
 }
 
-fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTopBorder(borderThickness: Dp, borderColor: Color) {
-    val strokeWidth = borderThickness.toPx()
-    drawLine(
-        color = borderColor,
-        start = androidx.compose.ui.geometry.Offset(0f, 0f),
-        end = androidx.compose.ui.geometry.Offset(size.width, 0f),
-        strokeWidth = strokeWidth
+@Composable
+private fun ScheduleListPreview(
+    backgroundColor: Color,
+    textColor: Color,
+    alignment: Alignment,
+    title: String
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(color = backgroundColor, shape = RoundedCornerShape(2.dp))
+            .padding(2.dp),
+        contentAlignment = alignment
+    ) {
+
+        Text(
+            text = title,
+            style = TextStyle(color = textColor),
+            fontSize = 10.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+fun calculateScheduleColor(index: Int, totalCount: Int): Color {
+    val baseColor = Color(0xFF03A9F4) // 기본 파랑색
+    val colorFactor = (index.toFloat() / totalCount.toFloat()) // 인덱스 비율
+
+    return baseColor.copy(
+        red = (baseColor.red * (1 - 0.3f * colorFactor)),
+        green = (baseColor.green * (1 - 0.3f * colorFactor)),
+        blue = (baseColor.blue * (1 - 0.3f * colorFactor))
     )
 }
 
+@Preview(showBackground = true)
+@Composable
+fun PreviewDayCell() {
+    val sampleDay = CalendarDay(
+        date = LocalDate.now(),
+        dayOfWeek = LocalDate.now().dayOfWeek,
+        isToday = true
+    )
+
+    val sampleSchedules = listOf(
+        ScheduleData(
+            title = "Morning Standup",
+            location = "Office",
+            start = DateTimePeriod(LocalDate.now(), LocalTime.of(9, 0)),
+            end = DateTimePeriod(LocalDate.now(), LocalTime.of(9, 30))
+        ),
+        ScheduleData(
+            title = "Client Meeting",
+            location = "Zoom",
+            start = DateTimePeriod(LocalDate.now(), LocalTime.of(11, 0)),
+            end = DateTimePeriod(LocalDate.now(), LocalTime.of(12, 0))
+        ),
+        ScheduleData(
+            title = "Lunch Break",
+            location = "Cafe",
+            start = DateTimePeriod(LocalDate.now(), LocalTime.of(12, 30)),
+            end = DateTimePeriod(LocalDate.now(), LocalTime.of(13, 30))
+        ),
+        ScheduleData(
+            title = "Project Review",
+            location = "Conference Room",
+            start = DateTimePeriod(LocalDate.now(), LocalTime.of(15, 0)),
+            end = DateTimePeriod(LocalDate.now(), LocalTime.of(16, 0))
+        )
+    )
+
+    DayCell(
+        day = sampleDay,
+        height = 120.dp,
+        schedules = sampleSchedules,
+        onClick = { /* 클릭 이벤트 처리 */ }
+    )
+}
