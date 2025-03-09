@@ -2,10 +2,11 @@ package com.pdevjay.calendar_with_schedule.di
 
 import android.content.Context
 import androidx.room.Room
-import com.pdevjay.calendar_with_schedule.data.db.TaskDao
-import com.pdevjay.calendar_with_schedule.data.db.TaskDatabase
+import com.pdevjay.calendar_with_schedule.data.database.TaskDao
+import com.pdevjay.calendar_with_schedule.data.database.TaskDatabase
 import com.pdevjay.calendar_with_schedule.data.repository.TaskRepository
 import com.pdevjay.calendar_with_schedule.data.repository.TaskRepositoryImpl
+import com.pdevjay.calendar_with_schedule.utils.EnumTypeConverter
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -24,7 +25,8 @@ object DatabaseModule {
             context,
             TaskDatabase::class.java,
             "task_database"
-        ).build()
+        )
+            .build()
     }
 
     @Provides

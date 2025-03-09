@@ -2,12 +2,6 @@ package com.pdevjay.calendar_with_schedule.screens.calendar
 
 import android.annotation.SuppressLint
 import android.util.Log
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,13 +19,11 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
 import androidx.navigation.NavController
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarDay
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarMonth
@@ -39,16 +31,17 @@ import com.pdevjay.calendar_with_schedule.screens.calendar.intents.CalendarInten
 import com.pdevjay.calendar_with_schedule.screens.calendar.viewmodels.CalendarViewModel
 import com.pdevjay.calendar_with_schedule.screens.schedule.ScheduleView
 import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.TaskViewModel
+import com.pdevjay.calendar_with_schedule.utils.ExpandVerticallyContainerFromBottom
+import com.pdevjay.calendar_with_schedule.utils.ExpandVerticallyContainerFromTop
+import com.pdevjay.calendar_with_schedule.utils.SlideInVerticallyContainerFromBottom
+import com.pdevjay.calendar_with_schedule.utils.SlideInVerticallyContainerFromTop
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
-import kotlin.math.abs
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
@@ -90,7 +83,7 @@ fun CalendarScreen(
                 month.yearMonth.year == now.year && month.yearMonth.monthValue == now.monthValue
             }
 
-            launch{listState.scrollToItem(currentMonthIndex)}
+            listState.scrollToItem(currentMonthIndex)
 
             isInitialized.value = true  // 다음부터는 실행 안 함
         }
@@ -127,14 +120,8 @@ fun CalendarScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            AnimatedVisibility(
-                visible = calendarState.selectedDate == null,
-                enter = fadeIn(animationSpec = tween(durationMillis = 50)) + expandVertically(
-                    animationSpec = tween(durationMillis = 50)
-                ),
-                exit = fadeOut(animationSpec = tween(durationMillis = 50)) + shrinkVertically(
-                    animationSpec = tween(durationMillis = 50)
-                )
+            SlideInVerticallyContainerFromBottom (
+                isVisible = calendarState.selectedDate == null,
             ) {
                 key(calendarState.selectedDate) {
                     LazyColumn(
@@ -162,27 +149,19 @@ fun CalendarScreen(
                     }
                 }
             }
-            AnimatedVisibility(
-                visible = calendarState.selectedDate != null,
-                enter = fadeIn(animationSpec = tween(durationMillis = 100)) + expandVertically(
-                    animationSpec = tween(durationMillis = 100)
-                ),
-                exit = fadeOut(animationSpec = tween(durationMillis = 100)) + shrinkVertically(
-                    animationSpec = tween(durationMillis = 100)
-                )
+            ExpandVerticallyContainerFromTop (
+                isVisible = calendarState.selectedDate != null,
             ) {
-                if (calendarState.selectedDate != null) {
                     ScheduleView(
-                        selectedDay = calendarState.selectedDate!!,
+                        selectedDay = calendarState.selectedDate ?: LocalDate.now(),
                         events = events,
                         onEventClick = { event ->
                             navController.navigate("scheduleDetail/${event.id}")
                         },
                         onBackButtonClicked = {
                             calendarViewModel.processIntent(CalendarIntent.DateUnselected)
-                        }
+                        },
                     )
-                }
             }
         }
     }

@@ -1,6 +1,6 @@
 package com.pdevjay.calendar_with_schedule.data.repository
 
-import com.pdevjay.calendar_with_schedule.data.db.TaskDao
+import com.pdevjay.calendar_with_schedule.data.database.TaskDao
 import com.pdevjay.calendar_with_schedule.data.entity.TaskEntity
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject

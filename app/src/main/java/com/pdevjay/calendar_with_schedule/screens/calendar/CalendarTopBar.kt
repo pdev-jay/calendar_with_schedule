@@ -1,10 +1,5 @@
 package com.pdevjay.calendar_with_schedule.screens.calendar
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -17,7 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -29,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.pdevjay.calendar_with_schedule.screens.calendar.intents.CalendarIntent
 import com.pdevjay.calendar_with_schedule.screens.calendar.viewmodels.CalendarViewModel
+import com.pdevjay.calendar_with_schedule.utils.ExpandVerticallyContainerFromTop
 import java.time.LocalDate
 
 @Composable
@@ -39,7 +34,7 @@ fun CalendarTopBar(
     val state by viewModel.state.collectAsState()
     val weekDates = state.selectedDate?.let { getWeekDatesForDate(it) }
 
-    Column {
+    Column() {
         CalendarHeader(
             state,
             navController,
@@ -48,10 +43,8 @@ fun CalendarTopBar(
         WeekHeader()
 
         // 애니메이션 제대로 동작하게 key 추가
-        AnimatedVisibility(
-            visible = weekDates != null,
-            enter = fadeIn() + expandVertically(),
-            exit = fadeOut() + shrinkVertically()
+        ExpandVerticallyContainerFromTop (
+            isVisible = weekDates != null,
         ) {
             weekDates?.let {
                 WeekRow(
@@ -79,7 +72,8 @@ fun WeekRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp)
+        ,
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {

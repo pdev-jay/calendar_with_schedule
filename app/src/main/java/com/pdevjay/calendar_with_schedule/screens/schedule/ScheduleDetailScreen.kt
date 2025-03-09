@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.pdevjay.calendar_with_schedule.screens.schedule.intents.TaskIntent
 import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.TaskViewModel
+import com.pdevjay.calendar_with_schedule.utils.SlideInHorizontallyContainer
 
 @Composable
 fun ScheduleDetailScreen(
@@ -71,11 +72,7 @@ fun ScheduleDetailScreen(
     var showDatePickerForEnd by remember { mutableStateOf(false) }
     var showTimePickerForEnd by remember { mutableStateOf(false) }
 
-    AnimatedVisibility(
-        visible = isVisible,
-        enter = slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(300)),
-        exit = slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(300))
-    ) {
+    SlideInHorizontallyContainer(isVisible) {
         // DatePicker / TimePicker
         if (showDatePickerForStart) {
             DatePickerView(

@@ -45,7 +45,6 @@ fun ScheduleView(
     }
 
     val groupedEvents = remember(dayEvents) { groupOverlappingEvents(dayEvents) }
-
     Box(modifier = modifier.fillMaxSize()) {
         Column(
             Modifier

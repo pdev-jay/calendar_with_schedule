@@ -53,10 +53,9 @@ fun DayCell(
             ) {
 
             Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.Top
+                modifier = Modifier.padding(vertical = 4.dp),
+//                verticalArrangement = Arrangement.Top
             ){
-                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = day.date.dayOfMonth.toString(),
                     style = TextStyle(fontStyle = MaterialTheme.typography.bodyLarge.fontStyle, color = if (day.isToday) Color.Red else Color.Black),
@@ -71,14 +70,14 @@ fun DayCell(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(2.dp),
                 ){
-                    schedules.take(2).forEachIndexed { index, schedule ->
+                    schedules.take(3).forEachIndexed { index, schedule ->
                         val backgroundColor = calculateScheduleColor(index, totalCount)
 
                         ScheduleListPreview(backgroundColor, Color.White, Alignment.CenterStart, schedule.title)
                     }
 
-                    if (schedules.size > 2) {
-                        ScheduleListPreview(Color.Transparent, Color.LightGray, Alignment.Center, "+${schedules.size - 2} more")
+                    if (schedules.size > 3) {
+                        ScheduleListPreview(Color.Transparent, Color.LightGray, Alignment.Center, "+${schedules.size - 4} more")
                     }
                 }
             }

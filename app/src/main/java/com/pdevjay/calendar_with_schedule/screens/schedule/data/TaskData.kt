@@ -1,5 +1,7 @@
 package com.pdevjay.calendar_with_schedule.screens.schedule.data
 
+import com.pdevjay.calendar_with_schedule.screens.schedule.enum.AlarmOption
+import com.pdevjay.calendar_with_schedule.screens.schedule.enum.RepeatOption
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -25,7 +27,10 @@ data class ScheduleData(
     val title: String = "New Event",
     val location: String? = null,
     val start: DateTimePeriod,
-    val end: DateTimePeriod
+    val end: DateTimePeriod,
+    val repeatOption: RepeatOption = RepeatOption.NONE, // 🔹 반복 옵션 추가
+    val repeatRule: String? = null, // 🔹 RRule 저장
+    val alarmOption: AlarmOption = AlarmOption.NONE // 🔹 알림 옵션 추가
 )
 
 // 겹침 여부 확인 함수
@@ -42,4 +47,15 @@ fun ScheduleData.overlapsWith(other: ScheduleData): Boolean {
     //    1. 현재 일정의 시작 시간이 다른 일정의 종료 시간보다 앞이어야 함 (thisStart < otherEnd)
     //    2. 현재 일정의 종료 시간이 다른 일정의 시작 시간보다 뒤이어야 함 (thisEnd > otherStart)
     return thisStart < otherEnd && thisEnd > otherStart
+}
+
+fun generateRepeatRule(repeatOption: RepeatOption, repeatCount: Int = 30): String? {
+    return when (repeatOption) {
+        RepeatOption.NONE -> null
+        RepeatOption.DAILY -> "FREQ=DAILY;COUNT=$repeatCount"
+        RepeatOption.WEEKLY -> "FREQ=WEEKLY;COUNT=$repeatCount"
+        RepeatOption.BIWEEKLY -> "FREQ=WEEKLY;INTERVAL=2;COUNT=$repeatCount"
+        RepeatOption.MONTHLY -> "FREQ=MONTHLY;COUNT=$repeatCount"
+        RepeatOption.YEARLY -> "FREQ=YEARLY;COUNT=$repeatCount"
+    }
 }

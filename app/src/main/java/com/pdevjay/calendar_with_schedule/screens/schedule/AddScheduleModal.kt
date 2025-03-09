@@ -345,65 +345,7 @@ fun ScheduleBottomSheet(
     }
 }
 
-@Composable
-fun DateTimeField(
-    label: String,
-    dateTime: DateTimePeriod,
-    onDateClick: () -> Unit,
-    onTimeClick: () -> Unit
-) {
-    Row {
-        Box(modifier = Modifier.weight(1f)) {
-            OutlinedTextField(
-                value = dateTime.date.toString(),
-                onValueChange = {},
-                label = { Text("$label Date") },
-                readOnly = true,
-                modifier = Modifier.fillMaxWidth(),
-                trailingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.DateRange,
-                        contentDescription = "Pick date"
-                    )
-                }
-            )
-            // 투명 클릭 레이어
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .clickable(
-                        indication = null,
-                        interactionSource = remember { MutableInteractionSource() }
-                    ) { onDateClick() }
-            )
-        }
-        Spacer(modifier = Modifier.width(4.dp))
-        Box(modifier = Modifier.weight(1f)) {
-            OutlinedTextField(
-                value = dateTime.time.toString(),
-                onValueChange = {},
-                label = { Text("$label Time") },
-                readOnly = true,
-                modifier = Modifier.fillMaxWidth(),
-                trailingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.AccessTime,
-                        contentDescription = "Pick time"
-                    )
-                }
-            )
-            // 투명 클릭 레이어
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .clickable(
-                        indication = null,
-                        interactionSource = remember { MutableInteractionSource() }
-                    ) { onTimeClick() }
-            )
-        }
-    }
-}
+
 
 class BottomSheetController(
     private val coroutineScope: CoroutineScope,

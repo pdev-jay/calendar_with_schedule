@@ -1,4 +1,4 @@
-package com.pdevjay.calendar_with_schedule.data.db
+package com.pdevjay.calendar_with_schedule.data.database
 
 import androidx.room.*
 import com.pdevjay.calendar_with_schedule.data.entity.TaskEntity
