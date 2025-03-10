@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -13,9 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.rememberNavController
+import com.pdevjay.calendar_with_schedule.ui.theme.AppTheme
 import com.pdevjay.calendar_with_schedule.screens.calendar.viewmodels.CalendarViewModel
-import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.TaskViewModel
-import com.pdevjay.calendar_with_schedule.ui.theme.Calendar_with_scheduleTheme
+import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -25,7 +26,7 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            Calendar_with_scheduleTheme {
+            AppTheme {
                 AppRoot()
             }
         }
@@ -37,10 +38,12 @@ class MainActivity : ComponentActivity() {
 fun AppRoot() {
     val navController = rememberNavController()
     val calendarViewModel: CalendarViewModel = hiltViewModel()
-    val taskViewModel: TaskViewModel = hiltViewModel()
+    val scheduleViewModel: ScheduleViewModel = hiltViewModel()
 
-    Scaffold(modifier = Modifier.fillMaxSize()) {
-        AppNavGraph(navController, calendarViewModel, taskViewModel)
+    AppTheme{
+        Scaffold(modifier = Modifier.fillMaxSize()) {
+            AppNavGraph(navController, calendarViewModel, scheduleViewModel)
+        }
     }
 }
 
@@ -55,7 +58,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
-    Calendar_with_scheduleTheme {
+    MaterialTheme {
         Greeting("Android")
     }
 }

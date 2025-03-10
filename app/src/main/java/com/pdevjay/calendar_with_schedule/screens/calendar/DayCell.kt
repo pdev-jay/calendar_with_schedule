@@ -2,6 +2,7 @@ package com.pdevjay.calendar_with_schedule.screens.calendar
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -38,13 +40,19 @@ fun DayCell(
     schedules: List<ScheduleData>,
     onClick: (CalendarDay) -> Unit
 ) {
+    val sortedSchedules = schedules.sortedWith(
+        compareBy({ it.start.date }, { it.start.time }) // 시작 날짜 → 시작 시간 순으로 정렬
+    )
     val totalCount = schedules.size
 
     Box(
         modifier = Modifier
             .size(height)
             .padding(2.dp)
-            .clickable { onClick(day) },
+            .clickable (
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            ){ onClick(day) },
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -64,13 +72,13 @@ fun DayCell(
 
             }
 
-            if (schedules.isNotEmpty()) {
+            if (sortedSchedules.isNotEmpty()) {
 
                 Column (
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(2.dp),
                 ){
-                    schedules.take(3).forEachIndexed { index, schedule ->
+                    sortedSchedules.take(3).forEachIndexed { index, schedule ->
                         val backgroundColor = calculateScheduleColor(index, totalCount)
 
                         ScheduleListPreview(backgroundColor, Color.White, Alignment.CenterStart, schedule.title)
@@ -146,7 +154,7 @@ fun PreviewDayCell() {
         ScheduleData(
             title = "Lunch Break",
             location = "Cafe",
-            start = DateTimePeriod(LocalDate.now(), LocalTime.of(12, 30)),
+            start = DateTimePeriod(LocalDate.now(), LocalTime.of(2, 30)),
             end = DateTimePeriod(LocalDate.now(), LocalTime.of(13, 30))
         ),
         ScheduleData(

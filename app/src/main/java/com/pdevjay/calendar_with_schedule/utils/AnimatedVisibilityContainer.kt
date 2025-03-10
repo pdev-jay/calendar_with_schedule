@@ -17,6 +17,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +51,22 @@ fun SlideInHorizontallyContainer(
         exit = slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(200))
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
+            content()
+        }
+    }
+}
+@Composable
+fun SlideInHorizontallyContainerFromStart(
+    modifier: Modifier = Modifier,
+    isVisible: Boolean,
+    content: @Composable () -> Unit
+) {
+    AnimatedVisibility(
+        visible = isVisible,
+        enter = slideInHorizontally(initialOffsetX = { -it }, animationSpec = tween(200)),
+        exit = slideOutHorizontally(targetOffsetX = { -it }, animationSpec = tween(200))
+    ) {
+        Box(modifier = modifier) {
             content()
         }
     }

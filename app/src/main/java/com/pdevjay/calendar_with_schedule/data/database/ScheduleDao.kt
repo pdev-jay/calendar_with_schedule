@@ -1,26 +1,25 @@
 package com.pdevjay.calendar_with_schedule.data.database
 
 import androidx.room.*
-import com.pdevjay.calendar_with_schedule.data.entity.TaskEntity
+import com.pdevjay.calendar_with_schedule.data.entity.ScheduleEntity
 import kotlinx.coroutines.flow.Flow
-import java.time.YearMonth
 
 @Dao
-interface TaskDao {
+interface ScheduleDao {
     @Query("SELECT * FROM tasks")
-    fun getAllTasks(): Flow<List<TaskEntity>>
+    fun getAllSchedules(): Flow<List<ScheduleEntity>>
 
     @Query("""
     SELECT * FROM tasks 
     WHERE strftime('%Y-%m', substr(startDate, 1, instr(startDate, '|') - 1)) IN (:months) 
        OR strftime('%Y-%m', substr(endDate, 1, instr(endDate, '|') - 1)) IN (:months)
 """)
-    fun getTasksForMonths(months: List<String>): Flow<List<TaskEntity>>
+    fun getSchedulesForMonths(months: List<String>): Flow<List<ScheduleEntity>>
 
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertTask(task: TaskEntity)
+    suspend fun insertSchedule(schedule: ScheduleEntity)
 
     @Delete
-    suspend fun deleteTask(task: TaskEntity)
+    suspend fun deleteSchedule(schedule: ScheduleEntity)
 }

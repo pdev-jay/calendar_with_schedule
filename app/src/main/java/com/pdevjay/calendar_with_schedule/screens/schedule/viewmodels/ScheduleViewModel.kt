@@ -1,15 +1,11 @@
 package com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pdevjay.calendar_with_schedule.data.entity.TaskEntity
-import com.pdevjay.calendar_with_schedule.data.entity.toScheduleData
-import com.pdevjay.calendar_with_schedule.data.entity.toTaskEntity
-import com.pdevjay.calendar_with_schedule.data.repository.TaskRepository
+import com.pdevjay.calendar_with_schedule.data.repository.ScheduleRepository
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
-import com.pdevjay.calendar_with_schedule.screens.schedule.intents.TaskIntent
-import com.pdevjay.calendar_with_schedule.screens.schedule.states.TaskState
+import com.pdevjay.calendar_with_schedule.screens.schedule.intents.ScheduleIntent
+import com.pdevjay.calendar_with_schedule.screens.schedule.states.ScheduleState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,38 +14,38 @@ import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
-class TaskViewModel @Inject constructor(
-    private val repository: TaskRepository
+class ScheduleViewModel @Inject constructor(
+    private val repository: ScheduleRepository
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(TaskState())
-    val state: StateFlow<TaskState> = _state
+    private val _state = MutableStateFlow(ScheduleState())
+    val state: StateFlow<ScheduleState> = _state
 
     init {
 
         viewModelScope.launch {
-            repository.getAllTasks()
+            repository.getAllSchedules()
                 .collect { entities ->
-                    _state.value = TaskState(schedules = entities.map { it })
+                    _state.value = ScheduleState(schedules = entities.map { it })
                 }
         }
     }
 
-    fun processIntent(intent: TaskIntent) {
+    fun processIntent(intent: ScheduleIntent) {
         viewModelScope.launch {
             when (intent) {
-                is TaskIntent.AddSchedule -> {
+                is ScheduleIntent.AddSchedule -> {
                     val entity = intent.schedule
-                    repository.saveTask(entity)
+                    repository.saveSchedule(entity)
                 }
-                is TaskIntent.UpdateSchedule -> {
+                is ScheduleIntent.UpdateSchedule -> {
                     val entity = intent.schedule
-                    repository.saveTask(entity)  // 덮어쓰기 (PrimaryKey 같으면 업데이트)
+                    repository.saveSchedule(entity)  // 덮어쓰기 (PrimaryKey 같으면 업데이트)
                 }
-                is TaskIntent.DeleteSchedule -> {
+                is ScheduleIntent.DeleteSchedule -> {
                     val target = _state.value.schedules.find { it.id == intent.scheduleId }
                     if (target != null) {
-                        repository.deleteTask(target)
+                        repository.deleteSchedule(target)
                     }
                 }
             }

@@ -3,7 +3,7 @@ package com.pdevjay.calendar_with_schedule.screens.calendar.viewmodels
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pdevjay.calendar_with_schedule.data.repository.TaskRepository
+import com.pdevjay.calendar_with_schedule.data.repository.ScheduleRepository
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarMonth
 import com.pdevjay.calendar_with_schedule.screens.calendar.intents.CalendarIntent
 import com.pdevjay.calendar_with_schedule.screens.calendar.loadInitialMonths
@@ -18,7 +18,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class CalendarViewModel @Inject constructor(
-    private val taskRepository: TaskRepository
+    private val scheduleRepository: ScheduleRepository
 ) : ViewModel() {
     private val _state = MutableStateFlow(CalendarState())
     val state: StateFlow<CalendarState> = _state
@@ -69,7 +69,7 @@ class CalendarViewModel @Inject constructor(
         )
 
         viewModelScope.launch {
-            taskRepository.getTasksForMonths(monthsToLoad).collect { monthSchedules ->
+            scheduleRepository.getSchedulesForMonths(monthsToLoad).collect { monthSchedules ->
                 _state.value = _state.value.copy(scheduleMap = monthSchedules)
             }
         }

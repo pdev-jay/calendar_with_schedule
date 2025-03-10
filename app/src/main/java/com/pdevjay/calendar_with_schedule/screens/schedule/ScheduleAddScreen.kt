@@ -48,16 +48,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.pdevjay.calendar_with_schedule.ui.theme.AppTheme
+import com.pdevjay.calendar_with_schedule.R
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.DateTimePeriod
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.generateRepeatRule
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatOption
-import com.pdevjay.calendar_with_schedule.ui.theme.Calendar_with_scheduleTheme
 import com.pdevjay.calendar_with_schedule.utils.SlideInHorizontallyContainer
 import java.time.LocalDate
 import java.time.LocalTime
@@ -72,7 +74,7 @@ fun ScheduleAddScreen(
     val now = remember { LocalTime.now() }
     val initialDate = remember { selectedDate ?: LocalDate.now() }
 
-    var isVisible by remember { mutableStateOf(true) }
+    var isVisible by remember { mutableStateOf(false) }
 
     var title by remember { mutableStateOf("") }
     var location by remember { mutableStateOf("") }
@@ -99,7 +101,7 @@ fun ScheduleAddScreen(
         topBar = {
                 SlideInHorizontallyContainer(isVisible) {
                     TopAppBar(
-                        title = { Text("Add Schedule") },
+                        title = { Text(stringResource(R.string.add_schedule)) },
                         navigationIcon = {
                             IconButton(onClick = {
                                 isVisible = false
@@ -123,42 +125,42 @@ fun ScheduleAddScreen(
                     .padding(16.dp)
                     .verticalScroll(rememberScrollState())
             ) {
-                StyledTextField(value = title, label = "Title", onValueChange = { title = it })
+                StyledTextField(value = title, label = stringResource(R.string.title), onValueChange = { title = it })
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Column (
                     modifier = Modifier
-                        .background(MaterialTheme.colorScheme.surfaceVariant, shape = RoundedCornerShape(10.dp))
+                        .background(Color.LightGray.copy(alpha = 0.5f), shape = RoundedCornerShape(10.dp))
                 ){
                     // All-day Toggle
                     AllDaySwitch(allDay)
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 2.dp, color = Color.LightGray)
-                    DateTimeSelector("Starts", start, onDateClick = {}, onTimeClick = {})
+                    DateTimeSelector(stringResource(R.string.starts), start, onDateClick = {showDatePickerForStart = true}, onTimeClick = {showTimePickerForStart = true})
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 2.dp, color = Color.LightGray)
-                    DateTimeSelector("Ends", end, onDateClick = {}, onTimeClick = {})
+                    DateTimeSelector(stringResource(R.string.ends), end, onDateClick = {showDatePickerForEnd = true}, onTimeClick = {showTimePickerForEnd = true})
 
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                DropdownMenuSelector(
-                    title = "Repeat",
-                    options = RepeatOption.entries.map { it.label },
-                    selectedOption = repeatOption.label,
-                    onOptionSelected = { label -> repeatOption = RepeatOption.fromLabel(label) }
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // 🔹 Alarm Dropdown
-                DropdownMenuSelector(
-                    title = "Alarm",
-                    options = AlarmOption.entries.map { it.label },
-                    selectedOption = alarmOption.label,
-                    onOptionSelected = { label -> alarmOption = AlarmOption.fromLabel(label) }
-                )
-                Spacer(modifier = Modifier.height(16.dp))
+//                DropdownMenuSelector(
+//                    title = stringResource(R.string.repeat),
+//                    options = RepeatOption.entries.map { it.label },
+//                    selectedOption = repeatOption.label,
+//                    onOptionSelected = { label -> repeatOption = RepeatOption.fromLabel(label) }
+//                )
+//
+//                Spacer(modifier = Modifier.height(16.dp))
+//
+//                // 🔹 Alarm Dropdown
+//                DropdownMenuSelector(
+//                    title = stringResource(R.string.notification),
+//                    options = AlarmOption.entries.map { it.label },
+//                    selectedOption = alarmOption.label,
+//                    onOptionSelected = { label -> alarmOption = AlarmOption.fromLabel(label) }
+//                )
+//                Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
                     onClick = {
@@ -175,9 +177,9 @@ fun ScheduleAddScreen(
                         Log.e("","ScheduleAddScreen: $newSchedule")
                         onSave(newSchedule)
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("Save")
+                    Text(stringResource(R.string.save))
                 }
             }
         }
@@ -233,7 +235,7 @@ fun ScheduleAddScreen(
 }
 
 @Composable
-private fun AllDaySwitch(allDay: Boolean) {
+fun AllDaySwitch(allDay: Boolean) {
     var allDay1 = allDay
     Row(
         modifier = Modifier
@@ -242,7 +244,7 @@ private fun AllDaySwitch(allDay: Boolean) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text("All-day", fontSize = 16.sp)
+        Text(stringResource(R.string.all_day), fontSize = 16.sp)
         Switch(
             checked = allDay1,
             onCheckedChange = { allDay1 = it }
@@ -316,14 +318,14 @@ fun StyledTextField(value: String, label: String, onValueChange: (String) -> Uni
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .background(Color.LightGray.copy(alpha = 0.5f))
             .padding(12.dp)
     ) {
         BasicTextField(
             modifier = Modifier.fillMaxWidth(),
             value = value,
             onValueChange = onValueChange,
-            textStyle = TextStyle(fontSize = 16.sp, color = Color.White),
+            textStyle = TextStyle(fontSize = 16.sp),
             decorationBox = { innerTextField ->
                 if (value.isEmpty()) {
                     Text(label, color = Color.Gray, fontSize = 16.sp)
@@ -356,23 +358,23 @@ fun DateTimeSelector(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.primary)
+//                    .background(MaterialTheme.colorScheme.secondaryContainer)
                     .clickable(onClick = onDateClick)
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(dateTime.date.toString(), color = Color.White, fontSize = 16.sp)
+                Text(dateTime.date.toString(), fontSize = 16.sp)
             }
 
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.primary)
+//                    .background(MaterialTheme.colorScheme.secondaryContainer)
                     .clickable(onClick = onTimeClick)
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(dateTime.time.toString(), color = Color.White, fontSize = 16.sp)
+                Text(dateTime.time.toString(), fontSize = 16.sp)
             }
         }
     }
@@ -395,7 +397,7 @@ fun DropdownMenuSelector(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surfaceVariant, shape = RoundedCornerShape(10.dp))
+                .background(Color.LightGray, shape = RoundedCornerShape(10.dp))
                 .clickable { expanded = true } // 클릭 시 Dropdown 열기
                 .padding(12.dp),
 
@@ -439,7 +441,7 @@ fun DropdownMenuSelector(
 @Preview(showBackground = true)
 @Composable
 fun PreviewScheduleAddScreen(){
-    Calendar_with_scheduleTheme {
+    AppTheme {
         ScheduleAddScreen(LocalDate.now(), {}, {})
     }
 }

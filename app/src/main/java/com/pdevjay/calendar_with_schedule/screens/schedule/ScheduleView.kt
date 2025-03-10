@@ -51,7 +51,7 @@ fun ScheduleView(
                 .verticalScroll(scrollState)
                 .fillMaxSize()
         ) {
-            Row(modifier = Modifier.fillMaxSize().background(color = Color.White)) {
+            Row(modifier = Modifier.fillMaxSize()) {
                 TimeColumn()
 
                 BoxWithConstraints(

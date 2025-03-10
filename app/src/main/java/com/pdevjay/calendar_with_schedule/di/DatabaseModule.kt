@@ -3,12 +3,10 @@ package com.pdevjay.calendar_with_schedule.di
 import android.content.Context
 import android.util.Log
 import androidx.room.Room
-import androidx.room.RoomDatabase
-import androidx.sqlite.db.SupportSQLiteDatabase
-import com.pdevjay.calendar_with_schedule.data.database.TaskDao
-import com.pdevjay.calendar_with_schedule.data.database.TaskDatabase
-import com.pdevjay.calendar_with_schedule.data.repository.TaskRepository
-import com.pdevjay.calendar_with_schedule.data.repository.TaskRepositoryImpl
+import com.pdevjay.calendar_with_schedule.data.database.ScheduleDao
+import com.pdevjay.calendar_with_schedule.data.database.ScheduleDatabase
+import com.pdevjay.calendar_with_schedule.data.repository.ScheduleRepository
+import com.pdevjay.calendar_with_schedule.data.repository.ScheduleRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -23,10 +21,10 @@ import javax.inject.Singleton
 object DatabaseModule {
     @Provides
     @Singleton
-    fun provideDatabase(@ApplicationContext context: Context): TaskDatabase {
+    fun provideDatabase(@ApplicationContext context: Context): ScheduleDatabase {
         return Room.databaseBuilder(
             context,
-            TaskDatabase::class.java,
+            ScheduleDatabase::class.java,
             "task_database"
         )
             .setQueryCallback({ sqlQuery, bindArgs ->
@@ -36,12 +34,12 @@ object DatabaseModule {
     }
 
     @Provides
-    fun provideTaskDao(database: TaskDatabase): TaskDao = database.taskDao()
+    fun provideScheduleDao(database: ScheduleDatabase): ScheduleDao = database.scheduleDao()
 }
 
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
     @Binds
-    abstract fun bindTaskRepository(impl: TaskRepositoryImpl): TaskRepository
+    abstract fun bindScheduleRepository(impl: ScheduleRepositoryImpl): ScheduleRepository
 }

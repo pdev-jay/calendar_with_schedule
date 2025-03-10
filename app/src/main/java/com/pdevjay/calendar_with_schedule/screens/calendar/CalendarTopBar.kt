@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -34,7 +35,9 @@ fun CalendarTopBar(
     val state by viewModel.state.collectAsState()
     val weekDates = state.selectedDate?.let { getWeekDatesForDate(it) }
 
-    Column() {
+    Column(
+//        modifier = Modifier.background(MaterialTheme.colorScheme.primary),
+        ) {
         CalendarHeader(
             state,
             navController,
@@ -102,6 +105,7 @@ fun WeekRow(
                         isToday -> Color.Red
                         else -> Color.Black
                     },
+
                     )
                 )
             }

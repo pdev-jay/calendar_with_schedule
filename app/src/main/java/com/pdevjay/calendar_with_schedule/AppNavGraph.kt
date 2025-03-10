@@ -12,20 +12,20 @@ import com.pdevjay.calendar_with_schedule.screens.calendar.CalendarScreen
 import com.pdevjay.calendar_with_schedule.screens.calendar.viewmodels.CalendarViewModel
 import com.pdevjay.calendar_with_schedule.screens.schedule.ScheduleAddScreen
 import com.pdevjay.calendar_with_schedule.screens.schedule.ScheduleDetailScreen
-import com.pdevjay.calendar_with_schedule.screens.schedule.intents.TaskIntent
-import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.TaskViewModel
+import com.pdevjay.calendar_with_schedule.screens.schedule.intents.ScheduleIntent
+import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
 import java.time.LocalDate
 
 @Composable
 fun AppNavGraph(
     navController: NavHostController = rememberNavController(),
     calendarViewModel: CalendarViewModel = hiltViewModel(),
-    taskViewModel: TaskViewModel = hiltViewModel()
+    scheduleViewModel: ScheduleViewModel = hiltViewModel()
 ) {
 
     NavHost(navController = navController, startDestination = "calendar") {
         composable("calendar") {
-            CalendarScreen(navController = navController, calendarViewModel = calendarViewModel, taskViewModel =taskViewModel)
+            CalendarScreen(navController = navController, calendarViewModel = calendarViewModel, scheduleViewModel = scheduleViewModel)
         }
         composable(
             route = "scheduleDetail/{scheduleId}",
@@ -35,7 +35,7 @@ fun AppNavGraph(
             ScheduleDetailScreen(
                 scheduleId = scheduleId,
                 navController = navController,
-                taskViewModel = taskViewModel
+                scheduleViewModel = scheduleViewModel
             )
         }
         composable(
@@ -50,7 +50,7 @@ fun AppNavGraph(
                 onDismiss = { navController.popBackStack() },
                 onSave = { scheduleData ->
                     // 저장 처리
-                    taskViewModel.processIntent(TaskIntent.AddSchedule(scheduleData))
+                    scheduleViewModel.processIntent(ScheduleIntent.AddSchedule(scheduleData))
                     navController.popBackStack()
                 }
             )

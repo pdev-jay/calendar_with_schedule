@@ -30,7 +30,7 @@ import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarMonth
 import com.pdevjay.calendar_with_schedule.screens.calendar.intents.CalendarIntent
 import com.pdevjay.calendar_with_schedule.screens.calendar.viewmodels.CalendarViewModel
 import com.pdevjay.calendar_with_schedule.screens.schedule.ScheduleView
-import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.TaskViewModel
+import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
 import com.pdevjay.calendar_with_schedule.utils.ExpandVerticallyContainerFromBottom
 import com.pdevjay.calendar_with_schedule.utils.ExpandVerticallyContainerFromTop
 import com.pdevjay.calendar_with_schedule.utils.SlideInVerticallyContainerFromBottom
@@ -49,14 +49,14 @@ fun CalendarScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
     calendarViewModel: CalendarViewModel,
-    taskViewModel: TaskViewModel,
+    scheduleViewModel: ScheduleViewModel,
 ) {
     Log.e("", "calendarview")
     val calendarState by calendarViewModel.state.collectAsState()
-    val taskState by taskViewModel.state.collectAsState()
-    val events = remember(calendarState.selectedDate, taskState.schedules) {
+    val scheduleState by scheduleViewModel.state.collectAsState()
+    val events = remember(calendarState.selectedDate, scheduleState.schedules) {
         calendarState.selectedDate?.let { date ->
-            taskViewModel.getSchedulesForDate(date)
+            scheduleViewModel.getSchedulesForDate(date)
         } ?: emptyList()
     }
 
