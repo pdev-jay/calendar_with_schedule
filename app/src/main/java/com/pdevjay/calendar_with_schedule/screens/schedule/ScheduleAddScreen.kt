@@ -2,10 +2,6 @@ package com.pdevjay.calendar_with_schedule.screens.schedule
 
 import android.util.Log
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -29,11 +25,9 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -61,8 +55,8 @@ import androidx.compose.ui.unit.sp
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.DateTimePeriod
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.generateRepeatRule
-import com.pdevjay.calendar_with_schedule.screens.schedule.enum.AlarmOption
-import com.pdevjay.calendar_with_schedule.screens.schedule.enum.RepeatOption
+import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
+import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatOption
 import com.pdevjay.calendar_with_schedule.ui.theme.Calendar_with_scheduleTheme
 import com.pdevjay.calendar_with_schedule.utils.SlideInHorizontallyContainer
 import java.time.LocalDate
@@ -440,27 +434,6 @@ fun DropdownMenuSelector(
             }
         }
     }
-}
-
-fun generateRepeatedSchedules(schedule: ScheduleData, repeatOption: RepeatOption): List<ScheduleData> {
-    val schedules = mutableListOf<ScheduleData>()
-    var currentDate = schedule.start.date
-    val repeatCount = 10
-
-    repeat(repeatCount) {
-        schedules.add(schedule.copy(start = schedule.start.copy(date = currentDate), end = schedule.end.copy(date = currentDate)))
-
-        currentDate = when (repeatOption) {
-            RepeatOption.DAILY -> currentDate.plusDays(1)
-            RepeatOption.WEEKLY -> currentDate.plusWeeks(1)
-            RepeatOption.BIWEEKLY -> currentDate.plusWeeks(2)
-            RepeatOption.MONTHLY -> currentDate.plusMonths(1)
-            RepeatOption.YEARLY -> currentDate.plusYears(1)
-            else -> return listOf(schedule) // "반복 안 함"일 경우 단일 일정만 저장
-        }
-    }
-
-    return schedules
 }
 
 @Preview(showBackground = true)

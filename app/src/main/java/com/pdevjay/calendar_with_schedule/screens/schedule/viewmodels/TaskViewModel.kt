@@ -14,6 +14,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
@@ -29,7 +30,7 @@ class TaskViewModel @Inject constructor(
         viewModelScope.launch {
             repository.getAllTasks()
                 .collect { entities ->
-                    _state.value = TaskState(schedules = entities.map { it.toScheduleData() })
+                    _state.value = TaskState(schedules = entities.map { it })
                 }
         }
     }
@@ -38,26 +39,30 @@ class TaskViewModel @Inject constructor(
         viewModelScope.launch {
             when (intent) {
                 is TaskIntent.AddSchedule -> {
-                    val entity = intent.schedule.toTaskEntity()
+                    val entity = intent.schedule
                     repository.saveTask(entity)
                 }
                 is TaskIntent.UpdateSchedule -> {
-                    val entity = intent.schedule.toTaskEntity()
+                    val entity = intent.schedule
                     repository.saveTask(entity)  // 덮어쓰기 (PrimaryKey 같으면 업데이트)
                 }
                 is TaskIntent.DeleteSchedule -> {
                     val target = _state.value.schedules.find { it.id == intent.scheduleId }
                     if (target != null) {
-                        repository.deleteTask(target.toTaskEntity())
+                        repository.deleteTask(target)
                     }
                 }
             }
         }
     }
 
-    fun getSchedulesForDate(date: java.time.LocalDate): List<ScheduleData> {
-        return _state.value.schedules.filter {
-            it.start.date <= date && it.end.date >= date
-        }
+    fun getSchedulesForDate(date: LocalDate): List<ScheduleData> {
+        return _state.value.schedules.filter { it.start.date == date || it.end.date == date }
     }
+
+//    fun getSchedulesForDate(date: java.time.LocalDate): List<ScheduleData> {
+//        return _state.value.schedules.filter {
+//            it.start.date <= date && it.end.date >= date
+//        }
+//    }
 }

@@ -1,18 +1,21 @@
 package com.pdevjay.calendar_with_schedule.di
 
 import android.content.Context
+import android.util.Log
 import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.pdevjay.calendar_with_schedule.data.database.TaskDao
 import com.pdevjay.calendar_with_schedule.data.database.TaskDatabase
 import com.pdevjay.calendar_with_schedule.data.repository.TaskRepository
 import com.pdevjay.calendar_with_schedule.data.repository.TaskRepositoryImpl
-import com.pdevjay.calendar_with_schedule.utils.EnumTypeConverter
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import java.util.concurrent.Executors
 import javax.inject.Singleton
 
 @Module
@@ -26,6 +29,9 @@ object DatabaseModule {
             TaskDatabase::class.java,
             "task_database"
         )
+            .setQueryCallback({ sqlQuery, bindArgs ->
+                Log.d("ROOM_QUERY", "Executed Query: $sqlQuery, Args: $bindArgs") // ✅ Log SQL queries
+            }, Executors.newSingleThreadExecutor()) // Run callback in the background
             .build()
     }
 

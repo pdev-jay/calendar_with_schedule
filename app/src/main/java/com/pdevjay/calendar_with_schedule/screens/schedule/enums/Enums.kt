@@ -1,4 +1,4 @@
-package com.pdevjay.calendar_with_schedule.screens.schedule.enum
+package com.pdevjay.calendar_with_schedule.screens.schedule.enums
 
 // 🔹 일정 반복 옵션 Enum
 enum class RepeatOption(val label: String) {

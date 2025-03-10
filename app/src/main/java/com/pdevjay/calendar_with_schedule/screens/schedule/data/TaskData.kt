@@ -1,25 +1,12 @@
 package com.pdevjay.calendar_with_schedule.screens.schedule.data
 
-import com.pdevjay.calendar_with_schedule.screens.schedule.enum.AlarmOption
-import com.pdevjay.calendar_with_schedule.screens.schedule.enum.RepeatOption
+import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
+import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatOption
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.UUID
 
-data class DateTimePeriod(
-    val date: LocalDate,
-    val time: LocalTime
-)
-
-fun DateTimePeriod.toDateTime(): LocalDateTime {
-    return LocalDateTime.of(date, time)
-}
-
-// DateTimePeriod -> 분 단위 변환
-fun DateTimePeriod.toMinutes(): Int {
-    return this.date.dayOfYear * 1440 + this.time.hour * 60 + this.time.minute
-}
 
 // 단일 이벤트(일정)를 나타내는 데이터 클래스
 data class ScheduleData(
@@ -47,6 +34,20 @@ fun ScheduleData.overlapsWith(other: ScheduleData): Boolean {
     //    1. 현재 일정의 시작 시간이 다른 일정의 종료 시간보다 앞이어야 함 (thisStart < otherEnd)
     //    2. 현재 일정의 종료 시간이 다른 일정의 시작 시간보다 뒤이어야 함 (thisEnd > otherStart)
     return thisStart < otherEnd && thisEnd > otherStart
+}
+
+data class DateTimePeriod(
+    val date: LocalDate,
+    val time: LocalTime
+)
+
+fun DateTimePeriod.toDateTime(): LocalDateTime {
+    return LocalDateTime.of(date, time)
+}
+
+// DateTimePeriod -> 분 단위 변환
+fun DateTimePeriod.toMinutes(): Int {
+    return this.date.dayOfYear * 1440 + this.time.hour * 60 + this.time.minute
 }
 
 fun generateRepeatRule(repeatOption: RepeatOption, repeatCount: Int = 30): String? {

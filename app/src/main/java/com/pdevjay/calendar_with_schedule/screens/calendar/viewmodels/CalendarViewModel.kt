@@ -1,11 +1,8 @@
 package com.pdevjay.calendar_with_schedule.screens.calendar.viewmodels
 
-import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pdevjay.calendar_with_schedule.data.entity.toScheduleData
 import com.pdevjay.calendar_with_schedule.data.repository.TaskRepository
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarMonth
 import com.pdevjay.calendar_with_schedule.screens.calendar.intents.CalendarIntent
@@ -65,35 +62,49 @@ class CalendarViewModel @Inject constructor(
     }
 
     private fun loadSchedulesForMonth(centerMonth: YearMonth) {
+        val monthsToLoad = listOf(
+            centerMonth.minusMonths(1), // Previous month
+            centerMonth, // Current month
+            centerMonth.plusMonths(1) // Next month
+        )
+
         viewModelScope.launch {
-            taskRepository.getAllTasks().collect { allTasks ->
-                val monthsToLoad = listOf(
-                    centerMonth.minusMonths(1), // 이전 달
-                    centerMonth, // 현재 달
-                    centerMonth.plusMonths(1) // 다음 달
-                )
-
-                val monthSchedules = allTasks
-                    .filter { task ->
-                        val taskStartDate = task.start.date
-                        val taskEndDate = task.end.date
-                        val taskStartMonth = YearMonth.from(taskStartDate)
-                        val taskEndMonth = YearMonth.from(taskEndDate)
-
-                        // ✅ 일정이 세 개의 달 중 하나와 겹치는 경우 포함
-                        monthsToLoad.any { it == taskStartMonth || it == taskEndMonth }
-                    }
-                    .flatMap { task ->
-                        // ✅ 일정이 여러 날에 걸쳐 있으면 각 날짜별로 복제하여 포함
-                        val dateRange = generateDateRange(task.start.date, task.end.date)
-                        dateRange.map { date -> date to task.toScheduleData() }
-                    }
-                    .groupBy({ it.first }, { it.second }) // ✅ 날짜 기준으로 그룹화
-
+            taskRepository.getTasksForMonths(monthsToLoad).collect { monthSchedules ->
                 _state.value = _state.value.copy(scheduleMap = monthSchedules)
             }
         }
     }
+
+//    private fun loadSchedulesForMonth(centerMonth: YearMonth) {
+//        viewModelScope.launch {
+//            taskRepository.getAllTasks().collect { allTasks ->
+//                val monthsToLoad = listOf(
+//                    centerMonth.minusMonths(1), // 이전 달
+//                    centerMonth, // 현재 달
+//                    centerMonth.plusMonths(1) // 다음 달
+//                )
+//
+//                val monthSchedules = allTasks
+//                    .filter { task ->
+//                        val taskStartDate = task.start.date
+//                        val taskEndDate = task.end.date
+//                        val taskStartMonth = YearMonth.from(taskStartDate)
+//                        val taskEndMonth = YearMonth.from(taskEndDate)
+//
+//                        // ✅ 일정이 세 개의 달 중 하나와 겹치는 경우 포함
+//                        monthsToLoad.any { it == taskStartMonth || it == taskEndMonth }
+//                    }
+//                    .flatMap { task ->
+//                        // ✅ 일정이 여러 날에 걸쳐 있으면 각 날짜별로 복제하여 포함
+//                        val dateRange = generateDateRange(task.start.date, task.end.date)
+//                        dateRange.map { date -> date to task }
+//                    }
+//                    .groupBy({ it.first }, { it.second }) // ✅ 날짜 기준으로 그룹화
+//
+//                _state.value = _state.value.copy(scheduleMap = monthSchedules)
+//            }
+//        }
+//    }
 
     private fun generateDateRange(startDate: LocalDate, endDate: LocalDate): List<LocalDate> {
         return generateSequence(startDate) { it.plusDays(1) }
