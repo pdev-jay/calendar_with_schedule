@@ -23,24 +23,31 @@ import com.pdevjay.calendar_with_schedule.screens.schedule.data.DateTimePeriod
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.overlapsWith
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.toMinutes
+import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
 import java.time.LocalDate
 import java.time.LocalTime
 
 @Composable
 fun ScheduleView(
     modifier: Modifier = Modifier,
+    scheduleViewModel: ScheduleViewModel,
     selectedDay: LocalDate,
-    events: List<ScheduleData>,
     onEventClick: (ScheduleData) -> Unit,
     onBackButtonClicked: () -> Unit
 ) {
+    val scheduleState by scheduleViewModel.state.collectAsState()
+
+    LaunchedEffect(selectedDay) {
+        scheduleViewModel.getSchedulesForDate(selectedDay)
+    }
+
     val scrollState = rememberScrollState()
 
     BackHandler {
         onBackButtonClicked()
     }
 
-    val dayEvents = events.filter { event ->
+    val dayEvents = scheduleState.schedules.filter { event ->
         event.start.date <= selectedDay && event.end.date >= selectedDay
     }
 

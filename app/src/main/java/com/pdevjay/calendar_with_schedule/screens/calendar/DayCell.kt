@@ -85,7 +85,7 @@ fun DayCell(
                     }
 
                     if (schedules.size > 3) {
-                        ScheduleListPreview(Color.Transparent, Color.LightGray, Alignment.Center, "+${schedules.size - 4} more")
+                        ScheduleListPreview(Color.Transparent, Color.LightGray, Alignment.Center, "+${schedules.size - 3} more")
                     }
                 }
             }

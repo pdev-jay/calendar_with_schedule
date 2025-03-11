@@ -31,10 +31,8 @@ import com.pdevjay.calendar_with_schedule.screens.calendar.intents.CalendarInten
 import com.pdevjay.calendar_with_schedule.screens.calendar.viewmodels.CalendarViewModel
 import com.pdevjay.calendar_with_schedule.screens.schedule.ScheduleView
 import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
-import com.pdevjay.calendar_with_schedule.utils.ExpandVerticallyContainerFromBottom
 import com.pdevjay.calendar_with_schedule.utils.ExpandVerticallyContainerFromTop
 import com.pdevjay.calendar_with_schedule.utils.SlideInVerticallyContainerFromBottom
-import com.pdevjay.calendar_with_schedule.utils.SlideInVerticallyContainerFromTop
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -53,12 +51,6 @@ fun CalendarScreen(
 ) {
     Log.e("", "calendarview")
     val calendarState by calendarViewModel.state.collectAsState()
-    val scheduleState by scheduleViewModel.state.collectAsState()
-    val events = remember(calendarState.selectedDate, scheduleState.schedules) {
-        calendarState.selectedDate?.let { date ->
-            scheduleViewModel.getSchedulesForDate(date)
-        } ?: emptyList()
-    }
 
     val isLoading = remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
@@ -154,7 +146,7 @@ fun CalendarScreen(
             ) {
                     ScheduleView(
                         selectedDay = calendarState.selectedDate ?: LocalDate.now(),
-                        events = events,
+                        scheduleViewModel = scheduleViewModel,
                         onEventClick = { event ->
                             navController.navigate("scheduleDetail/${event.id}")
                         },

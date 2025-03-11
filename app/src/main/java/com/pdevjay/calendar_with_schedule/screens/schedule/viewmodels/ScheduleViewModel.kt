@@ -15,50 +15,38 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ScheduleViewModel @Inject constructor(
-    private val repository: ScheduleRepository
+    private val scheduleRepository: ScheduleRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ScheduleState())
     val state: StateFlow<ScheduleState> = _state
-
-    init {
-
-        viewModelScope.launch {
-            repository.getAllSchedules()
-                .collect { entities ->
-                    _state.value = ScheduleState(schedules = entities.map { it })
-                }
-        }
-    }
 
     fun processIntent(intent: ScheduleIntent) {
         viewModelScope.launch {
             when (intent) {
                 is ScheduleIntent.AddSchedule -> {
                     val entity = intent.schedule
-                    repository.saveSchedule(entity)
+                    scheduleRepository.saveSchedule(entity)
                 }
                 is ScheduleIntent.UpdateSchedule -> {
                     val entity = intent.schedule
-                    repository.saveSchedule(entity)  // 덮어쓰기 (PrimaryKey 같으면 업데이트)
+                    scheduleRepository.saveSchedule(entity)  // 덮어쓰기 (PrimaryKey 같으면 업데이트)
                 }
                 is ScheduleIntent.DeleteSchedule -> {
                     val target = _state.value.schedules.find { it.id == intent.scheduleId }
                     if (target != null) {
-                        repository.deleteSchedule(target)
+                        scheduleRepository.deleteSchedule(target)
                     }
                 }
             }
         }
     }
 
-    fun getSchedulesForDate(date: LocalDate): List<ScheduleData> {
-        return _state.value.schedules.filter { it.start.date == date || it.end.date == date }
+    fun getSchedulesForDate(date: LocalDate){
+        viewModelScope.launch {
+            scheduleRepository.getSchedulesForDate(date).collect { schedules ->
+                _state.value = _state.value.copy(schedules = schedules)
+            }
+        }
     }
-
-//    fun getSchedulesForDate(date: java.time.LocalDate): List<ScheduleData> {
-//        return _state.value.schedules.filter {
-//            it.start.date <= date && it.end.date >= date
-//        }
-//    }
 }

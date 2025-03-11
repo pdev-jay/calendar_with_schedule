@@ -28,7 +28,7 @@ object DatabaseModule {
             "task_database"
         )
             .setQueryCallback({ sqlQuery, bindArgs ->
-                Log.d("ROOM_QUERY", "Executed Query: $sqlQuery, Args: $bindArgs") // ✅ Log SQL queries
+                Log.e("ROOM_QUERY", "Executed Query: $sqlQuery, Args: $bindArgs") // ✅ Log SQL queries
             }, Executors.newSingleThreadExecutor()) // Run callback in the background
             .build()
     }

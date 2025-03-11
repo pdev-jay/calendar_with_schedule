@@ -74,41 +74,4 @@ class CalendarViewModel @Inject constructor(
             }
         }
     }
-
-//    private fun loadSchedulesForMonth(centerMonth: YearMonth) {
-//        viewModelScope.launch {
-//            taskRepository.getAllTasks().collect { allTasks ->
-//                val monthsToLoad = listOf(
-//                    centerMonth.minusMonths(1), // 이전 달
-//                    centerMonth, // 현재 달
-//                    centerMonth.plusMonths(1) // 다음 달
-//                )
-//
-//                val monthSchedules = allTasks
-//                    .filter { task ->
-//                        val taskStartDate = task.start.date
-//                        val taskEndDate = task.end.date
-//                        val taskStartMonth = YearMonth.from(taskStartDate)
-//                        val taskEndMonth = YearMonth.from(taskEndDate)
-//
-//                        // ✅ 일정이 세 개의 달 중 하나와 겹치는 경우 포함
-//                        monthsToLoad.any { it == taskStartMonth || it == taskEndMonth }
-//                    }
-//                    .flatMap { task ->
-//                        // ✅ 일정이 여러 날에 걸쳐 있으면 각 날짜별로 복제하여 포함
-//                        val dateRange = generateDateRange(task.start.date, task.end.date)
-//                        dateRange.map { date -> date to task }
-//                    }
-//                    .groupBy({ it.first }, { it.second }) // ✅ 날짜 기준으로 그룹화
-//
-//                _state.value = _state.value.copy(scheduleMap = monthSchedules)
-//            }
-//        }
-//    }
-
-    private fun generateDateRange(startDate: LocalDate, endDate: LocalDate): List<LocalDate> {
-        return generateSequence(startDate) { it.plusDays(1) }
-            .takeWhile { it <= endDate }
-            .toList()
-    }
 }

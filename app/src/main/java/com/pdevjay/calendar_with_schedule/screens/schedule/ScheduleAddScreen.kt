@@ -60,6 +60,7 @@ import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.generateRepeatRule
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatOption
+import com.pdevjay.calendar_with_schedule.utils.RepeatType
 import com.pdevjay.calendar_with_schedule.utils.SlideInHorizontallyContainer
 import java.time.LocalDate
 import java.time.LocalTime
@@ -82,7 +83,7 @@ fun ScheduleAddScreen(
     var end by remember { mutableStateOf(DateTimePeriod(initialDate, LocalTime.of(now.plusHours(1).hour, 0))) }
     var allDay by remember { mutableStateOf(false) }
     // repeat과 alarm 상태 추가
-    var repeatOption by remember { mutableStateOf(RepeatOption.NONE) }
+    var repeatType by remember { mutableStateOf(RepeatType.NONE) }
     var alarmOption by remember { mutableStateOf(AlarmOption.NONE) }
 
     var showDatePickerForStart by remember { mutableStateOf(false) }
@@ -144,23 +145,23 @@ fun ScheduleAddScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-//                DropdownMenuSelector(
-//                    title = stringResource(R.string.repeat),
-//                    options = RepeatOption.entries.map { it.label },
-//                    selectedOption = repeatOption.label,
-//                    onOptionSelected = { label -> repeatOption = RepeatOption.fromLabel(label) }
-//                )
-//
-//                Spacer(modifier = Modifier.height(16.dp))
-//
-//                // 🔹 Alarm Dropdown
-//                DropdownMenuSelector(
-//                    title = stringResource(R.string.notification),
-//                    options = AlarmOption.entries.map { it.label },
-//                    selectedOption = alarmOption.label,
-//                    onOptionSelected = { label -> alarmOption = AlarmOption.fromLabel(label) }
-//                )
-//                Spacer(modifier = Modifier.height(16.dp))
+                DropdownMenuSelector(
+                    title = stringResource(R.string.repeat),
+                    options = RepeatType.entries.map { it.label },
+                    selectedOption = repeatType.label,
+                    onOptionSelected = { label -> repeatType = RepeatType.fromLabel(label) }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 🔹 Alarm Dropdown
+                DropdownMenuSelector(
+                    title = stringResource(R.string.notification),
+                    options = AlarmOption.entries.map { it.label },
+                    selectedOption = alarmOption.label,
+                    onOptionSelected = { label -> alarmOption = AlarmOption.fromLabel(label) }
+                )
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
                     onClick = {
@@ -170,8 +171,8 @@ fun ScheduleAddScreen(
                             location = location,
                             start = start,
                             end = end,
-                            repeatOption = repeatOption,
-                            repeatRule = generateRepeatRule(repeatOption), // 🔹 RRule 자동 생성
+                            repeatType = repeatType,
+                            repeatRule = generateRepeatRule(repeatType), // 🔹 RRule 자동 생성
                             alarmOption = alarmOption
                         )
                         Log.e("","ScheduleAddScreen: $newSchedule")

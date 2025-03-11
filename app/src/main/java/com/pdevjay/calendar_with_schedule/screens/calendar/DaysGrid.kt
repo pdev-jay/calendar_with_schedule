@@ -78,28 +78,7 @@ fun DaysGrid(
     }
 }
 
-fun calculateGridHeight(
-    days: List<CalendarDay>,
-    calendarHeight: Dp,  // 👈 캘린더 전체 높이
-    monthLabelHeight: Dp  // 👈 월 이름 추가 높이
-): Dp {
-    val cellHeight = calendarHeight / 4  // 👈 셀 높이 = 캘린더 높이의 1/4
-    val firstDayPosition = getFirstDayPosition(days)  // 1일이 몇 번째 칸인지 확인
-    val totalDays = firstDayPosition + days.size  // 전체 칸 개수 (빈칸 포함)
-    val weeks = ceil(totalDays / 7.0).toInt()  // 주 개수 (올림)
 
-    // 1일이 있는 행(row)에는 추가 높이 반영
-    val firstDayRow = firstDayPosition / 7
-    return (cellHeight * weeks) + (if (firstDayRow >= 0) monthLabelHeight else 0.dp)
-}
-
-fun getFirstDayPosition(days: List<CalendarDay>): Int {
-    val firstDay = days.firstOrNull() ?: return -1  // 👈 첫 번째 날짜 찾기 (예: 2025-03-01)
-    val dayOfWeek = firstDay.date.dayOfWeek.value  // 👈 요일 값 (월=1, 화=2, ..., 일=7)
-
-    // 요일을 0부터 시작하도록 맞추기 (일요일이 0, 월요일이 1, ... 토요일이 6)
-    return (dayOfWeek % 7)
-}
 
 // 날짜 데이터 -> 주 단위로 나누기
 fun calculateWeeks(days: List<CalendarDay>): List<List<CalendarDay?>> {

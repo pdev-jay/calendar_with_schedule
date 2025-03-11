@@ -43,6 +43,7 @@ import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatOption
 import com.pdevjay.calendar_with_schedule.screens.schedule.intents.ScheduleIntent
 import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
+import com.pdevjay.calendar_with_schedule.utils.RepeatType
 import com.pdevjay.calendar_with_schedule.utils.SlideInHorizontallyContainer
 
 @Composable
@@ -82,7 +83,7 @@ fun ScheduleDetailScreen(
     var start by remember { mutableStateOf(schedule.start) }
     var end by remember { mutableStateOf(schedule.end) }
     var allDay by remember { mutableStateOf(false) }
-    var repeatOption by remember { mutableStateOf(schedule.repeatOption) }
+    var repeatType by remember { mutableStateOf(schedule.repeatType) }
     var alarmOption by remember { mutableStateOf(schedule.alarmOption) }
 
     LaunchedEffect(Unit) { isVisible = true }
@@ -158,7 +159,7 @@ fun ScheduleDetailScreen(
                                     location = location,
                                     start = start,
                                     end = end,
-                                    repeatOption = repeatOption,
+                                    repeatType = repeatType,
                                     alarmOption = alarmOption
                                 )
                             )

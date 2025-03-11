@@ -7,6 +7,7 @@ import com.pdevjay.calendar_with_schedule.screens.schedule.data.DateTimePeriod
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatOption
+import com.pdevjay.calendar_with_schedule.utils.RepeatType
 
 @Entity(tableName = "tasks")
 data class ScheduleEntity(
@@ -15,31 +16,10 @@ data class ScheduleEntity(
     val location: String?,
     @ColumnInfo(name = "startDate") val start: DateTimePeriod,
     @ColumnInfo(name = "endDate") val end: DateTimePeriod,
-    @ColumnInfo(name = "repeatOption") val repeatOption: RepeatOption = RepeatOption.NONE,
-    @ColumnInfo(name = "repeatRule") val repeatRule: String? = null, // 기본값 추가
+    @ColumnInfo(name = "repeatType") val repeatType: RepeatType = RepeatType.NONE, // 🔹 RepeatType 사용
+    @ColumnInfo(name = "repeatRule") val repeatRule: String? = null, // 🔹 RRule을 저장할 문자열
     @ColumnInfo(name = "alarmOption")val alarmOption: AlarmOption
 )
 
-// ScheduleData <-> TaskEntity 변환 함수들
-fun ScheduleData.toScheduleEntity() = ScheduleEntity(
-    id = id,
-    title = title,
-    location = location,
-    start = start,
-    end = end,
-    repeatOption = repeatOption,          // Enum 변환
-    repeatRule = repeatRule,              // RRule 그대로 저장
-    alarmOption = alarmOption             // Enum 변환
-)
 
-fun ScheduleEntity.toScheduleData() = ScheduleData(
-    id = id,
-    title = title,
-    location = location,
-    start = start,
-    end = end,
-    repeatOption = repeatOption,         // Enum 변환 유지
-    repeatRule = repeatRule,             // RRule 그대로 유지
-    alarmOption = alarmOption            // Enum 변환 유지
-)
 

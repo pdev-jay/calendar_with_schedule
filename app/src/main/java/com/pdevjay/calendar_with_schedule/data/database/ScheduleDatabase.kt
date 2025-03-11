@@ -6,10 +6,9 @@ import androidx.room.TypeConverters
 import com.pdevjay.calendar_with_schedule.data.entity.ScheduleEntity
 import com.pdevjay.calendar_with_schedule.utils.AlarmOptionConverter
 import com.pdevjay.calendar_with_schedule.utils.DateTimePeriodConverter
-import com.pdevjay.calendar_with_schedule.utils.RepeatOptionConverter
 
 @Database(entities = [ScheduleEntity::class], version = 1)
-@TypeConverters(DateTimePeriodConverter::class, RepeatOptionConverter::class, AlarmOptionConverter::class)
+@TypeConverters(DateTimePeriodConverter::class, AlarmOptionConverter::class)
 abstract class ScheduleDatabase : RoomDatabase() {
     abstract fun scheduleDao(): ScheduleDao
 }

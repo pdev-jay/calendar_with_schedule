@@ -1,7 +1,10 @@
 package com.pdevjay.calendar_with_schedule.screens.schedule.data
 
+import androidx.room.ColumnInfo
+import com.pdevjay.calendar_with_schedule.data.entity.ScheduleEntity
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatOption
+import com.pdevjay.calendar_with_schedule.utils.RepeatType
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -15,8 +18,8 @@ data class ScheduleData(
     val location: String? = null,
     val start: DateTimePeriod,
     val end: DateTimePeriod,
-    val repeatOption: RepeatOption = RepeatOption.NONE, // 🔹 반복 옵션 추가
-    val repeatRule: String? = null, // 🔹 RRule 저장
+    val repeatType: RepeatType = RepeatType.NONE, // 🔹 RepeatType 사용
+    val repeatRule: String? = null, // 🔹 RRule을 저장할 문자열
     val alarmOption: AlarmOption = AlarmOption.NONE // 🔹 알림 옵션 추가
 )
 
@@ -36,6 +39,28 @@ fun ScheduleData.overlapsWith(other: ScheduleData): Boolean {
     return thisStart < otherEnd && thisEnd > otherStart
 }
 
+// ScheduleData <-> TaskEntity 변환 함수들
+fun ScheduleData.toScheduleEntity() = ScheduleEntity(
+    id = id,
+    title = title,
+    location = location,
+    start = start,
+    end = end,
+    repeatType = repeatType,
+    repeatRule = repeatRule,              // RRule 그대로 저장
+    alarmOption = alarmOption             // Enum 변환
+)
+
+fun ScheduleEntity.toScheduleData() = ScheduleData(
+    id = id,
+    title = title,
+    location = location,
+    start = start,
+    end = end,
+    repeatType = repeatType,         // Enum 변환 유지
+    repeatRule = repeatRule,             // RRule 그대로 유지
+    alarmOption = alarmOption            // Enum 변환 유지
+)
 data class DateTimePeriod(
     val date: LocalDate,
     val time: LocalTime
@@ -50,13 +75,13 @@ fun DateTimePeriod.toMinutes(): Int {
     return this.date.dayOfYear * 1440 + this.time.hour * 60 + this.time.minute
 }
 
-fun generateRepeatRule(repeatOption: RepeatOption, repeatCount: Int = 30): String? {
-    return when (repeatOption) {
-        RepeatOption.NONE -> null
-        RepeatOption.DAILY -> "FREQ=DAILY;COUNT=$repeatCount"
-        RepeatOption.WEEKLY -> "FREQ=WEEKLY;COUNT=$repeatCount"
-        RepeatOption.BIWEEKLY -> "FREQ=WEEKLY;INTERVAL=2;COUNT=$repeatCount"
-        RepeatOption.MONTHLY -> "FREQ=MONTHLY;COUNT=$repeatCount"
-        RepeatOption.YEARLY -> "FREQ=YEARLY;COUNT=$repeatCount"
+fun generateRepeatRule(repeatType: RepeatType): String? {
+    return when (repeatType) {
+        RepeatType.NONE -> null
+        RepeatType.DAILY -> "FREQ=DAILY"
+        RepeatType.WEEKLY -> "FREQ=WEEKLY"
+        RepeatType.BIWEEKLY -> "FREQ=WEEKLY;INTERVAL=2"
+        RepeatType.MONTHLY -> "FREQ=MONTHLY"
+        RepeatType.YEARLY -> "FREQ=YEARLY"
     }
 }
