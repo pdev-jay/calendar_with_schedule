@@ -20,7 +20,8 @@ data class ScheduleData(
     val end: DateTimePeriod,
     val repeatType: RepeatType = RepeatType.NONE, // 🔹 RepeatType 사용
     val repeatRule: String? = null, // 🔹 RRule을 저장할 문자열
-    val alarmOption: AlarmOption = AlarmOption.NONE // 🔹 알림 옵션 추가
+    val alarmOption: AlarmOption = AlarmOption.NONE, // 🔹 알림 옵션 추가
+    val isOriginalEvent: Boolean = true
 )
 
 // 겹침 여부 확인 함수
@@ -48,7 +49,8 @@ fun ScheduleData.toScheduleEntity() = ScheduleEntity(
     end = end,
     repeatType = repeatType,
     repeatRule = repeatRule,              // RRule 그대로 저장
-    alarmOption = alarmOption             // Enum 변환
+    alarmOption = alarmOption,             // Enum 변환
+    isOriginalEvent = isOriginalEvent
 )
 
 fun ScheduleEntity.toScheduleData() = ScheduleData(
@@ -59,7 +61,8 @@ fun ScheduleEntity.toScheduleData() = ScheduleData(
     end = end,
     repeatType = repeatType,         // Enum 변환 유지
     repeatRule = repeatRule,             // RRule 그대로 유지
-    alarmOption = alarmOption            // Enum 변환 유지
+    alarmOption = alarmOption,            // Enum 변환 유지
+    isOriginalEvent = isOriginalEvent
 )
 data class DateTimePeriod(
     val date: LocalDate,

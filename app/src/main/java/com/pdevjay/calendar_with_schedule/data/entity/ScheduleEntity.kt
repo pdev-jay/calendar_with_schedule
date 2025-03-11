@@ -18,7 +18,8 @@ data class ScheduleEntity(
     @ColumnInfo(name = "endDate") val end: DateTimePeriod,
     @ColumnInfo(name = "repeatType") val repeatType: RepeatType = RepeatType.NONE, // 🔹 RepeatType 사용
     @ColumnInfo(name = "repeatRule") val repeatRule: String? = null, // 🔹 RRule을 저장할 문자열
-    @ColumnInfo(name = "alarmOption")val alarmOption: AlarmOption
+    @ColumnInfo(name = "alarmOption")val alarmOption: AlarmOption,
+    @ColumnInfo(name = "isOriginalEvent") val isOriginalEvent: Boolean = true
 )
 
 

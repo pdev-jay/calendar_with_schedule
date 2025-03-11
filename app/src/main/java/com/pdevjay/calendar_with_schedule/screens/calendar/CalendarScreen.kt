@@ -88,22 +88,9 @@ fun CalendarScreen(
         }
     }
 
-    LaunchedEffect(calendarState.selectedDate) {
-        if (calendarState.selectedDate != null) {
-            calendarViewModel.processIntent(
-                CalendarIntent.MonthChanged(
-                    YearMonth.of(
-                        calendarState.selectedDate!!.year,
-                        calendarState.selectedDate!!.month
-                    )
-                )
-            )
-        }
-    }
-
     Scaffold(
         topBar = {
-            CalendarTopBar(calendarViewModel, navController)
+            CalendarTopBar(calendarViewModel, listState, navController)
         }
     ) { innerPadding ->
 
@@ -145,10 +132,12 @@ fun CalendarScreen(
                 isVisible = calendarState.selectedDate != null,
             ) {
                     ScheduleView(
-                        selectedDay = calendarState.selectedDate ?: LocalDate.now(),
+                        selectedDay = calendarState.selectedDate,
                         scheduleViewModel = scheduleViewModel,
                         onEventClick = { event ->
                             navController.navigate("scheduleDetail/${event.id}")
+//                            navController.navigate("scheduleDetail/${event.id}?selectedDate=${calendarState.selectedDate}")
+
                         },
                         onBackButtonClicked = {
                             calendarViewModel.processIntent(CalendarIntent.DateUnselected)
@@ -264,24 +253,12 @@ fun generateMonth(year: Int, month: Int): CalendarMonth {
     return CalendarMonth(YearMonth.of(year, month), days)
 }
 
-@OptIn(FlowPreview::class)
 @Composable
 fun rememberCurrentVisibleMonth(
     listState: LazyListState,
     monthList: List<CalendarMonth>
 ): State<CalendarMonth?> {
     val visibleMonth = remember { mutableStateOf<CalendarMonth?>(null) }
-
-    // LaunchedEffect는 firstVisibleItemIndex만 감시
-//    LaunchedEffect(listState) {
-//        snapshotFlow { listState.firstVisibleItemIndex }
-//            .distinctUntilChanged()
-//            .collect { index ->
-//                Log.e("NavDebug", "firstVisibleItemIndex: $index")
-//
-//                visibleMonth.value = monthList.getOrNull(index)
-//            }
-//    }
 
     LaunchedEffect(listState) {
         snapshotFlow { listState.firstVisibleItemScrollOffset }

@@ -1,5 +1,6 @@
 package com.pdevjay.calendar_with_schedule.screens.calendar
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -9,12 +10,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,22 +28,41 @@ import androidx.navigation.NavController
 import com.pdevjay.calendar_with_schedule.screens.calendar.intents.CalendarIntent
 import com.pdevjay.calendar_with_schedule.screens.calendar.viewmodels.CalendarViewModel
 import com.pdevjay.calendar_with_schedule.utils.ExpandVerticallyContainerFromTop
+import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.YearMonth
 
 @Composable
 fun CalendarTopBar(
     viewModel: CalendarViewModel,
+    listState: LazyListState,
     navController: NavController
 ) {
     val state by viewModel.state.collectAsState()
     val weekDates = state.selectedDate?.let { getWeekDatesForDate(it) }
-
+    val coroutineScope = rememberCoroutineScope()
     Column(
 //        modifier = Modifier.background(MaterialTheme.colorScheme.primary),
         ) {
         CalendarHeader(
             state,
             navController,
+            onTodayClick = {
+                if (state.selectedDate == null) {
+                    val now = YearMonth.now()
+                    val currentMonthIndex = viewModel.monthListState.indexOfFirst { month ->
+                        month.yearMonth == now
+                    }
+
+                    if (currentMonthIndex != -1) { // 🔹 현재 월이 존재할 때만 스크롤
+                        coroutineScope.launch {
+                            listState.animateScrollToItem(currentMonthIndex) // 🔹 부드러운 스크롤 적용
+                        }
+                    }
+                } else {
+                    viewModel.processIntent(CalendarIntent.DateSelected(LocalDate.now()))
+                }
+            },
             onClick = { viewModel.processIntent(CalendarIntent.DateUnselected) }
         )
         WeekHeader()

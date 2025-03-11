@@ -24,6 +24,9 @@ import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.overlapsWith
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.toMinutes
 import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
+import com.pdevjay.calendar_with_schedule.utils.RepeatScheduleGenerator
+import com.pdevjay.calendar_with_schedule.utils.RepeatScheduleGenerator.generateRepeatedScheduleInstances
+import com.pdevjay.calendar_with_schedule.utils.RepeatType
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -31,14 +34,16 @@ import java.time.LocalTime
 fun ScheduleView(
     modifier: Modifier = Modifier,
     scheduleViewModel: ScheduleViewModel,
-    selectedDay: LocalDate,
+    selectedDay: LocalDate?,
     onEventClick: (ScheduleData) -> Unit,
     onBackButtonClicked: () -> Unit
 ) {
     val scheduleState by scheduleViewModel.state.collectAsState()
 
     LaunchedEffect(selectedDay) {
-        scheduleViewModel.getSchedulesForDate(selectedDay)
+        selectedDay?.let {
+            scheduleViewModel.getSchedulesForDate(it)
+        }
     }
 
     val scrollState = rememberScrollState()
@@ -47,8 +52,19 @@ fun ScheduleView(
         onBackButtonClicked()
     }
 
-    val dayEvents = scheduleState.schedules.filter { event ->
-        event.start.date <= selectedDay && event.end.date >= selectedDay
+    // 🔹 반복 일정이 있으면 선택된 날짜(`selectedDay`)에 맞춰 변환
+    val dayEvents = scheduleState.schedules.flatMap { schedule ->
+        if ((schedule.repeatType == RepeatType.NONE || schedule.repeatRule.isNullOrEmpty()) || (schedule.repeatType != RepeatType.NONE && schedule.start.date == selectedDay)) {
+            listOf(schedule) // 🔹 반복 일정이 아니면 그대로 반환
+        } else {
+            val repeatedDates = RepeatScheduleGenerator.generateRepeatedDates(
+                schedule.repeatType,
+                schedule.start.date,
+                monthList = null,
+                selectedDate = selectedDay
+            )
+            repeatedDates.map { date -> generateRepeatedScheduleInstances(schedule, date) }
+        }
     }
 
     val groupedEvents = remember(dayEvents) { groupOverlappingEvents(dayEvents) }
@@ -82,7 +98,9 @@ fun ScheduleView(
                     groupedEvents.forEach { group ->
                         val totalCount = group.size
                         group.forEachIndexed { index, event ->
-                            EventBlock(event, index, totalCount, maxWidth, selectedDay, onEventClick)
+                            if (selectedDay != null) { // 🔹 selectedDay가 null이 아닐 때만 실행
+                                EventBlock(event, index, totalCount, maxWidth, selectedDay, onEventClick)
+                            }
                         }
                     }
 
@@ -128,9 +146,11 @@ fun EventBlock(event: ScheduleData, index: Int, totalCount: Int, maxWidth: Dp, s
     } else {
         event.start.time.hour * 60 + event.start.time.minute
     }
+
     val endMinutes = if (event.end.date > selectedDay) {
         1440
     } else {
+        // 반복일정 -> time만 고려하기 때문에 종료 지점 찾기에 문제 없음
         event.end.time.hour * 60 + event.end.time.minute
     }
 
@@ -165,6 +185,9 @@ fun EventBlock(event: ScheduleData, index: Int, totalCount: Int, maxWidth: Dp, s
             event.location?.let { loc ->
                 Text(loc, color = Color.White, fontSize = 10.sp)
             }
+            if(event.repeatType != RepeatType.NONE){
+                Text(event.repeatType.toString(), color = Color.White, fontSize = 10.sp)
+            }
         }
     }
 }
@@ -185,7 +208,7 @@ fun NowIndicator() {
 
 fun groupOverlappingEvents(events: List<ScheduleData>): List<List<ScheduleData>> {
     if (events.isEmpty()) return emptyList() //  빈 리스트가 들어오면 빈 리스트 반환
-Log.e("","$events")
+    Log.e("","$events")
     //  일정들을 시작 시간 기준으로 정렬 (시간을 분 단위로 변환하여 비교)
     val sorted = events.sortedBy { it.start.time.hour * 60 + it.start.time.minute }
 

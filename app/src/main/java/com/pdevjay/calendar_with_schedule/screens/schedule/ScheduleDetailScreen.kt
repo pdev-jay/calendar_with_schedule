@@ -8,24 +8,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -39,12 +34,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.pdevjay.calendar_with_schedule.R
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.DateTimePeriod
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatOption
 import com.pdevjay.calendar_with_schedule.screens.schedule.intents.ScheduleIntent
 import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
+import com.pdevjay.calendar_with_schedule.utils.RepeatScheduleGenerator
 import com.pdevjay.calendar_with_schedule.utils.RepeatType
 import com.pdevjay.calendar_with_schedule.utils.SlideInHorizontallyContainer
+import java.time.LocalDate
+import java.time.LocalTime
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,8 +53,15 @@ fun ScheduleDetailScreen(
     scheduleViewModel: ScheduleViewModel
 ) {
     val scheduleState by scheduleViewModel.state.collectAsState()
+
     val schedule = remember(scheduleState.schedules) {
-        scheduleState.schedules.firstOrNull { it.id == scheduleId }
+        val tempScheduleId = scheduleId.split("_")
+        if (tempScheduleId.size >= 2){
+            val originalEvent = scheduleState.schedules.firstOrNull { it.id == tempScheduleId.first() }
+            originalEvent?.let{RepeatScheduleGenerator.generateRepeatedScheduleInstances(originalEvent, LocalDate.parse(tempScheduleId.last()))}
+        } else {
+            scheduleState.schedules.firstOrNull { it.id == scheduleId }
+        }
     }
 
     var isVisible by remember { mutableStateOf(false) }
@@ -65,26 +71,34 @@ fun ScheduleDetailScreen(
     var showDatePickerForEnd by remember { mutableStateOf(false) }
     var showTimePickerForEnd by remember { mutableStateOf(false) }
 
-    if (schedule == null) {
-        LaunchedEffect(Unit) {
-            isVisible = false
-            navController.popBackStack()
-        }
-        return
-    }
-
     BackHandler {
         isVisible = false
         navController.popBackStack()
     }
 
-    var title by remember { mutableStateOf(schedule.title) }
-    var location by remember { mutableStateOf(schedule.location ?: "") }
-    var start by remember { mutableStateOf(schedule.start) }
-    var end by remember { mutableStateOf(schedule.end) }
+    LaunchedEffect(schedule) {
+        if (schedule == null) {
+            isVisible = false
+            navController.popBackStack()
+        }
+    }
+
+//    var title by remember { mutableStateOf(schedule?.title) }
+//    var location by remember { mutableStateOf(schedule?.location ?: "") }
+//    var start by remember { mutableStateOf(schedule?.start) }
+//    var end by remember { mutableStateOf(schedule?.end) }
+//    var allDay by remember { mutableStateOf(false) }
+//    var repeatType by remember { mutableStateOf(schedule?.repeatType) }
+//    var alarmOption by remember { mutableStateOf(schedule?.alarmOption) }
+
+    var title by remember { mutableStateOf(schedule?.title ?: "New Event") }
+    var location by remember { mutableStateOf(schedule?.location ?: "") }
+    var start by remember { mutableStateOf(schedule?.start ?: DateTimePeriod(LocalDate.now(), LocalTime.of(9, 0))) }
+    var end by remember { mutableStateOf(schedule?.end ?: DateTimePeriod(LocalDate.now(), LocalTime.of(10, 0))) }
     var allDay by remember { mutableStateOf(false) }
-    var repeatType by remember { mutableStateOf(schedule.repeatType) }
-    var alarmOption by remember { mutableStateOf(schedule.alarmOption) }
+    var repeatType by remember { mutableStateOf(schedule?.repeatType ?: RepeatType.NONE) }
+    var alarmOption by remember { mutableStateOf(schedule?.alarmOption ?: AlarmOption.NONE) }
+
 
     LaunchedEffect(Unit) { isVisible = true }
 
@@ -132,38 +146,41 @@ fun ScheduleDetailScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-//                DropdownMenuSelector(
-//                    title = stringResource(R.string.repeat),
-//                    options = RepeatOption.entries.map { it.label },
-//                    selectedOption = repeatOption.label,
-//                    onOptionSelected = { label -> repeatOption = RepeatOption.fromLabel(label) }
-//                )
-//
-//                Spacer(modifier = Modifier.height(16.dp))
-//
-//                DropdownMenuSelector(
-//                    title = stringResource(R.string.notification),
-//                    options = AlarmOption.entries.map { it.label },
-//                    selectedOption = alarmOption.label,
-//                    onOptionSelected = { label -> alarmOption = AlarmOption.fromLabel(label) }
-//                )
-//                Spacer(modifier = Modifier.height(16.dp))
+                DropdownMenuSelector(
+                    title = stringResource(R.string.repeat),
+                    options = RepeatType.entries.map { it.label },
+                    selectedOption = repeatType.label,
+                    onOptionSelected = { label -> repeatType = RepeatType.fromLabel(label) }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 🔹 Alarm Dropdown
+                DropdownMenuSelector(
+                    title = stringResource(R.string.notification),
+                    options = AlarmOption.entries.map { it.label },
+                    selectedOption = alarmOption.label,
+                    onOptionSelected = { label -> alarmOption = AlarmOption.fromLabel(label) }
+                )
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
                     onClick = {
                         isVisible = false
-                        scheduleViewModel.processIntent(
-                            ScheduleIntent.UpdateSchedule(
-                                schedule.copy(
-                                    title = title,
-                                    location = location,
-                                    start = start,
-                                    end = end,
-                                    repeatType = repeatType,
-                                    alarmOption = alarmOption
+                        if (schedule != null) {
+                            scheduleViewModel.processIntent(
+                                ScheduleIntent.UpdateSchedule(
+                                    schedule.copy(
+                                        title = title,
+                                        location = location,
+                                        start = start,
+                                        end = end,
+                                        repeatType = repeatType,
+                                        alarmOption = alarmOption
+                                    )
                                 )
                             )
-                        )
+                        }
                         navController.popBackStack()
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -173,9 +190,9 @@ fun ScheduleDetailScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 Button(
                     onClick = {
-                        scheduleViewModel.processIntent(ScheduleIntent.DeleteSchedule(schedule.id))
-                        isVisible = false
-                        navController.popBackStack()
+                        if (schedule != null) {
+                            scheduleViewModel.processIntent(ScheduleIntent.DeleteSchedule(schedule.id))
+                        }
                     },
                     modifier = Modifier.fillMaxWidth(),
                 ) {

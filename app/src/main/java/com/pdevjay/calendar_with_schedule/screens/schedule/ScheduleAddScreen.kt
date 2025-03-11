@@ -173,7 +173,8 @@ fun ScheduleAddScreen(
                             end = end,
                             repeatType = repeatType,
                             repeatRule = generateRepeatRule(repeatType), // 🔹 RRule 자동 생성
-                            alarmOption = alarmOption
+                            alarmOption = alarmOption,
+                            isOriginalEvent = true
                         )
                         Log.e("","ScheduleAddScreen: $newSchedule")
                         onSave(newSchedule)

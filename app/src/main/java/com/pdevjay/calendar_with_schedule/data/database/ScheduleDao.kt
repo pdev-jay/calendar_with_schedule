@@ -11,13 +11,15 @@ interface ScheduleDao {
 
     @Query("""
     SELECT * FROM tasks 
-    WHERE repeatType = 'NONE' AND (
+    WHERE (repeatType = 'NONE' AND (
         strftime('%Y-%m', substr(startDate, 1, instr(startDate, '|') - 1)) IN (:months)
         OR strftime('%Y-%m', substr(endDate, 1, instr(endDate, '|') - 1)) IN (:months)
+    ))
+    OR (repeatType != 'NONE' AND 
+        strftime('%Y-%m', substr(startDate, 1, instr(startDate, '|') - 1)) <= :maxMonth
     )
-    OR repeatType != 'NONE'
 """)
-    fun getSchedulesForMonths(months: List<String>): Flow<List<ScheduleEntity>>
+    fun getSchedulesForMonths(months: List<String>, maxMonth: String): Flow<List<ScheduleEntity>>
 
     @Query("""
         SELECT * FROM tasks 

@@ -25,8 +25,9 @@ class ScheduleRepositoryImpl @Inject constructor(
 
     override fun getSchedulesForMonths(months: List<YearMonth>): Flow<Map<LocalDate, List<ScheduleData>>> {
         val monthStrings = months.map { it.toString() }
+        val maxMonth = months.maxOrNull()?.toString() ?: YearMonth.now().toString()
 
-        return scheduleDao.getSchedulesForMonths(monthStrings)
+        return scheduleDao.getSchedulesForMonths(monthStrings, maxMonth)
             .map { scheduleEntities ->
                 scheduleEntities.map { it.toScheduleData() }
                     .flatMap { schedule ->

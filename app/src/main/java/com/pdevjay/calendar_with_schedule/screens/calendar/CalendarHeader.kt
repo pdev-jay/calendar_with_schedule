@@ -4,7 +4,10 @@ import android.util.Log
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,6 +25,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
@@ -38,6 +42,7 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 fun CalendarHeader(state: CalendarState,
                    navController: NavController,
+                   onTodayClick: () -> Unit = {},
                    onClick: () -> Unit = {}) {
     TopAppBar(
         title = {
@@ -70,6 +75,13 @@ fun CalendarHeader(state: CalendarState,
                 }
         },
         actions = {
+            Text(modifier = Modifier.clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() },
+                onClick = onTodayClick
+            ),
+                text = "Today",
+            )
             IconButton(onClick = {
                 val destination = "add_schedule/${state.selectedDate ?: LocalDate.now()}"
 

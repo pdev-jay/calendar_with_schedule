@@ -28,12 +28,18 @@ fun AppNavGraph(
             CalendarScreen(navController = navController, calendarViewModel = calendarViewModel, scheduleViewModel = scheduleViewModel)
         }
         composable(
-            route = "scheduleDetail/{scheduleId}",
-            arguments = listOf(navArgument("scheduleId") { type = NavType.StringType }),
+            route = "scheduleDetail/{scheduleId}?selectedDate={selectedDate}",
+            arguments = listOf(
+                navArgument("scheduleId") { type = NavType.StringType },
+                navArgument("selectedDate") { type = NavType.StringType; nullable = true }
+            ),
         ) { backStackEntry ->
             val scheduleId = backStackEntry.arguments?.getString("scheduleId")!!
+//            val selectedDate = backStackEntry.arguments?.getString("selectedDate")?.let { LocalDate.parse(it) }
+
             ScheduleDetailScreen(
                 scheduleId = scheduleId,
+//                selectedDate = selectedDate, // 🔹 선택된 날짜 추가
                 navController = navController,
                 scheduleViewModel = scheduleViewModel
             )
