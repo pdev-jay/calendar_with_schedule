@@ -9,7 +9,7 @@ import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatOption
 import com.pdevjay.calendar_with_schedule.utils.RepeatType
 
-@Entity(tableName = "tasks")
+@Entity(tableName = "schedules")
 data class ScheduleEntity(
     @PrimaryKey val id: String,
     val title: String,

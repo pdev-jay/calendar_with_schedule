@@ -1,8 +1,13 @@
 package com.pdevjay.calendar_with_schedule.data.repository
 
+import android.text.TextUtils.split
 import android.util.Log
 import com.pdevjay.calendar_with_schedule.data.database.ScheduleDao
+import com.pdevjay.calendar_with_schedule.data.entity.RecurringScheduleEntity
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.RecurringData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.toRecurringData
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.toRecurringScheduleEntity
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.toScheduleData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.toScheduleEntity
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatOption
@@ -60,11 +65,20 @@ class ScheduleRepositoryImpl @Inject constructor(
             }
     }
 
+    override suspend fun getRecurringSchedulesForDate(date: LocalDate): Flow<List<RecurringData>> {
+        return scheduleDao.getRecurringScheduleChangesForDate(date.toString())
+            .map { recurringScheduleEntities ->
+                recurringScheduleEntities.map { it.toRecurringData() }
+            }
+    }
 
 
-    private fun generateDateRange(startDate: LocalDate, endDate: LocalDate): List<LocalDate> {
-        return generateSequence(startDate) { it.plusDays(1) }
-            .takeWhile { it <= endDate }
-            .toList()
+
+    override suspend fun saveRecurringScheduleChange(recurringData: RecurringData) {
+        scheduleDao.insertRecurringSchedule(recurringData.toRecurringScheduleEntity())
+    }
+
+    override suspend fun markRecurringScheduleDeleted(recurringData: RecurringData) {
+        scheduleDao.insertRecurringSchedule(recurringData.toRecurringScheduleEntity())
     }
 }

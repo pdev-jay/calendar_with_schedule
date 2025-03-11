@@ -25,6 +25,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarDay
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarMonth
 import com.pdevjay.calendar_with_schedule.screens.calendar.intents.CalendarIntent
@@ -32,13 +34,17 @@ import com.pdevjay.calendar_with_schedule.screens.calendar.viewmodels.CalendarVi
 import com.pdevjay.calendar_with_schedule.screens.schedule.ScheduleView
 import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
 import com.pdevjay.calendar_with_schedule.utils.ExpandVerticallyContainerFromTop
+import com.pdevjay.calendar_with_schedule.utils.LocalDateAdapter
+import com.pdevjay.calendar_with_schedule.utils.LocalTimeAdapter
 import com.pdevjay.calendar_with_schedule.utils.SlideInVerticallyContainerFromBottom
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import java.net.URLEncoder
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.YearMonth
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
@@ -135,8 +141,13 @@ fun CalendarScreen(
                         selectedDay = calendarState.selectedDate,
                         scheduleViewModel = scheduleViewModel,
                         onEventClick = { event ->
-                            navController.navigate("scheduleDetail/${event.id}")
-//                            navController.navigate("scheduleDetail/${event.id}?selectedDate=${calendarState.selectedDate}")
+                            val gson: Gson = GsonBuilder()
+                                .registerTypeAdapter(LocalDate::class.java, LocalDateAdapter())
+                                .registerTypeAdapter(LocalTime::class.java, LocalTimeAdapter())
+                                .create()
+
+                            val jsonSchedule = gson.toJson(event)
+                            navController.navigate("scheduleDetail/${URLEncoder.encode(jsonSchedule, "UTF-8")}")
 
                         },
                         onBackButtonClicked = {

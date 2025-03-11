@@ -6,4 +6,7 @@ sealed class ScheduleIntent {
     data class AddSchedule(val schedule: ScheduleData) : ScheduleIntent()
     data class UpdateSchedule(val schedule: ScheduleData) : ScheduleIntent()
     data class DeleteSchedule(val scheduleId: String) : ScheduleIntent()
+
+    data class UpdateRecurringSchedule(val schedule: ScheduleData) : ScheduleIntent()
+    data class DeleteRecurringSchedule(val schedule: ScheduleData) : ScheduleIntent()
 }

@@ -35,8 +35,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.pdevjay.calendar_with_schedule.R
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.DateTimePeriod
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.toScheduleData
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
-import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatOption
 import com.pdevjay.calendar_with_schedule.screens.schedule.intents.ScheduleIntent
 import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
 import com.pdevjay.calendar_with_schedule.utils.RepeatScheduleGenerator
@@ -48,21 +49,41 @@ import java.time.LocalTime
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun ScheduleDetailScreen(
-    scheduleId: String,
+    schedule: ScheduleData,
     navController: NavController,
     scheduleViewModel: ScheduleViewModel
 ) {
     val scheduleState by scheduleViewModel.state.collectAsState()
 
-    val schedule = remember(scheduleState.schedules) {
-        val tempScheduleId = scheduleId.split("_")
-        if (tempScheduleId.size >= 2){
-            val originalEvent = scheduleState.schedules.firstOrNull { it.id == tempScheduleId.first() }
-            originalEvent?.let{RepeatScheduleGenerator.generateRepeatedScheduleInstances(originalEvent, LocalDate.parse(tempScheduleId.last()))}
-        } else {
-            scheduleState.schedules.firstOrNull { it.id == scheduleId }
-        }
-    }
+//    val schedule = remember(scheduleState.schedules) {
+//        val tempScheduleId = scheduleId.split("_")
+//        if (tempScheduleId.size >= 2){
+//            val originalEvent = scheduleState.schedules.firstOrNull { it.id == tempScheduleId.first() }
+//            originalEvent?.let{RepeatScheduleGenerator.generateRepeatedScheduleInstances(originalEvent, LocalDate.parse(tempScheduleId.last()))}
+//        } else {
+//            scheduleState.schedules.firstOrNull { it.id == scheduleId }
+//        }
+//    }
+
+//    val schedule = remember(scheduleState.schedules) {
+//        val tempScheduleId = scheduleId.split("_")
+//
+//        if (tempScheduleId.size >= 2) {
+//            // 🔹 원본 일정 가져오기
+//            val originalEvent = scheduleState.schedules.firstOrNull { it.id == tempScheduleId.first() }
+//
+//            // 🔹 특정 날짜에서 수정된 반복 일정이 있는지 확인
+//            val modifiedRecurringEvent = scheduleState.recurringSchedules.firstOrNull {
+//                it.originalEventId == tempScheduleId.first() && it.start.date == LocalDate.parse(tempScheduleId.last())
+//            }
+//
+//            // 🔹 변경된 일정이 있으면 그것을 사용, 없으면 원본 이벤트 사용
+//            originalEvent?.let { modifiedRecurringEvent?.toScheduleData(it)?.copy(isOriginalEvent = false) }
+//                ?: originalEvent?.let { RepeatScheduleGenerator.generateRepeatedScheduleInstances(it, LocalDate.parse(tempScheduleId.last())) }
+//        } else {
+//            scheduleState.schedules.firstOrNull { it.id == scheduleId }?.copy(isOriginalEvent = true)
+//        }
+//    }
 
     var isVisible by remember { mutableStateOf(false) }
 
@@ -168,8 +189,21 @@ fun ScheduleDetailScreen(
                     onClick = {
                         isVisible = false
                         if (schedule != null) {
-                            scheduleViewModel.processIntent(
-                                ScheduleIntent.UpdateSchedule(
+                            if (schedule.isOriginalEvent) {
+                                scheduleViewModel.processIntent(
+                                    ScheduleIntent.UpdateSchedule(
+                                        schedule.copy(
+                                            title = title,
+                                            location = location,
+                                            start = start,
+                                            end = end,
+                                            repeatType = repeatType,
+                                            alarmOption = alarmOption
+                                        )
+                                    )
+                                )
+                            } else {
+                                scheduleViewModel.processIntent(ScheduleIntent.UpdateRecurringSchedule(
                                     schedule.copy(
                                         title = title,
                                         location = location,
@@ -178,8 +212,8 @@ fun ScheduleDetailScreen(
                                         repeatType = repeatType,
                                         alarmOption = alarmOption
                                     )
-                                )
-                            )
+                                ))
+                            }
                         }
                         navController.popBackStack()
                     },
@@ -191,7 +225,21 @@ fun ScheduleDetailScreen(
                 Button(
                     onClick = {
                         if (schedule != null) {
-                            scheduleViewModel.processIntent(ScheduleIntent.DeleteSchedule(schedule.id))
+                            if (schedule.isOriginalEvent) {
+                                scheduleViewModel.processIntent(
+                                    ScheduleIntent.DeleteSchedule(
+                                        schedule.id
+                                    )
+                                )
+                            } else {
+                                scheduleViewModel.processIntent(
+                                    ScheduleIntent.DeleteRecurringSchedule(
+                                        schedule
+                                    )
+                                )
+                                isVisible = false
+                                navController.popBackStack()
+                            }
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),

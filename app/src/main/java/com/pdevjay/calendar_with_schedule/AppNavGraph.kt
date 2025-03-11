@@ -8,13 +8,20 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.pdevjay.calendar_with_schedule.screens.calendar.CalendarScreen
 import com.pdevjay.calendar_with_schedule.screens.calendar.viewmodels.CalendarViewModel
 import com.pdevjay.calendar_with_schedule.screens.schedule.ScheduleAddScreen
 import com.pdevjay.calendar_with_schedule.screens.schedule.ScheduleDetailScreen
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
 import com.pdevjay.calendar_with_schedule.screens.schedule.intents.ScheduleIntent
 import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
+import com.pdevjay.calendar_with_schedule.utils.LocalDateAdapter
+import com.pdevjay.calendar_with_schedule.utils.LocalTimeAdapter
+import java.net.URLDecoder
 import java.time.LocalDate
+import java.time.LocalTime
 
 @Composable
 fun AppNavGraph(
@@ -28,18 +35,24 @@ fun AppNavGraph(
             CalendarScreen(navController = navController, calendarViewModel = calendarViewModel, scheduleViewModel = scheduleViewModel)
         }
         composable(
-            route = "scheduleDetail/{scheduleId}?selectedDate={selectedDate}",
-            arguments = listOf(
-                navArgument("scheduleId") { type = NavType.StringType },
-                navArgument("selectedDate") { type = NavType.StringType; nullable = true }
-            ),
-        ) { backStackEntry ->
-            val scheduleId = backStackEntry.arguments?.getString("scheduleId")!!
-//            val selectedDate = backStackEntry.arguments?.getString("selectedDate")?.let { LocalDate.parse(it) }
+            route = "scheduleDetail/{scheduleJson}",
+            arguments = listOf(navArgument("scheduleJson") { type = NavType.StringType }),
 
+//            route = "scheduleDetail/{scheduleId}",
+//            arguments = listOf(
+//                navArgument("scheduleId") { type = NavType.StringType },
+//            ),
+        ) { backStackEntry ->
+//            val scheduleId = backStackEntry.arguments?.getString("scheduleId")!!
+            val gson: Gson = GsonBuilder()
+                .registerTypeAdapter(LocalDate::class.java, LocalDateAdapter())
+                .registerTypeAdapter(LocalTime::class.java, LocalTimeAdapter())
+                .create()
+
+            val scheduleJson = backStackEntry.arguments?.getString("scheduleJson")!!
+            val schedule = gson.fromJson(URLDecoder.decode(scheduleJson, "UTF-8"), ScheduleData::class.java)
             ScheduleDetailScreen(
-                scheduleId = scheduleId,
-//                selectedDate = selectedDate, // 🔹 선택된 날짜 추가
+                schedule = schedule,
                 navController = navController,
                 scheduleViewModel = scheduleViewModel
             )
