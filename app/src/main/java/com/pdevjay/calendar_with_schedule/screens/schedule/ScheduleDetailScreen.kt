@@ -74,7 +74,7 @@ fun ScheduleDetailScreen(
     var end by remember { mutableStateOf(schedule?.end ?: DateTimePeriod(LocalDate.now(), LocalTime.of(10, 0))) }
     var allDay by remember { mutableStateOf(false) }
     var repeatType by remember { mutableStateOf(schedule?.repeatType ?: RepeatType.NONE) }
-    var isRepeatUntilEnabled by remember { mutableStateOf(if (schedule.repeatUntil != null) false else true) }
+    var isRepeatUntilEnabled by remember { mutableStateOf(if (schedule.repeatUntil == null) false else true) }
     var repeatUntil by remember { mutableStateOf(schedule.repeatUntil ?: LocalDate.now().plusWeeks(1)) }
     var alarmOption by remember { mutableStateOf(schedule?.alarmOption ?: AlarmOption.NONE) }
 
@@ -268,6 +268,16 @@ fun ScheduleDetailScreen(
                 onDismiss = { showTimePickerForEnd = false }
             )
         }
+
+        if (showDatePickerForRepeatUntil) {
+            DatePickerView(
+                initialDate = repeatUntil,
+                minDate = start.date, // 시작 날짜 이후만 선택 가능
+                onDateSelected = { repeatUntil = it },
+                onDismiss = { showDatePickerForRepeatUntil = false }
+            )
+        }
+
     }
 }
 

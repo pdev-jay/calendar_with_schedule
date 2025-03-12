@@ -65,11 +65,11 @@ object RepeatScheduleGenerator {
     fun generateRepeatedDates(
         repeatType: RepeatType,
         startDate: LocalDate,
-        monthList: List<YearMonth>? = null,  // 🔹 특정 월 리스트 (nullable)
-        selectedDate: LocalDate? = null, // 🔹 특정 날짜만 반환할 경우
-        dateToIgnore: MutableList<LocalDate> = mutableListOf()
+        monthList: List<YearMonth>? = null,
+        selectedDate: LocalDate? = null,
+        dateToIgnore: List<LocalDate> = emptyList(),
+        repeatUntil: LocalDate? = null // 🔹 repeatUntil 추가
     ): List<LocalDate> {
-        // 🔹 만약 monthList가 null이면 selectedDate가 반드시 존재해야 함
         if (monthList == null) {
             return selectedDate?.let {
                 generateSequence(startDate) { currentDate ->
@@ -79,49 +79,35 @@ object RepeatScheduleGenerator {
                         RepeatType.BIWEEKLY -> currentDate.plusWeeks(2)
                         RepeatType.MONTHLY -> currentDate.plusMonths(1)
                         RepeatType.YEARLY -> currentDate.plusYears(1)
-                        else -> null // NONE 또는 CUSTOM일 경우 즉시 종료
+                        else -> null
                     }
                 }
-                    .takeWhile { it <= selectedDate } // 🔹 selectedDate까지 반복
+                    .takeWhile { it <= selectedDate && (repeatUntil == null || it <= repeatUntil) } // 🔹 repeatUntil 반영
+                    .filterNot { dateToIgnore.contains(it) }
                     .find { it == selectedDate }?.let { listOf(it) }
-                    ?: emptyList() // 🔹 selectedDate가 있으면 리스트 반환
-            } ?: emptyList() // 🔹 monthList도 null이고 selectedDate도 null이면 빈 리스트 반환
+                    ?: emptyList()
+            } ?: emptyList()
         }
 
-        // 🔹 monthList가 비어 있으면 빈 리스트 반환
         if (monthList.isEmpty()) return emptyList()
 
-        val maxMonth = monthList.maxOrNull() ?: return emptyList() // 🔹 최대 월이 없으면 빈 리스트 반환
+        val maxMonth = monthList.maxOrNull() ?: return emptyList()
 
         return generateSequence(startDate) { currentDate ->
-            var nextDate = when (repeatType) {
+            when (repeatType) {
                 RepeatType.DAILY -> currentDate.plusDays(1)
                 RepeatType.WEEKLY -> currentDate.plusWeeks(1)
                 RepeatType.BIWEEKLY -> currentDate.plusWeeks(2)
                 RepeatType.MONTHLY -> currentDate.plusMonths(1)
                 RepeatType.YEARLY -> currentDate.plusYears(1)
-                else -> null // NONE 또는 CUSTOM일 경우 즉시 종료
+                else -> null
             }
-
-            // 🔹 `dateToIgnore`에 있는 경우, 건너뛰고 다음 날짜를 찾음
-            while (nextDate != null && dateToIgnore.contains(nextDate)) {
-                nextDate = when (repeatType) {
-                    RepeatType.DAILY -> nextDate.plusDays(1)
-                    RepeatType.WEEKLY -> nextDate.plusWeeks(1)
-                    RepeatType.BIWEEKLY -> nextDate.plusWeeks(2)
-                    RepeatType.MONTHLY -> nextDate.plusMonths(1)
-                    RepeatType.YEARLY -> nextDate.plusYears(1)
-                    else -> null
-                }
-            }
-
-            nextDate
-
         }
-            .takeWhile { date -> YearMonth.from(date) <= maxMonth } // 🔹 특정 월을 벗어나면 중단
+            .takeWhile { date -> YearMonth.from(date) <= maxMonth && (repeatUntil == null || date <= repeatUntil) } // 🔹 repeatUntil 반영
+            .filterNot { dateToIgnore.contains(it) }
             .filter { date ->
                 selectedDate?.let { it == date }
-                    ?: monthList.contains(YearMonth.from(date)) // 🔹 특정 날짜 필터링 또는 monthList 포함 여부 체크
+                    ?: monthList.contains(YearMonth.from(date))
             }
             .toList()
     }
@@ -168,7 +154,7 @@ object RepeatScheduleGenerator {
     }
 }
 
-    enum class RepeatType(val label: String) {
+enum class RepeatType(val label: String) {
     NONE("반복 안 함"),
     DAILY("매일"),
     WEEKLY("매주"),

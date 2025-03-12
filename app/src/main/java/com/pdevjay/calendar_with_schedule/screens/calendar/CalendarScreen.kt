@@ -63,7 +63,7 @@ fun CalendarScreen(
 
     val monthListState = calendarViewModel.monthListState
     val currentVisibleMonth by rememberCurrentVisibleMonth(listState, monthListState)
-
+    val lastVisibleMonth = remember { mutableStateOf<YearMonth?>(null) }
 
     val isInitialized = rememberSaveable { mutableStateOf(false) }
 
@@ -140,6 +140,7 @@ fun CalendarScreen(
                     ScheduleView(
                         selectedDay = calendarState.selectedDate,
                         scheduleViewModel = scheduleViewModel,
+                        schedules = calendarState.scheduleMap[calendarState.selectedDate] ?: emptyList(),
                         onEventClick = { event ->
                             val gson: Gson = GsonBuilder()
                                 .registerTypeAdapter(LocalDate::class.java, LocalDateAdapter())

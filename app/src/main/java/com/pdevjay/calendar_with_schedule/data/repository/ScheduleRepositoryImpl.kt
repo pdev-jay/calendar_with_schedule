@@ -27,22 +27,36 @@ class ScheduleRepositoryImpl @Inject constructor(
             .map { scheduleEntities -> scheduleEntities.map { it.toScheduleData() } }
     }
 
+    // FIXME: 현재 사용 안함, getSchedulesForMonths에서 구한 schedule list로 진행
     override suspend fun getSchedulesForDate(date: LocalDate): Flow<List<ScheduleData>> {
         return combine(
             scheduleDao.getSchedulesForDate(date.toString()),  // 원본 일정 가져오기
             scheduleDao.getRecurringScheduleChangesForDate(date.toString()) // 특정 날짜에서 수정된 반복 일정 가져오기
         ) { scheduleEntities, recurringEntities ->
+
             val schedules = scheduleEntities.map { it.toScheduleData() }
             val recurringSchedules = recurringEntities.map { it.toRecurringData() }
 
             schedules.flatMap { schedule ->
+
+                val repeatEndDate = schedule.repeatUntil ?: date // `repeatUntil`이 없으면 `date`까지 반복
+
+                // 🔹 수정된 일정에서 원래 반복되던 날짜를 제외하기 위해 `dateToIgnore` 생성
+                val modifiedRecurringEvents = recurringSchedules.filter { it.originalEventId == schedule.id }
+
+                // 🔹 원래 반복되던 날짜 중 변경된 날짜를 `dateToIgnore`에 추가
+                val dateToIgnore = modifiedRecurringEvents
+                    .mapNotNull { it.id.split("_").lastOrNull()?.let { d -> LocalDate.parse(d) } }
+                    .toMutableList()
+
+
                 // 반복 일정이 없는 경우 (단일 일정 또는 시작 날짜가 `date`와 일치하는 일정)
                 if ((schedule.repeatType == RepeatType.NONE || schedule.repeatRule.isNullOrEmpty()) ||
                     (schedule.repeatType != RepeatType.NONE && schedule.start.date == date)) {
                     listOf(schedule) // 그대로 반환
                 } else {
                     // `recurringSchedules`에서 해당 일정이 수정되었는지 확인
-                    val modifiedRecurringEvent = recurringSchedules.firstOrNull {
+                    val modifiedRecurringEvent = modifiedRecurringEvents.firstOrNull {
                         it.originalEventId == schedule.id && it.start.date == date
                     }
 
@@ -58,7 +72,9 @@ class ScheduleRepositoryImpl @Inject constructor(
                             schedule.repeatType,  // 반복 유형 (DAILY, WEEKLY 등)
                             schedule.start.date,  // 반복 일정의 시작 날짜
                             monthList = null,     // 특정 월 리스트 사용 안 함
-                            selectedDate = date   // 특정 날짜에 해당하는 일정만 생성
+                            selectedDate = date,   // 특정 날짜에 해당하는 일정만 생성
+                            repeatUntil = repeatEndDate,
+                            dateToIgnore = dateToIgnore
                         )
 
                         // 반복 일정 생성
@@ -108,12 +124,16 @@ class ScheduleRepositoryImpl @Inject constructor(
                         modifiedEvent.start.date to modifiedEvent.toScheduleData(schedule) // 🔹 수정된 일정 추가
                     }
 
+                // 🔹 `repeatUntil`을 고려하여 반복 일정 생성 범위 제한
+                val repeatEndDate = schedule.repeatUntil ?: months.max().atEndOfMonth()
+
                 // 수정되지 않은 반복 일정 생성 (수정된 일정 및 삭제된 일정 제외)
                 val repeatedDates = RepeatScheduleGenerator.generateRepeatedDates(
                     schedule.repeatType,
                     schedule.start.date,
                     monthList = months,
-                    dateToIgnore = dateToIgnore
+                    dateToIgnore = dateToIgnore,
+                    repeatUntil = repeatEndDate // 🔹 repeatUntil 반영
                 )
                 val filteredDates = repeatedDates.filter { date ->
                     months.any { month -> YearMonth.from(date) == month }

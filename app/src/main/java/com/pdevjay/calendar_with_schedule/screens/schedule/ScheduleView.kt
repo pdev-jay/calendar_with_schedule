@@ -48,16 +48,17 @@ fun ScheduleView(
     modifier: Modifier = Modifier,
     scheduleViewModel: ScheduleViewModel,
     selectedDay: LocalDate?,
+    schedules: List<ScheduleData>,
     onEventClick: (ScheduleData) -> Unit,
     onBackButtonClicked: () -> Unit
 ) {
     val scheduleState by scheduleViewModel.state.collectAsState()
     
-    LaunchedEffect(selectedDay) {
-        selectedDay?.let {
-            scheduleViewModel.getSchedulesForDate(it)
-        }
-    }
+//    LaunchedEffect(selectedDay) {
+//        selectedDay?.let {
+//            scheduleViewModel.getSchedulesForDate(it)
+//        }
+//    }
 
     val scrollState = rememberScrollState()
 
@@ -80,7 +81,7 @@ fun ScheduleView(
 //        }
 //    }
 //
-    val dayEvents = scheduleState.schedules
+    val dayEvents = schedules
     val allDayEvents = dayEvents.filter { it.isAllDay }
     val nonAllDayEvents = dayEvents.filter { !it.isAllDay }
     val groupedEvents = remember(nonAllDayEvents) { groupOverlappingEvents(nonAllDayEvents) }
