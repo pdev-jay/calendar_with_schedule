@@ -28,6 +28,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -79,14 +81,25 @@ fun ScheduleView(
 //    }
 //
     val dayEvents = scheduleState.schedules
-
-    val groupedEvents = remember(dayEvents) { groupOverlappingEvents(dayEvents) }
+    val allDayEvents = dayEvents.filter { it.isAllDay }
+    val nonAllDayEvents = dayEvents.filter { !it.isAllDay }
+    val groupedEvents = remember(nonAllDayEvents) { groupOverlappingEvents(nonAllDayEvents) }
     Box(modifier = modifier.fillMaxSize()) {
         Column(
             Modifier
                 .verticalScroll(scrollState)
                 .fillMaxSize()
         ) {
+
+            Column(modifier = Modifier.fillMaxWidth()) {
+                if (selectedDay != null) {
+                    allDayEvents.forEach { event ->
+                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                            Text(event.title, fontSize = 12.sp)
+                        }
+                    }
+                }
+            }
             Row(modifier = Modifier.fillMaxSize()) {
                 TimeColumn()
 
@@ -106,7 +119,6 @@ fun ScheduleView(
                             )
                         }
                     }
-
                     // 이벤트 블록 표시
                     groupedEvents.forEach { group ->
                         val totalCount = group.size

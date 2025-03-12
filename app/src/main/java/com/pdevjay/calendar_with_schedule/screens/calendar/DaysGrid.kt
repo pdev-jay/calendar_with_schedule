@@ -103,21 +103,21 @@ fun generateSampleDays(month: YearMonth): List<CalendarDay> {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun PreviewDaysGrid() {
-    val sampleDays = generateSampleDays(YearMonth.now())
-    val sampleScheduleMap = mapOf(
-        LocalDate.now() to listOf(
-            ScheduleData("1", "회의", "회의실A", DateTimePeriod(LocalDate.now(), LocalTime.of(10, 0)), DateTimePeriod(LocalDate.now(), LocalTime.of(11, 0))),
-            ScheduleData("2", "점심 약속", "식당", DateTimePeriod(LocalDate.now(), LocalTime.of(12, 0)), DateTimePeriod(LocalDate.now(), LocalTime.of(13, 0))),
-            ScheduleData("3", "점심 약속", "식당", DateTimePeriod(LocalDate.now(), LocalTime.of(12, 0)), DateTimePeriod(LocalDate.now(), LocalTime.of(13, 0)))
-        )
-    )
-
-    DaysGrid(
-        days = sampleDays,
-        scheduleMap = sampleScheduleMap,
-        onDayClick = { /* 클릭 테스트용 로그 */ }
-    )
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun PreviewDaysGrid() {
+//    val sampleDays = generateSampleDays(YearMonth.now())
+//    val sampleScheduleMap = mapOf(
+//        LocalDate.now() to listOf(
+//            ScheduleData("1", "회의", "회의실A", DateTimePeriod(LocalDate.now(), LocalTime.of(10, 0)), DateTimePeriod(LocalDate.now(), LocalTime.of(11, 0))),
+//            ScheduleData("2", "점심 약속", "식당", DateTimePeriod(LocalDate.now(), LocalTime.of(12, 0)), DateTimePeriod(LocalDate.now(), LocalTime.of(13, 0))),
+//            ScheduleData("3", "점심 약속", "식당", DateTimePeriod(LocalDate.now(), LocalTime.of(12, 0)), DateTimePeriod(LocalDate.now(), LocalTime.of(13, 0)))
+//        )
+//    )
+//
+//    DaysGrid(
+//        days = sampleDays,
+//        scheduleMap = sampleScheduleMap,
+//        onDayClick = { /* 클릭 테스트용 로그 */ }
+//    )
+//}

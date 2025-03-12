@@ -7,6 +7,8 @@
     <string name="starts">시작</string>
     <string name="ends">종료</string>
     <string name="repeat">반복</string>
+    <string name="set_repeat_until">종료일 설정</string>
+    <string name="repeat_until">반복 종료일</string>
     <string name="notification">알림</string>
     <string name="save">저장</string>
     <string name="update_schedule">일정 수정</string>

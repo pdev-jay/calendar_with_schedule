@@ -16,9 +16,11 @@ data class ScheduleData(
     val id: String = UUID.randomUUID().toString(),
     val title: String = "New Event",
     val location: String? = null,
+    val isAllDay: Boolean = false,
     val start: DateTimePeriod,
     val end: DateTimePeriod,
     val repeatType: RepeatType = RepeatType.NONE, // 🔹 RepeatType 사용
+    val repeatUntil: LocalDate? = null,
     val repeatRule: String? = null, // 🔹 RRule을 저장할 문자열
     val alarmOption: AlarmOption = AlarmOption.NONE, // 🔹 알림 옵션 추가
     val isOriginalEvent: Boolean = true
@@ -45,9 +47,11 @@ fun ScheduleData.toScheduleEntity() = ScheduleEntity(
     id = id,
     title = title,
     location = location,
+    isAllDay = isAllDay,
     start = start,
     end = end,
     repeatType = repeatType,
+    repeatUntil = repeatUntil,
     repeatRule = repeatRule,              // RRule 그대로 저장
     alarmOption = alarmOption,             // Enum 변환
     isOriginalEvent = isOriginalEvent
@@ -57,9 +61,11 @@ fun ScheduleEntity.toScheduleData() = ScheduleData(
     id = id,
     title = title,
     location = location,
+    isAllDay = isAllDay,
     start = start,
     end = end,
     repeatType = repeatType,         // Enum 변환 유지
+    repeatUntil = repeatUntil,
     repeatRule = repeatRule,             // RRule 그대로 유지
     alarmOption = alarmOption,            // Enum 변환 유지
     isOriginalEvent = isOriginalEvent

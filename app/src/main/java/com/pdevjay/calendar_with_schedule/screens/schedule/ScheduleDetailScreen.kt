@@ -1,7 +1,6 @@
 package com.pdevjay.calendar_with_schedule.screens.schedule
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -23,7 +21,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,11 +33,9 @@ import androidx.navigation.NavController
 import com.pdevjay.calendar_with_schedule.R
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.DateTimePeriod
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
-import com.pdevjay.calendar_with_schedule.screens.schedule.data.toScheduleData
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
 import com.pdevjay.calendar_with_schedule.screens.schedule.intents.ScheduleIntent
 import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
-import com.pdevjay.calendar_with_schedule.utils.RepeatScheduleGenerator
 import com.pdevjay.calendar_with_schedule.utils.RepeatType
 import com.pdevjay.calendar_with_schedule.utils.SlideInHorizontallyContainer
 import java.time.LocalDate
@@ -53,44 +48,13 @@ fun ScheduleDetailScreen(
     navController: NavController,
     scheduleViewModel: ScheduleViewModel
 ) {
-    val scheduleState by scheduleViewModel.state.collectAsState()
-
-//    val schedule = remember(scheduleState.schedules) {
-//        val tempScheduleId = scheduleId.split("_")
-//        if (tempScheduleId.size >= 2){
-//            val originalEvent = scheduleState.schedules.firstOrNull { it.id == tempScheduleId.first() }
-//            originalEvent?.let{RepeatScheduleGenerator.generateRepeatedScheduleInstances(originalEvent, LocalDate.parse(tempScheduleId.last()))}
-//        } else {
-//            scheduleState.schedules.firstOrNull { it.id == scheduleId }
-//        }
-//    }
-
-//    val schedule = remember(scheduleState.schedules) {
-//        val tempScheduleId = scheduleId.split("_")
-//
-//        if (tempScheduleId.size >= 2) {
-//            // 🔹 원본 일정 가져오기
-//            val originalEvent = scheduleState.schedules.firstOrNull { it.id == tempScheduleId.first() }
-//
-//            // 🔹 특정 날짜에서 수정된 반복 일정이 있는지 확인
-//            val modifiedRecurringEvent = scheduleState.recurringSchedules.firstOrNull {
-//                it.originalEventId == tempScheduleId.first() && it.start.date == LocalDate.parse(tempScheduleId.last())
-//            }
-//
-//            // 🔹 변경된 일정이 있으면 그것을 사용, 없으면 원본 이벤트 사용
-//            originalEvent?.let { modifiedRecurringEvent?.toScheduleData(it)?.copy(isOriginalEvent = false) }
-//                ?: originalEvent?.let { RepeatScheduleGenerator.generateRepeatedScheduleInstances(it, LocalDate.parse(tempScheduleId.last())) }
-//        } else {
-//            scheduleState.schedules.firstOrNull { it.id == scheduleId }?.copy(isOriginalEvent = true)
-//        }
-//    }
-
     var isVisible by remember { mutableStateOf(false) }
 
     var showDatePickerForStart by remember { mutableStateOf(false) }
     var showTimePickerForStart by remember { mutableStateOf(false) }
     var showDatePickerForEnd by remember { mutableStateOf(false) }
     var showTimePickerForEnd by remember { mutableStateOf(false) }
+    var showDatePickerForRepeatUntil by remember { mutableStateOf(false) }
 
     BackHandler {
         isVisible = false
@@ -104,20 +68,14 @@ fun ScheduleDetailScreen(
         }
     }
 
-//    var title by remember { mutableStateOf(schedule?.title) }
-//    var location by remember { mutableStateOf(schedule?.location ?: "") }
-//    var start by remember { mutableStateOf(schedule?.start) }
-//    var end by remember { mutableStateOf(schedule?.end) }
-//    var allDay by remember { mutableStateOf(false) }
-//    var repeatType by remember { mutableStateOf(schedule?.repeatType) }
-//    var alarmOption by remember { mutableStateOf(schedule?.alarmOption) }
-
     var title by remember { mutableStateOf(schedule?.title ?: "New Event") }
     var location by remember { mutableStateOf(schedule?.location ?: "") }
     var start by remember { mutableStateOf(schedule?.start ?: DateTimePeriod(LocalDate.now(), LocalTime.of(9, 0))) }
     var end by remember { mutableStateOf(schedule?.end ?: DateTimePeriod(LocalDate.now(), LocalTime.of(10, 0))) }
     var allDay by remember { mutableStateOf(false) }
     var repeatType by remember { mutableStateOf(schedule?.repeatType ?: RepeatType.NONE) }
+    var isRepeatUntilEnabled by remember { mutableStateOf(if (schedule.repeatUntil != null) false else true) }
+    var repeatUntil by remember { mutableStateOf(schedule.repeatUntil ?: LocalDate.now().plusWeeks(1)) }
     var alarmOption by remember { mutableStateOf(schedule?.alarmOption ?: AlarmOption.NONE) }
 
 
@@ -154,35 +112,48 @@ fun ScheduleDetailScreen(
                 StyledTextField(value = title, label = stringResource(R.string.title), onValueChange = { title = it })
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Column(
-                    modifier = Modifier
-                        .background(Color.LightGray.copy(alpha = 0.5f), shape = RoundedCornerShape(10.dp))
+                GroupContainer(
                 ) {
-                    AllDaySwitch(allDay)
+                    SwitchSelector(label = stringResource(R.string.all_day), option = allDay, onSwitch = { allDay = it })
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 2.dp, color = Color.LightGray)
-                    DateTimeSelector(stringResource(R.string.starts), start, onDateClick = {showDatePickerForStart = true}, onTimeClick = {showTimePickerForStart = true})
+                    DateTimeSelector(stringResource(R.string.starts), start.date, start.time, onDateClick = {showDatePickerForStart = true}, onTimeClick = {showTimePickerForStart = true})
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 2.dp, color = Color.LightGray)
-                    DateTimeSelector(stringResource(R.string.ends), end, onDateClick = {showDatePickerForEnd = true}, onTimeClick = {showTimePickerForEnd = true})
+                    DateTimeSelector(stringResource(R.string.ends), end.date, end.time, onDateClick = {showDatePickerForEnd = true}, onTimeClick = {showTimePickerForEnd = true})
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                DropdownMenuSelector(
-                    title = stringResource(R.string.repeat),
-                    options = RepeatType.entries.map { it.label },
-                    selectedOption = repeatType.label,
-                    onOptionSelected = { label -> repeatType = RepeatType.fromLabel(label) }
-                )
+                GroupContainer {
+                    // 반복 옵션
+                    DropdownMenuSelector(
+                        title = stringResource(R.string.repeat),
+                        options = RepeatType.entries.map { it.label },
+                        selectedOption = repeatType.label,
+                        onOptionSelected = { label -> repeatType = RepeatType.fromLabel(label) }
+                    )
+
+                    // 반복 옵션을 선택하면 나타나는 반복 마지막 날 선택 옵션
+                    if (repeatType != RepeatType.NONE) {
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 2.dp, color = Color.LightGray)
+                        SwitchSelector(label = stringResource(R.string.set_repeat_until), option = isRepeatUntilEnabled, onSwitch = {isRepeatUntilEnabled = it})
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 2.dp, color = Color.LightGray)
+                        if (isRepeatUntilEnabled){
+                            DateTimeSelector(stringResource(R.string.repeat_until), date = repeatUntil, onDateClick = {showDatePickerForRepeatUntil = true})
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 🔹 Alarm Dropdown
-                DropdownMenuSelector(
-                    title = stringResource(R.string.notification),
-                    options = AlarmOption.entries.map { it.label },
-                    selectedOption = alarmOption.label,
-                    onOptionSelected = { label -> alarmOption = AlarmOption.fromLabel(label) }
-                )
+                // Alarm Dropdown
+                GroupContainer {
+                    DropdownMenuSelector(
+                        title = stringResource(R.string.notification),
+                        options = AlarmOption.entries.map { it.label },
+                        selectedOption = alarmOption.label,
+                        onOptionSelected = { label -> alarmOption = AlarmOption.fromLabel(label) }
+                    )
+                }
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
@@ -256,7 +227,7 @@ fun ScheduleDetailScreen(
                 initialDate = start.date,
                 onDateSelected = {
                     start = start.copy(date = it)
-                    if (end.date.isBefore(it)) end = end.copy(date = it)
+                    end = end.copy(date = it)
                 },
                 onDismiss = { showDatePickerForStart = false }
             )

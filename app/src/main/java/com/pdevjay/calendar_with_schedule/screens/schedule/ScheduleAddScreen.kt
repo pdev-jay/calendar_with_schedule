@@ -2,6 +2,7 @@ package com.pdevjay.calendar_with_schedule.screens.schedule
 
 import android.util.Log
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -59,7 +60,6 @@ import com.pdevjay.calendar_with_schedule.screens.schedule.data.DateTimePeriod
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.generateRepeatRule
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
-import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatOption
 import com.pdevjay.calendar_with_schedule.utils.RepeatType
 import com.pdevjay.calendar_with_schedule.utils.SlideInHorizontallyContainer
 import java.time.LocalDate
@@ -84,12 +84,15 @@ fun ScheduleAddScreen(
     var allDay by remember { mutableStateOf(false) }
     // repeat과 alarm 상태 추가
     var repeatType by remember { mutableStateOf(RepeatType.NONE) }
+    var isRepeatUntilEnabled by remember { mutableStateOf(false) }
+    var repeatUntil by remember { mutableStateOf(end.date.plusWeeks(1)) }
     var alarmOption by remember { mutableStateOf(AlarmOption.NONE) }
 
     var showDatePickerForStart by remember { mutableStateOf(false) }
     var showTimePickerForStart by remember { mutableStateOf(false) }
     var showDatePickerForEnd by remember { mutableStateOf(false) }
     var showTimePickerForEnd by remember { mutableStateOf(false) }
+    var showDatePickerForRepeatUntil by remember { mutableStateOf(false) }
 
     BackHandler {
         isVisible = false
@@ -97,6 +100,17 @@ fun ScheduleAddScreen(
     }
 
     LaunchedEffect(Unit) { isVisible = true }
+
+    LaunchedEffect(repeatType){
+            repeatUntil = when (repeatType) {
+                RepeatType.DAILY -> start.date.plusDays(30)  // 기본 30일 후
+                RepeatType.WEEKLY -> start.date.plusMonths(3) // 기본 3개월 후
+                RepeatType.BIWEEKLY -> start.date.plusMonths(6) // 기본 6개월 후
+                RepeatType.MONTHLY -> start.date.plusYears(1)  // 기본 1년 후
+                RepeatType.YEARLY -> start.date.plusYears(3)   // 기본 3년 후
+                RepeatType.NONE -> end.date.plusWeeks(1)
+            }
+    }
 
     Scaffold(
         topBar = {
@@ -130,37 +144,53 @@ fun ScheduleAddScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Column (
-                    modifier = Modifier
-                        .background(Color.LightGray.copy(alpha = 0.5f), shape = RoundedCornerShape(10.dp))
+                GroupContainer (
                 ){
                     // All-day Toggle
-                    AllDaySwitch(allDay)
+                    SwitchSelector(label = stringResource(R.string.all_day), option = allDay, onSwitch = { allDay = it })
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 2.dp, color = Color.LightGray)
-                    DateTimeSelector(stringResource(R.string.starts), start, onDateClick = {showDatePickerForStart = true}, onTimeClick = {showTimePickerForStart = true})
+                    DateTimeSelector(stringResource(R.string.starts), start.date, start.time, onDateClick = {showDatePickerForStart = true}, onTimeClick = {showTimePickerForStart = true})
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 2.dp, color = Color.LightGray)
-                    DateTimeSelector(stringResource(R.string.ends), end, onDateClick = {showDatePickerForEnd = true}, onTimeClick = {showTimePickerForEnd = true})
+                    DateTimeSelector(stringResource(R.string.ends), end.date, end.time, onDateClick = {showDatePickerForEnd = true}, onTimeClick = {showTimePickerForEnd = true})
 
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                DropdownMenuSelector(
-                    title = stringResource(R.string.repeat),
-                    options = RepeatType.entries.map { it.label },
-                    selectedOption = repeatType.label,
-                    onOptionSelected = { label -> repeatType = RepeatType.fromLabel(label) }
-                )
+                GroupContainer {
+                    // 반복 옵션
+                    DropdownMenuSelector(
+                        title = stringResource(R.string.repeat),
+                        options = RepeatType.entries.map { it.label },
+                        selectedOption = repeatType.label,
+                        onOptionSelected = { label -> repeatType = RepeatType.fromLabel(label) }
+                    )
+
+                    // 반복 옵션을 선택하면 나타나는 반복 마지막 날 선택 옵션
+                    if (repeatType != RepeatType.NONE) {
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 2.dp, color = Color.LightGray)
+                        SwitchSelector(label = stringResource(R.string.set_repeat_until), option = isRepeatUntilEnabled, onSwitch = {isRepeatUntilEnabled = it})
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 2.dp, color = Color.LightGray)
+                        if (isRepeatUntilEnabled){
+                            DateTimeSelector(stringResource(R.string.repeat_until), date = repeatUntil, onDateClick = {showDatePickerForRepeatUntil = true})
+//                            RepeatUntilSelector(stringResource(R.string.repeat_until), repeatUntil, onClick = {showDatePickerForRepeatUntil = true})
+                        }
+                    }
+                }
+
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 🔹 Alarm Dropdown
-                DropdownMenuSelector(
-                    title = stringResource(R.string.notification),
-                    options = AlarmOption.entries.map { it.label },
-                    selectedOption = alarmOption.label,
-                    onOptionSelected = { label -> alarmOption = AlarmOption.fromLabel(label) }
-                )
+                // Alarm Dropdown
+                GroupContainer {
+                    DropdownMenuSelector(
+                        title = stringResource(R.string.notification),
+                        options = AlarmOption.entries.map { it.label },
+                        selectedOption = alarmOption.label,
+                        onOptionSelected = { label -> alarmOption = AlarmOption.fromLabel(label) }
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
@@ -169,10 +199,12 @@ fun ScheduleAddScreen(
                         val newSchedule = ScheduleData(
                             title = if (title.isBlank()) "New Event" else title,
                             location = location,
+                            isAllDay = allDay,
                             start = start,
                             end = end,
                             repeatType = repeatType,
-                            repeatRule = generateRepeatRule(repeatType), // 🔹 RRule 자동 생성
+                            repeatUntil = if (isRepeatUntilEnabled) repeatUntil else null,
+                            repeatRule = generateRepeatRule(repeatType), // RRule 자동 생성
                             alarmOption = alarmOption,
                             isOriginalEvent = true
                         )
@@ -192,7 +224,7 @@ fun ScheduleAddScreen(
                 initialDate = start.date,
                 onDateSelected = {
                     start = start.copy(date = it)
-                    if (end.date.isBefore(it)) end = end.copy(date = it)
+                    end = end.copy(date = it)
                 },
                 onDismiss = { showDatePickerForStart = false }
             )
@@ -233,12 +265,20 @@ fun ScheduleAddScreen(
                 onDismiss = { showTimePickerForEnd = false }
             )
         }
+
+        if (showDatePickerForRepeatUntil) {
+            DatePickerView(
+                initialDate = repeatUntil,
+                minDate = start.date, // 시작 날짜 이후만 선택 가능
+                onDateSelected = { repeatUntil = it },
+                onDismiss = { showDatePickerForRepeatUntil = false }
+            )
+        }
     }
 }
 
 @Composable
-fun AllDaySwitch(allDay: Boolean) {
-    var allDay1 = allDay
+fun SwitchSelector(label:String, option: Boolean, onSwitch: (Boolean) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -246,10 +286,10 @@ fun AllDaySwitch(allDay: Boolean) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(stringResource(R.string.all_day), fontSize = 16.sp)
+        Text(label, fontSize = 16.sp)
         Switch(
-            checked = allDay1,
-            onCheckedChange = { allDay1 = it }
+            checked = option,
+            onCheckedChange = onSwitch
         )
     }
 }
@@ -259,7 +299,7 @@ fun DateTimeField(
     label: String,
     dateTime: DateTimePeriod,
     onDateClick: () -> Unit,
-    onTimeClick: () -> Unit
+    onTimeClick: (() -> Unit)? = null
 ) {
     Row {
         Box(modifier = Modifier.weight(1f)) {
@@ -287,29 +327,31 @@ fun DateTimeField(
             )
         }
         Spacer(modifier = Modifier.width(4.dp))
-        Box(modifier = Modifier.weight(1f)) {
-            OutlinedTextField(
-                value = dateTime.time.toString(),
-                onValueChange = {},
-                label = { Text("$label Time") },
-                readOnly = true,
-                modifier = Modifier.fillMaxWidth(),
-                trailingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.AccessTime,
-                        contentDescription = "Pick time"
-                    )
-                }
-            )
-            // 투명 클릭 레이어
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .clickable(
-                        indication = null,
-                        interactionSource = remember { MutableInteractionSource() }
-                    ) { onTimeClick() }
-            )
+        if (onTimeClick != null) {
+            Box(modifier = Modifier.weight(1f)) {
+                OutlinedTextField(
+                    value = dateTime.time.toString(),
+                    onValueChange = {},
+                    label = { Text("$label Time") },
+                    readOnly = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.AccessTime,
+                            contentDescription = "Pick time"
+                        )
+                    }
+                )
+                // 투명 클릭 레이어
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) { onTimeClick() }
+                )
+            }
         }
     }
 }
@@ -341,9 +383,11 @@ fun StyledTextField(value: String, label: String, onValueChange: (String) -> Uni
 @Composable
 fun DateTimeSelector(
     label: String,
-    dateTime: DateTimePeriod,
+//    dateTime: DateTimePeriod,
+    date: LocalDate,
+    time: LocalTime? = null,
     onDateClick: () -> Unit,
-    onTimeClick: () -> Unit
+    onTimeClick: (() -> Unit)? = null
 ) {
     Row(
         modifier = Modifier
@@ -360,25 +404,40 @@ fun DateTimeSelector(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
-//                    .background(MaterialTheme.colorScheme.secondaryContainer)
                     .clickable(onClick = onDateClick)
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(dateTime.date.toString(), fontSize = 16.sp)
+                Text(date.toString(), fontSize = 16.sp)
             }
 
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-//                    .background(MaterialTheme.colorScheme.secondaryContainer)
-                    .clickable(onClick = onTimeClick)
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(dateTime.time.toString(), fontSize = 16.sp)
+            if (time != null && onTimeClick != null) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(onClick = onTimeClick)
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(time.toString(), fontSize = 16.sp)
+                }
             }
         }
+    }
+}
+
+@Composable
+fun RepeatUntilSelector(label:String, repeatUntil: LocalDate, onClick: () -> Unit, ){
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = label)
+        Spacer(modifier = Modifier.weight(1f))
+        Text(text = repeatUntil.toString())
     }
 }
 
@@ -399,7 +458,6 @@ fun DropdownMenuSelector(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.LightGray, shape = RoundedCornerShape(10.dp))
                 .clickable { expanded = true } // 클릭 시 Dropdown 열기
                 .padding(12.dp),
 
@@ -437,6 +495,17 @@ fun DropdownMenuSelector(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun GroupContainer(content: @Composable () -> Unit){
+    Column(
+        modifier = Modifier
+            .background(Color.LightGray.copy(alpha = 0.5f), shape = RoundedCornerShape(10.dp))
+            .animateContentSize()
+    ){
+        content()
     }
 }
 
