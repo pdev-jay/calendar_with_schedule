@@ -35,7 +35,7 @@ fun RecurringData.toRecurringScheduleEntity(): RecurringScheduleEntity {
 
 fun RecurringData.toScheduleData(originalSchedule: ScheduleData): ScheduleData {
     return originalSchedule.copy(
-        id = this.id, // 🔹 특정 날짜의 반복 일정이므로 ID 변경
+        id = this.originalEventId, // 🔹 특정 날짜의 반복 일정이므로 ID 변경
         title = this.title ?: originalSchedule.title, // 🔹 변경된 제목이 있으면 적용
         start = this.start, // 🔹 변경된 날짜 및 시간 적용
         end = this.end,

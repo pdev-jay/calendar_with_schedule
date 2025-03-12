@@ -38,6 +38,13 @@ interface ScheduleDao {
 
     // 반복 일정 테이블
 
+    @Query("""
+    SELECT * FROM recurring_schedules 
+    WHERE strftime('%Y-%m', substr(startDate, 1, instr(startDate, '|') - 1)) IN (:months)
+       OR strftime('%Y-%m', substr(endDate, 1, instr(endDate, '|') - 1)) IN (:months)
+""")
+    fun getRecurringSchedulesForMonths(months: List<String>): Flow<List<RecurringScheduleEntity>>
+
     // 🔹 특정 날짜에서 변경된 반복 일정 가져오기
     @Query("SELECT * FROM recurring_schedules WHERE strftime('%Y-%m-%d', substr(startDate, 1, instr(startDate, '|') - 1)) = :date")
     fun getRecurringScheduleChangesForDate(date: String): Flow<List<RecurringScheduleEntity>>
