@@ -31,7 +31,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.pdevjay.calendar_with_schedule.R
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.DateTimePeriod
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.RecurringData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
 import com.pdevjay.calendar_with_schedule.screens.schedule.intents.ScheduleIntent
@@ -44,7 +46,7 @@ import java.time.LocalTime
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun ScheduleDetailScreen(
-    schedule: ScheduleData,
+    schedule: BaseSchedule,
     navController: NavController,
     scheduleViewModel: ScheduleViewModel
 ) {
@@ -55,6 +57,8 @@ fun ScheduleDetailScreen(
     var showDatePickerForEnd by remember { mutableStateOf(false) }
     var showTimePickerForEnd by remember { mutableStateOf(false) }
     var showDatePickerForRepeatUntil by remember { mutableStateOf(false) }
+    var showDeleteBottomSheet by remember{ mutableStateOf(false) }
+    var showUpdateBottomSheet by remember{ mutableStateOf(false) }
 
     BackHandler {
         isVisible = false
@@ -80,6 +84,47 @@ fun ScheduleDetailScreen(
 
 
     LaunchedEffect(Unit) { isVisible = true }
+
+
+    fun updateSchedule(schedule: BaseSchedule, isFuture: Boolean) {
+        try {
+            when (schedule) {
+                is ScheduleData -> {
+                    val updatedSchedule = schedule.copy(
+                        title = title,
+                        location = location,
+                        start = start,
+                        end = end,
+                        repeatType = repeatType,
+                        alarmOption = alarmOption
+                    )
+                    scheduleViewModel.processIntent(ScheduleIntent.UpdateSchedule(updatedSchedule))
+                }
+                is RecurringData -> {
+                    val updatedRecurringData = schedule.copy(
+                        title = title,
+                        location = location,
+                        start = start,
+                        end = end,
+                        repeatType = repeatType,
+                        repeatUntil = if (isRepeatUntilEnabled) repeatUntil else null,
+                        alarmOption = alarmOption
+                    )
+                    val intent = if (isFuture) {
+                        ScheduleIntent.UpdateFutureRecurringSchedule(updatedRecurringData)
+                    } else {
+                        ScheduleIntent.UpdateSingleRecurringSchedule(updatedRecurringData)
+                    }
+                    scheduleViewModel.processIntent(intent)
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            isVisible = false
+            navController.popBackStack()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -158,35 +203,7 @@ fun ScheduleDetailScreen(
 
                 Button(
                     onClick = {
-                        isVisible = false
-                        if (schedule != null) {
-                            if (schedule.isOriginalEvent) {
-                                scheduleViewModel.processIntent(
-                                    ScheduleIntent.UpdateSchedule(
-                                        schedule.copy(
-                                            title = title,
-                                            location = location,
-                                            start = start,
-                                            end = end,
-                                            repeatType = repeatType,
-                                            alarmOption = alarmOption
-                                        )
-                                    )
-                                )
-                            } else {
-                                scheduleViewModel.processIntent(ScheduleIntent.UpdateRecurringSchedule(
-                                    schedule.copy(
-                                        title = title,
-                                        location = location,
-                                        start = start,
-                                        end = end,
-                                        repeatType = repeatType,
-                                        alarmOption = alarmOption
-                                    )
-                                ))
-                            }
-                        }
-                        navController.popBackStack()
+                        showUpdateBottomSheet = true
                     },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
@@ -195,23 +212,7 @@ fun ScheduleDetailScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 Button(
                     onClick = {
-                        if (schedule != null) {
-                            if (schedule.isOriginalEvent) {
-                                scheduleViewModel.processIntent(
-                                    ScheduleIntent.DeleteSchedule(
-                                        schedule.id
-                                    )
-                                )
-                            } else {
-                                scheduleViewModel.processIntent(
-                                    ScheduleIntent.DeleteRecurringSchedule(
-                                        schedule
-                                    )
-                                )
-                                isVisible = false
-                                navController.popBackStack()
-                            }
-                        }
+                        showDeleteBottomSheet = true
                     },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
@@ -277,6 +278,107 @@ fun ScheduleDetailScreen(
                 onDismiss = { showDatePickerForRepeatUntil = false }
             )
         }
+
+        ConfirmBottomSheet(
+            title = stringResource(R.string.update_schedule),
+            description = stringResource(R.string.update_description),
+            single = stringResource(R.string.update_single),
+            future = stringResource(R.string.update_future),
+            isVisible = showUpdateBottomSheet,
+            onDismiss = { showUpdateBottomSheet = false },
+            onSingle = {
+
+                updateSchedule(schedule, false)
+//                try {
+//                    scheduleViewModel.processIntent(
+//                        ScheduleIntent.UpdateSingleRecurringSchedule(
+//                            schedule as RecurringData
+//                        )
+//                    )
+//                } catch (e: Exception) {
+//                    e.printStackTrace()
+//                } finally {
+//                    isVisible = false
+//                    navController.popBackStack()
+//                }
+            },
+            onFuture = {
+                updateSchedule(schedule, true)
+//                try {
+//                    scheduleViewModel.processIntent(
+//                        ScheduleIntent.UpdateFutureRecurringSchedule(
+//                            schedule as RecurringData
+//                        )
+//                    )
+//                } catch (e: Exception) {
+//                    e.printStackTrace()
+//                } finally {
+//                    isVisible = false
+//                    navController.popBackStack()
+//                }
+            },
+        )
+
+        ConfirmBottomSheet(
+            title = stringResource(R.string.delete_schedule),
+            description = stringResource(R.string.delete_description),
+            single = stringResource(R.string.delete_single),
+            future = stringResource(R.string.delete_future),
+            isVisible = showDeleteBottomSheet,
+            onDismiss = { showDeleteBottomSheet = false },
+            onSingle = {
+                try {
+                    when(schedule){
+                        is ScheduleData -> {
+                            scheduleViewModel.processIntent(
+                                ScheduleIntent.DeleteSingleSchedule(
+                                    schedule as ScheduleData
+                                )
+                            )
+                        }
+                        is RecurringData -> {
+                            scheduleViewModel.processIntent(
+                                ScheduleIntent.DeleteSingleRecurringSchedule(
+                                    schedule as RecurringData
+                                )
+                            )
+                        }
+                    }
+
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                } finally {
+                    isVisible = false
+                    navController.popBackStack()
+                }
+            },
+            onFuture = {
+                try {
+                    when(schedule){
+                        is ScheduleData -> {
+                            scheduleViewModel.processIntent(
+                                ScheduleIntent.DeleteFutureSchedule(
+                                    schedule as ScheduleData
+                                )
+                            )
+                        }
+                        is RecurringData -> {
+                            scheduleViewModel.processIntent(
+                                ScheduleIntent.DeleteFutureRecurringSchedule(
+                                    schedule as RecurringData
+                                )
+                            )
+                        }
+                    }
+
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                } finally {
+                    isVisible = false
+                    navController.popBackStack()
+                }
+            },
+        )
 
     }
 }

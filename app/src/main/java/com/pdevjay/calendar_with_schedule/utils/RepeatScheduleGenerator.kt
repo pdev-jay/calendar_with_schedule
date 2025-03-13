@@ -1,7 +1,9 @@
 package com.pdevjay.calendar_with_schedule.utils
 
 import android.util.Log
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.RecurringData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.toRecurringData
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.temporal.ChronoUnit
@@ -112,13 +114,14 @@ object RepeatScheduleGenerator {
             .toList()
     }
 
-    fun generateRepeatedScheduleInstances(schedule: ScheduleData, selectedDay: LocalDate): ScheduleData {
-        return schedule.copy(
-            id = "${schedule.id}_${selectedDay}", // 🔹 ID를 다르게 하여 중복 방지
-            start = schedule.start.copy(date = selectedDay), // 🔹 선택된 날짜에 맞게 조정
-            end = schedule.end.copy(date = selectedDay), // 🔹 종료 날짜도 선택된 날짜로 조정
-            isOriginalEvent = false
-        )
+    fun generateRepeatedScheduleInstances(schedule: ScheduleData, selectedDay: LocalDate): RecurringData {
+//        return schedule.copy(
+//            id = "${schedule.id}_${selectedDay}", // 🔹 ID를 다르게 하여 중복 방지
+//            start = schedule.start.copy(date = selectedDay), // 🔹 선택된 날짜에 맞게 조정
+//            end = schedule.end.copy(date = selectedDay), // 🔹 종료 날짜도 선택된 날짜로 조정
+//            isOriginalSchedule = false,
+//        )
+        return schedule.copy().toRecurringData(selectedDay)
     }
 
     fun isValidRepeatDate(repeatType: RepeatType, originalStartDate: LocalDate, modifiedDate: LocalDate): Boolean {

@@ -1,5 +1,6 @@
 package com.pdevjay.calendar_with_schedule.screens.calendar.states
 
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
 import java.time.LocalDate
 import java.time.YearMonth
@@ -8,5 +9,5 @@ import java.time.YearMonth
 data class CalendarState(
     val currentMonth: YearMonth = YearMonth.now(),
     val selectedDate: LocalDate? = null,
-    val scheduleMap: Map<LocalDate, List<ScheduleData>> = emptyMap() // 추가
+    val scheduleMap: Map<LocalDate, List<BaseSchedule>> = emptyMap() // 추가
 )

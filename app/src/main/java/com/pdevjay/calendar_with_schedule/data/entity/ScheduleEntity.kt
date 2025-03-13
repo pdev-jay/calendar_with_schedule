@@ -13,17 +13,30 @@ import java.time.LocalDate
 @Entity(tableName = "schedules")
 data class ScheduleEntity(
     @PrimaryKey val id: String,
-    val title: String,
-    val location: String?,
+    @ColumnInfo(name = "title")val title: String,
+    @ColumnInfo(name = "location")val location: String?,
     @ColumnInfo(name = "isAllDay") val isAllDay: Boolean,
     @ColumnInfo(name = "startDate") val start: DateTimePeriod,
     @ColumnInfo(name = "endDate") val end: DateTimePeriod,
-    @ColumnInfo(name = "repeatType") val repeatType: RepeatType = RepeatType.NONE, // 🔹 RepeatType 사용
+    @ColumnInfo(name = "repeatType") val repeatType: RepeatType = RepeatType.NONE,
     @ColumnInfo(name = "repeatUntil") val repeatUntil: LocalDate? = null,
-    @ColumnInfo(name = "repeatRule") val repeatRule: String? = null, // 🔹 RRule을 저장할 문자열
-    @ColumnInfo(name = "alarmOption")val alarmOption: AlarmOption,
-    @ColumnInfo(name = "isOriginalEvent") val isOriginalEvent: Boolean = true
+    @ColumnInfo(name = "repeatRule") val repeatRule: String? = null,
+    @ColumnInfo(name = "alarmOption") val alarmOption: AlarmOption,
+    @ColumnInfo(name = "isOriginalSchedule") val isOriginalSchedule: Boolean = true
 )
 
-
-
+fun ScheduleEntity.toScheduleData(): ScheduleData {
+    return ScheduleData(
+        id = this.id,
+        title = this.title,
+        location = this.location,
+        isAllDay = this.isAllDay,
+        start = this.start,
+        end = this.end,
+        repeatType = this.repeatType,
+        repeatUntil = this.repeatUntil,
+        repeatRule = this.repeatRule,
+        alarmOption = this.alarmOption,
+        isOriginalSchedule = this.isOriginalSchedule
+    )
+}

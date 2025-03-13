@@ -14,9 +14,13 @@ import com.pdevjay.calendar_with_schedule.screens.calendar.CalendarScreen
 import com.pdevjay.calendar_with_schedule.screens.calendar.viewmodels.CalendarViewModel
 import com.pdevjay.calendar_with_schedule.screens.schedule.ScheduleAddScreen
 import com.pdevjay.calendar_with_schedule.screens.schedule.ScheduleDetailScreen
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.RecurringData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
 import com.pdevjay.calendar_with_schedule.screens.schedule.intents.ScheduleIntent
 import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
+import com.pdevjay.calendar_with_schedule.utils.BaseScheduleTypeAdapter
+import com.pdevjay.calendar_with_schedule.utils.JsonUtils
 import com.pdevjay.calendar_with_schedule.utils.LocalDateAdapter
 import com.pdevjay.calendar_with_schedule.utils.LocalTimeAdapter
 import java.net.URLDecoder
@@ -38,19 +42,10 @@ fun AppNavGraph(
             route = "scheduleDetail/{scheduleJson}",
             arguments = listOf(navArgument("scheduleJson") { type = NavType.StringType }),
 
-//            route = "scheduleDetail/{scheduleId}",
-//            arguments = listOf(
-//                navArgument("scheduleId") { type = NavType.StringType },
-//            ),
         ) { backStackEntry ->
-//            val scheduleId = backStackEntry.arguments?.getString("scheduleId")!!
-            val gson: Gson = GsonBuilder()
-                .registerTypeAdapter(LocalDate::class.java, LocalDateAdapter())
-                .registerTypeAdapter(LocalTime::class.java, LocalTimeAdapter())
-                .create()
-
             val scheduleJson = backStackEntry.arguments?.getString("scheduleJson")!!
-            val schedule = gson.fromJson(URLDecoder.decode(scheduleJson, "UTF-8"), ScheduleData::class.java)
+            val schedule = JsonUtils.parseScheduleJson(scheduleJson)
+
             ScheduleDetailScreen(
                 schedule = schedule,
                 navController = navController,

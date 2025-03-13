@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.times
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.overlapsWith
 import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
@@ -48,10 +49,10 @@ fun ScheduleView(
     modifier: Modifier = Modifier,
     scheduleViewModel: ScheduleViewModel,
     selectedDay: LocalDate?,
-    schedules: List<ScheduleData>,
-    onEventClick: (ScheduleData) -> Unit,
+    schedules: List<BaseSchedule>, // ✅ BaseSchedule 사용 (ScheduleData + RecurringData 모두 처리 가능)
+    onEventClick: (BaseSchedule) -> Unit, // ✅ BaseSchedule로 변경
     onBackButtonClicked: () -> Unit
-) {
+){
     val scheduleState by scheduleViewModel.state.collectAsState()
     
 //    LaunchedEffect(selectedDay) {
@@ -166,7 +167,7 @@ fun TimeColumn() {
 }
 
 @Composable
-fun EventBlock(event: ScheduleData, index: Int, totalCount: Int, maxWidth: Dp, selectedDay: LocalDate, onEventClick: (ScheduleData) -> Unit) {
+fun EventBlock(event: BaseSchedule, index: Int, totalCount: Int, maxWidth: Dp, selectedDay: LocalDate, onEventClick: (BaseSchedule) -> Unit) {
     val startMinutes = if (event.start.date < selectedDay) {
         0  // 전날부터 이어진 이벤트는 오늘 0시부터 표시
     } else {
@@ -232,13 +233,13 @@ fun NowIndicator() {
     )
 }
 
-fun groupOverlappingEvents(events: List<ScheduleData>): List<List<ScheduleData>> {
+fun groupOverlappingEvents(events: List<BaseSchedule>): List<List<BaseSchedule>> {
     if (events.isEmpty()) return emptyList() //  빈 리스트가 들어오면 빈 리스트 반환
     Log.e("","$events")
     //  일정들을 시작 시간 기준으로 정렬 (시간을 분 단위로 변환하여 비교)
     val sorted = events.sortedBy { it.start.time.hour * 60 + it.start.time.minute }
 
-    val result = mutableListOf<MutableList<ScheduleData>>() //  그룹화된 결과 리스트
+    val result = mutableListOf<MutableList<BaseSchedule>>() //  그룹화된 결과 리스트
     var currentGroup = mutableListOf(sorted.first()) //  첫 번째 일정으로 첫 그룹 시작
 
     //  두 번째 일정부터 순회하면서 그룹화 진행

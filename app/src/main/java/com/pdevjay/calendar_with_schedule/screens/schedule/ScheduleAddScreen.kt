@@ -60,6 +60,7 @@ import com.pdevjay.calendar_with_schedule.screens.schedule.data.DateTimePeriod
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.generateRepeatRule
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
+import com.pdevjay.calendar_with_schedule.utils.RRuleHelper.generateRRule
 import com.pdevjay.calendar_with_schedule.utils.RepeatType
 import com.pdevjay.calendar_with_schedule.utils.SlideInHorizontallyContainer
 import java.time.LocalDate
@@ -204,9 +205,13 @@ fun ScheduleAddScreen(
                             end = end,
                             repeatType = repeatType,
                             repeatUntil = if (isRepeatUntilEnabled) repeatUntil else null,
-                            repeatRule = generateRepeatRule(repeatType), // RRule 자동 생성
+                            repeatRule = generateRRule(
+                                repeatType = repeatType,
+                                startDate = start.date,
+                                repeatUntil = if (isRepeatUntilEnabled) repeatUntil else null
+                            ), // RRule 자동 생성
                             alarmOption = alarmOption,
-                            isOriginalEvent = true
+                            isOriginalSchedule = true // ✅ 변경됨
                         )
                         Log.e("","ScheduleAddScreen: $newSchedule")
                         onSave(newSchedule)

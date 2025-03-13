@@ -34,6 +34,7 @@ import com.pdevjay.calendar_with_schedule.screens.calendar.viewmodels.CalendarVi
 import com.pdevjay.calendar_with_schedule.screens.schedule.ScheduleView
 import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
 import com.pdevjay.calendar_with_schedule.utils.ExpandVerticallyContainerFromTop
+import com.pdevjay.calendar_with_schedule.utils.JsonUtils
 import com.pdevjay.calendar_with_schedule.utils.LocalDateAdapter
 import com.pdevjay.calendar_with_schedule.utils.LocalTimeAdapter
 import com.pdevjay.calendar_with_schedule.utils.SlideInVerticallyContainerFromBottom
@@ -142,12 +143,14 @@ fun CalendarScreen(
                         scheduleViewModel = scheduleViewModel,
                         schedules = calendarState.scheduleMap[calendarState.selectedDate] ?: emptyList(),
                         onEventClick = { event ->
-                            val gson: Gson = GsonBuilder()
-                                .registerTypeAdapter(LocalDate::class.java, LocalDateAdapter())
-                                .registerTypeAdapter(LocalTime::class.java, LocalTimeAdapter())
-                                .create()
+//                            val gson: Gson = GsonBuilder()
+//                                .registerTypeAdapter(LocalDate::class.java, LocalDateAdapter())
+//                                .registerTypeAdapter(LocalTime::class.java, LocalTimeAdapter())
+//                                .create()
+//
+////                            val jsonSchedule = gson.toJson(event)
+                            val jsonSchedule = URLEncoder.encode(JsonUtils.gson.toJson(event), "UTF-8")
 
-                            val jsonSchedule = gson.toJson(event)
                             navController.navigate("scheduleDetail/${URLEncoder.encode(jsonSchedule, "UTF-8")}")
 
                         },

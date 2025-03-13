@@ -1,44 +1,61 @@
 package com.pdevjay.calendar_with_schedule.screens.schedule.data
 
+import com.google.gson.annotations.SerializedName
 import com.pdevjay.calendar_with_schedule.data.entity.RecurringScheduleEntity
+import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
+import com.pdevjay.calendar_with_schedule.utils.RepeatType
+import java.time.LocalDate
 
 data class RecurringData(
-    val id: String,  // "originalEventId_selectedDate" 형식으로 저장
-    val originalEventId: String, // 원본 일정 ID
-    val start: DateTimePeriod, // 시작 날짜 및 시간
-    val end: DateTimePeriod, // 종료 날짜 및 시간
-    val title: String?, // 변경된 제목 (null이면 원본 제목 사용)
-    val isDeleted: Boolean // 해당 날짜의 일정이 삭제되었는지 여부
-)
+    @SerializedName("id") override val id: String,
+    @SerializedName("originalEventId") val originalEventId: String,
+    @SerializedName("originalRecurringDate") val originalRecurringDate: LocalDate,
+    @SerializedName("title") override val title: String,
+    @SerializedName("location") override val location: String?,
+    @SerializedName("isAllDay") override val isAllDay: Boolean,
+    @SerializedName("start") override val start: DateTimePeriod,
+    @SerializedName("end") override val end: DateTimePeriod,
+    @SerializedName("repeatType") override val repeatType: RepeatType,
+    @SerializedName("repeatUntil") override val repeatUntil: LocalDate?,
+    @SerializedName("repeatRule") override val repeatRule: String?,
+    @SerializedName("alarmOption") override val alarmOption: AlarmOption,
+    @SerializedName("isOriginalSchedule") override val isOriginalSchedule: Boolean = false,
+    @SerializedName("isDeleted") val isDeleted: Boolean
+) : BaseSchedule(id, title, location, isAllDay, start, end, repeatType, repeatUntil, repeatRule, alarmOption, isOriginalSchedule)
 
-fun RecurringScheduleEntity.toRecurringData(): RecurringData {
-    return RecurringData(
-        id = this.id,
-        originalEventId = this.originalEventId,
-        start = this.start,
-        end = this.end,
-        title = this.title,
-        isDeleted = this.isDeleted
-    )
-}
 
 fun RecurringData.toRecurringScheduleEntity(): RecurringScheduleEntity {
     return RecurringScheduleEntity(
         id = this.id,
         originalEventId = this.originalEventId,
+        originalRecurringDate = this.originalRecurringDate,
+        title = this.title,
+        location = this.location,
+        isAllDay = this.isAllDay,
         start = this.start,
         end = this.end,
-        title = this.title,
+        repeatType = this.repeatType,
+        repeatUntil = this.repeatUntil,
+        repeatRule = this.repeatRule,
+        alarmOption = this.alarmOption,
+        isOriginalSchedule = this.isOriginalSchedule,
         isDeleted = this.isDeleted
     )
 }
 
-fun RecurringData.toScheduleData(originalSchedule: ScheduleData): ScheduleData {
-    return originalSchedule.copy(
-        id = this.id, // 🔹 특정 날짜의 반복 일정이므로 ID 변경
-        title = this.title ?: originalSchedule.title, // 🔹 변경된 제목이 있으면 적용
-        start = this.start, // 🔹 변경된 날짜 및 시간 적용
+// recurring data를 기반으로 새로운 schedule data를 저장할 때
+fun RecurringData.toScheduleData(): ScheduleData {
+    return ScheduleData(
+        id = this.id,
+        title = this.title ?: "New Event", // 기본 제목 설정
+        location = this.location,
+        isAllDay = this.isAllDay,
+        start = this.start,
         end = this.end,
-        isOriginalEvent = false // 🔹 원본이 아님을 표시
+        repeatType = this.repeatType,
+        repeatUntil = this.repeatUntil,
+        repeatRule = this.repeatRule,
+        alarmOption = this.alarmOption,
+        isOriginalSchedule = true // 반복 일정이므로 false
     )
 }

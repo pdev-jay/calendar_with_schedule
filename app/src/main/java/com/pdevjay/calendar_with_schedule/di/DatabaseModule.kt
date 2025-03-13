@@ -3,6 +3,7 @@ package com.pdevjay.calendar_with_schedule.di
 import android.content.Context
 import android.util.Log
 import androidx.room.Room
+import com.pdevjay.calendar_with_schedule.data.database.RecurringScheduleDao
 import com.pdevjay.calendar_with_schedule.data.database.ScheduleDao
 import com.pdevjay.calendar_with_schedule.data.database.ScheduleDatabase
 import com.pdevjay.calendar_with_schedule.data.repository.ScheduleRepository
@@ -35,6 +36,8 @@ object DatabaseModule {
 
     @Provides
     fun provideScheduleDao(database: ScheduleDatabase): ScheduleDao = database.scheduleDao()
+    @Provides
+    fun provideRecurringScheduleDao(database: ScheduleDatabase): RecurringScheduleDao = database.recurringScheduleDao()
 }
 
 @Module

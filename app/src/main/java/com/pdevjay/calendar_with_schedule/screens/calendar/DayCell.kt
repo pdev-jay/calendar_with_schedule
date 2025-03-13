@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarDay
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.DateTimePeriod
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
 import java.time.LocalDate
@@ -37,7 +38,7 @@ import java.time.LocalTime
 fun DayCell(
     day: CalendarDay,
     height: Dp,
-    schedules: List<ScheduleData>,
+    schedules: List<BaseSchedule>,
     onClick: (CalendarDay) -> Unit
 ) {
     val sortedSchedules = schedules.sortedWith(

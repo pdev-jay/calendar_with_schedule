@@ -11,13 +11,14 @@ import androidx.compose.ui.unit.dp
 import com.pdevjay.calendar_with_schedule.data.entity.ScheduleEntity
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarDay
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarMonth
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
 import java.time.LocalDate
 
 @Composable
 fun MonthItem(
     month: CalendarMonth,
-    scheduleMap: Map<LocalDate, List<ScheduleData>>,
+    scheduleMap: Map<LocalDate, List<BaseSchedule>>,
     onDayClick: (CalendarDay) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {

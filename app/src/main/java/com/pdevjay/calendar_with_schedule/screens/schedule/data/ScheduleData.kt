@@ -1,9 +1,8 @@
 package com.pdevjay.calendar_with_schedule.screens.schedule.data
 
-import androidx.room.ColumnInfo
+import com.google.gson.annotations.SerializedName
 import com.pdevjay.calendar_with_schedule.data.entity.ScheduleEntity
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
-import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatOption
 import com.pdevjay.calendar_with_schedule.utils.RepeatType
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -13,76 +12,56 @@ import java.util.UUID
 
 // 단일 이벤트(일정)를 나타내는 데이터 클래스
 data class ScheduleData(
-    val id: String = UUID.randomUUID().toString(),
-    val title: String = "New Event",
-    val location: String? = null,
-    val isAllDay: Boolean = false,
-    val start: DateTimePeriod,
-    val end: DateTimePeriod,
-    val repeatType: RepeatType = RepeatType.NONE, // 🔹 RepeatType 사용
-    val repeatUntil: LocalDate? = null,
-    val repeatRule: String? = null, // 🔹 RRule을 저장할 문자열
-    val alarmOption: AlarmOption = AlarmOption.NONE, // 🔹 알림 옵션 추가
-    val isOriginalEvent: Boolean = true
-)
-
-// 겹침 여부 확인 함수
-fun ScheduleData.overlapsWith(other: ScheduleData): Boolean {
-    // 현재 일정의 시작/종료 시간을 분(Minutes) 단위로 변환
-    val thisStart = this.start.toMinutes()
-    val thisEnd = this.end.toMinutes()
-
-    // 비교 대상 일정의 시작/종료 시간을 분(Minutes) 단위로 변환
-    val otherStart = other.start.toMinutes()
-    val otherEnd = other.end.toMinutes()
-
-    // 시간이 겹치는 경우의 조건:
-    //    1. 현재 일정의 시작 시간이 다른 일정의 종료 시간보다 앞이어야 함 (thisStart < otherEnd)
-    //    2. 현재 일정의 종료 시간이 다른 일정의 시작 시간보다 뒤이어야 함 (thisEnd > otherStart)
-    return thisStart < otherEnd && thisEnd > otherStart
-}
+    @SerializedName("id") override val id: String = UUID.randomUUID().toString(),
+    @SerializedName("title") override val title: String = "New Event",
+    @SerializedName("location") override val location: String? = null,
+    @SerializedName("isAllDay") override val isAllDay: Boolean = false,
+    @SerializedName("start") override val start: DateTimePeriod,
+    @SerializedName("end") override val end: DateTimePeriod,
+    @SerializedName("repeatType") override val repeatType: RepeatType = RepeatType.NONE,
+    @SerializedName("repeatUntil") override val repeatUntil: LocalDate? = null,
+    @SerializedName("repeatRule") override val repeatRule: String? = null,
+    @SerializedName("alarmOption") override val alarmOption: AlarmOption = AlarmOption.NONE,
+    @SerializedName("isOriginalSchedule") override val isOriginalSchedule: Boolean = true
+) : BaseSchedule(id, title, location, isAllDay, start, end, repeatType, repeatUntil, repeatRule, alarmOption, isOriginalSchedule)
 
 // ScheduleData <-> TaskEntity 변환 함수들
-fun ScheduleData.toScheduleEntity() = ScheduleEntity(
-    id = id,
-    title = title,
-    location = location,
-    isAllDay = isAllDay,
-    start = start,
-    end = end,
-    repeatType = repeatType,
-    repeatUntil = repeatUntil,
-    repeatRule = repeatRule,              // RRule 그대로 저장
-    alarmOption = alarmOption,             // Enum 변환
-    isOriginalEvent = isOriginalEvent
-)
-
-fun ScheduleEntity.toScheduleData() = ScheduleData(
-    id = id,
-    title = title,
-    location = location,
-    isAllDay = isAllDay,
-    start = start,
-    end = end,
-    repeatType = repeatType,         // Enum 변환 유지
-    repeatUntil = repeatUntil,
-    repeatRule = repeatRule,             // RRule 그대로 유지
-    alarmOption = alarmOption,            // Enum 변환 유지
-    isOriginalEvent = isOriginalEvent
-)
-data class DateTimePeriod(
-    val date: LocalDate,
-    val time: LocalTime
-)
-
-fun DateTimePeriod.toDateTime(): LocalDateTime {
-    return LocalDateTime.of(date, time)
+fun ScheduleData.toScheduleEntity(): ScheduleEntity {
+    return ScheduleEntity(
+        id = this.id,
+        title = this.title,
+        location = this.location,
+        isAllDay = this.isAllDay,
+        start = this.start,
+        end = this.end,
+        repeatType = this.repeatType,
+        repeatUntil = this.repeatUntil,
+        repeatRule = this.repeatRule,
+        alarmOption = this.alarmOption,
+        isOriginalSchedule = this.isOriginalSchedule
+    )
 }
 
-// DateTimePeriod -> 분 단위 변환
-fun DateTimePeriod.toMinutes(): Int {
-    return this.date.dayOfYear * 1440 + this.time.hour * 60 + this.time.minute
+
+fun ScheduleData.toRecurringData(selectedDate: LocalDate): RecurringData {
+    return RecurringData(
+        id = "${this.id}_${selectedDate}", // 고유 ID 생성
+        originalEventId = this.id,
+        originalRecurringDate = selectedDate, // 원본 반복 일정 날짜
+        title = this.title,
+        location = this.location,
+        isAllDay = this.isAllDay,
+        start = this.start.copy(date = selectedDate),
+        end = this.end.copy(date = selectedDate),
+        repeatType = this.repeatType,
+        repeatUntil = this.repeatUntil,
+        repeatRule = this.repeatRule,
+        alarmOption = this.alarmOption,
+        isOriginalSchedule = false,
+        isDeleted = false // 기본적으로 삭제되지 않음
+    )
 }
+
 
 fun generateRepeatRule(repeatType: RepeatType): String? {
     return when (repeatType) {

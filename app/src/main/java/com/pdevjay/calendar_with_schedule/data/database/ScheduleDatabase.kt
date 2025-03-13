@@ -12,4 +12,5 @@ import com.pdevjay.calendar_with_schedule.utils.DateTimePeriodConverter
 @TypeConverters(DateTimePeriodConverter::class, AlarmOptionConverter::class)
 abstract class ScheduleDatabase : RoomDatabase() {
     abstract fun scheduleDao(): ScheduleDao
+    abstract fun recurringScheduleDao(): RecurringScheduleDao // 🔥 추가
 }
