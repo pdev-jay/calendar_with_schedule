@@ -61,4 +61,5 @@ interface ScheduleRepository {
      * 또한 `recurring_schedules` 테이블에서도 해당 날짜 이후의 모든 반복 일정 삭제
      */
     suspend fun deleteFutureRecurringSchedule(recurringData: RecurringData)
+    suspend fun deleteRecurringSchedule(recurringData: RecurringData)
 }

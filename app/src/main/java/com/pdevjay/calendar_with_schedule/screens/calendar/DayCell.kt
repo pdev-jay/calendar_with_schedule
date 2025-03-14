@@ -130,46 +130,46 @@ fun calculateScheduleColor(index: Int, totalCount: Int): Color {
     )
 }
 
-@Preview(showBackground = true)
-@Composable
-fun PreviewDayCell() {
-    val sampleDay = CalendarDay(
-        date = LocalDate.now(),
-        dayOfWeek = LocalDate.now().dayOfWeek,
-        isToday = true
-    )
-
-    val sampleSchedules = listOf(
-        ScheduleData(
-            title = "Morning Standup",
-            location = "Office",
-            start = DateTimePeriod(LocalDate.now(), LocalTime.of(9, 0)),
-            end = DateTimePeriod(LocalDate.now(), LocalTime.of(9, 30))
-        ),
-        ScheduleData(
-            title = "Client Meeting",
-            location = "Zoom",
-            start = DateTimePeriod(LocalDate.now(), LocalTime.of(11, 0)),
-            end = DateTimePeriod(LocalDate.now(), LocalTime.of(12, 0))
-        ),
-        ScheduleData(
-            title = "Lunch Break",
-            location = "Cafe",
-            start = DateTimePeriod(LocalDate.now(), LocalTime.of(2, 30)),
-            end = DateTimePeriod(LocalDate.now(), LocalTime.of(13, 30))
-        ),
-        ScheduleData(
-            title = "Project Review",
-            location = "Conference Room",
-            start = DateTimePeriod(LocalDate.now(), LocalTime.of(15, 0)),
-            end = DateTimePeriod(LocalDate.now(), LocalTime.of(16, 0))
-        )
-    )
-
-    DayCell(
-        day = sampleDay,
-        height = 120.dp,
-        schedules = sampleSchedules,
-        onClick = { /* 클릭 이벤트 처리 */ }
-    )
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun PreviewDayCell() {
+//    val sampleDay = CalendarDay(
+//        date = LocalDate.now(),
+//        dayOfWeek = LocalDate.now().dayOfWeek,
+//        isToday = true
+//    )
+//
+//    val sampleSchedules = listOf(
+//        ScheduleData(
+//            title = "Morning Standup",
+//            location = "Office",
+//            start = DateTimePeriod(LocalDate.now(), LocalTime.of(9, 0)),
+//            end = DateTimePeriod(LocalDate.now(), LocalTime.of(9, 30))
+//        ),
+//        ScheduleData(
+//            title = "Client Meeting",
+//            location = "Zoom",
+//            start = DateTimePeriod(LocalDate.now(), LocalTime.of(11, 0)),
+//            end = DateTimePeriod(LocalDate.now(), LocalTime.of(12, 0))
+//        ),
+//        ScheduleData(
+//            title = "Lunch Break",
+//            location = "Cafe",
+//            start = DateTimePeriod(LocalDate.now(), LocalTime.of(2, 30)),
+//            end = DateTimePeriod(LocalDate.now(), LocalTime.of(13, 30))
+//        ),
+//        ScheduleData(
+//            title = "Project Review",
+//            location = "Conference Room",
+//            start = DateTimePeriod(LocalDate.now(), LocalTime.of(15, 0)),
+//            end = DateTimePeriod(LocalDate.now(), LocalTime.of(16, 0))
+//        )
+//    )
+//
+//    DayCell(
+//        day = sampleDay,
+//        height = 120.dp,
+//        schedules = sampleSchedules,
+//        onClick = { /* 클릭 이벤트 처리 */ }
+//    )
+//}

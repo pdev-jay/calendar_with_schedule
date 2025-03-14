@@ -3,6 +3,7 @@ package com.pdevjay.calendar_with_schedule.screens.schedule.data
 import com.google.gson.annotations.SerializedName
 import com.pdevjay.calendar_with_schedule.data.entity.ScheduleEntity
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
+import com.pdevjay.calendar_with_schedule.utils.RRuleHelper
 import com.pdevjay.calendar_with_schedule.utils.RepeatType
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -22,7 +23,8 @@ data class ScheduleData(
     @SerializedName("repeatUntil") override val repeatUntil: LocalDate? = null,
     @SerializedName("repeatRule") override val repeatRule: String? = null,
     @SerializedName("alarmOption") override val alarmOption: AlarmOption = AlarmOption.NONE,
-    @SerializedName("isOriginalSchedule") override val isOriginalSchedule: Boolean = true
+    @SerializedName("isOriginalSchedule") override val isOriginalSchedule: Boolean = true,
+    @SerializedName("originalRepeatUntil") val originalRepeatUntil: LocalDate? = null
 ) : BaseSchedule(id, title, location, isAllDay, start, end, repeatType, repeatUntil, repeatRule, alarmOption, isOriginalSchedule)
 
 // ScheduleData <-> TaskEntity 변환 함수들
@@ -36,9 +38,10 @@ fun ScheduleData.toScheduleEntity(): ScheduleEntity {
         end = this.end,
         repeatType = this.repeatType,
         repeatUntil = this.repeatUntil,
-        repeatRule = this.repeatRule,
+        repeatRule = RRuleHelper.generateRRule(this.repeatType, this.start.date, this.repeatUntil),
         alarmOption = this.alarmOption,
-        isOriginalSchedule = this.isOriginalSchedule
+        isOriginalSchedule = this.isOriginalSchedule,
+        originalRepeatUntil = this.originalRepeatUntil
     )
 }
 
@@ -48,6 +51,7 @@ fun ScheduleData.toRecurringData(selectedDate: LocalDate): RecurringData {
         id = "${this.id}_${selectedDate}", // 고유 ID 생성
         originalEventId = this.id,
         originalRecurringDate = selectedDate, // 원본 반복 일정 날짜
+        originatedFrom = this.id, // 원본 일정
         title = this.title,
         location = this.location,
         isAllDay = this.isAllDay,
@@ -58,7 +62,8 @@ fun ScheduleData.toRecurringData(selectedDate: LocalDate): RecurringData {
         repeatRule = this.repeatRule,
         alarmOption = this.alarmOption,
         isOriginalSchedule = false,
-        isDeleted = false // 기본적으로 삭제되지 않음
+        isDeleted = false, // 기본적으로 삭제되지 않음
+        originalRepeatUntil = this.originalRepeatUntil,
     )
 }
 

@@ -51,7 +51,7 @@ class ScheduleViewModel @Inject constructor(
                     scheduleRepository.saveFutureRecurringScheduleChange(intent.schedule)
                 }
                 is ScheduleIntent.UpdateSingleRecurringSchedule -> {
-                    scheduleRepository.saveSingleRecurringScheduleChange(intent.schedule)
+                    scheduleRepository.saveSingleRecurringScheduleChange(intent.schedule.copy(repeatType = RepeatType.NONE))
                 }
 
                 is ScheduleIntent.DeleteFutureRecurringSchedule -> {
@@ -59,7 +59,7 @@ class ScheduleViewModel @Inject constructor(
                 }
 
                 is ScheduleIntent.DeleteSingleRecurringSchedule -> {
-                    scheduleRepository.saveSingleRecurringScheduleChange(intent.schedule.copy(isDeleted = true))
+                    scheduleRepository.deleteRecurringSchedule(intent.schedule)
                 }
 
                 is ScheduleIntent.DeleteFutureSchedule -> {

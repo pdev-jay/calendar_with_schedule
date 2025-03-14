@@ -64,7 +64,6 @@ fun CalendarScreen(
 
     val monthListState = calendarViewModel.monthListState
     val currentVisibleMonth by rememberCurrentVisibleMonth(listState, monthListState)
-    val lastVisibleMonth = remember { mutableStateOf<YearMonth?>(null) }
 
     val isInitialized = rememberSaveable { mutableStateOf(false) }
 
@@ -143,12 +142,6 @@ fun CalendarScreen(
                         scheduleViewModel = scheduleViewModel,
                         schedules = calendarState.scheduleMap[calendarState.selectedDate] ?: emptyList(),
                         onEventClick = { event ->
-//                            val gson: Gson = GsonBuilder()
-//                                .registerTypeAdapter(LocalDate::class.java, LocalDateAdapter())
-//                                .registerTypeAdapter(LocalTime::class.java, LocalTimeAdapter())
-//                                .create()
-//
-////                            val jsonSchedule = gson.toJson(event)
                             val jsonSchedule = URLEncoder.encode(JsonUtils.gson.toJson(event), "UTF-8")
 
                             navController.navigate("scheduleDetail/${URLEncoder.encode(jsonSchedule, "UTF-8")}")

@@ -54,12 +54,15 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.pdevjay.calendar_with_schedule.ui.theme.AppTheme
 import com.pdevjay.calendar_with_schedule.R
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.DateTimePeriod
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.generateRepeatRule
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
+import com.pdevjay.calendar_with_schedule.screens.schedule.intents.ScheduleIntent
+import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
 import com.pdevjay.calendar_with_schedule.utils.RRuleHelper.generateRRule
 import com.pdevjay.calendar_with_schedule.utils.RepeatType
 import com.pdevjay.calendar_with_schedule.utils.SlideInHorizontallyContainer
@@ -70,8 +73,8 @@ import java.time.LocalTime
 @Composable
 fun ScheduleAddScreen(
     selectedDate: LocalDate?,
-    onDismiss: () -> Unit,
-    onSave: (ScheduleData) -> Unit
+    navController: NavController,
+    scheduleViewModel: ScheduleViewModel,
 ) {
     val now = remember { LocalTime.now() }
     val initialDate = remember { selectedDate ?: LocalDate.now() }
@@ -97,7 +100,7 @@ fun ScheduleAddScreen(
 
     BackHandler {
         isVisible = false
-        onDismiss()
+        navController.popBackStack()
     }
 
     LaunchedEffect(Unit) { isVisible = true }
@@ -121,7 +124,7 @@ fun ScheduleAddScreen(
                         navigationIcon = {
                             IconButton(onClick = {
                                 isVisible = false
-                                onDismiss()
+                                navController.popBackStack()
                             }) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -174,7 +177,6 @@ fun ScheduleAddScreen(
                         HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 2.dp, color = Color.LightGray)
                         if (isRepeatUntilEnabled){
                             DateTimeSelector(stringResource(R.string.repeat_until), date = repeatUntil, onDateClick = {showDatePickerForRepeatUntil = true})
-//                            RepeatUntilSelector(stringResource(R.string.repeat_until), repeatUntil, onClick = {showDatePickerForRepeatUntil = true})
                         }
                     }
                 }
@@ -196,7 +198,6 @@ fun ScheduleAddScreen(
 
                 Button(
                     onClick = {
-                        isVisible = false
                         val newSchedule = ScheduleData(
                             title = if (title.isBlank()) "New Event" else title,
                             location = location,
@@ -214,7 +215,9 @@ fun ScheduleAddScreen(
                             isOriginalSchedule = true // ✅ 변경됨
                         )
                         Log.e("","ScheduleAddScreen: $newSchedule")
-                        onSave(newSchedule)
+                        scheduleViewModel.processIntent(ScheduleIntent.AddSchedule(newSchedule))
+                        isVisible = false
+                        navController.popBackStack()
                     },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
@@ -514,10 +517,10 @@ fun GroupContainer(content: @Composable () -> Unit){
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun PreviewScheduleAddScreen(){
-    AppTheme {
-        ScheduleAddScreen(LocalDate.now(), {}, {})
-    }
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun PreviewScheduleAddScreen(){
+//    AppTheme {
+//        ScheduleAddScreen(LocalDate.now(), {}, {})
+//    }
+//}

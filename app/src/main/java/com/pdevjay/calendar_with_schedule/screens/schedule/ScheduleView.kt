@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
@@ -87,53 +88,62 @@ fun ScheduleView(
     val nonAllDayEvents = dayEvents.filter { !it.isAllDay }
     val groupedEvents = remember(nonAllDayEvents) { groupOverlappingEvents(nonAllDayEvents) }
     Box(modifier = modifier.fillMaxSize()) {
-        Column(
-            Modifier
-                .verticalScroll(scrollState)
-                .fillMaxSize()
-        ) {
+        Column {
 
             Column(modifier = Modifier.fillMaxWidth()) {
                 if (selectedDay != null) {
                     allDayEvents.forEach { event ->
-                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                            Text(event.title, fontSize = 12.sp)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color(0xFF03A9F4), shape = RoundedCornerShape(8.dp)),
+                            contentAlignment = Alignment.Center,
+
+                        ) {
+                            Text(event.title, fontSize = 12.sp, color = Color.White, modifier = Modifier.padding(4.dp))
                         }
                     }
                 }
             }
-            Row(modifier = Modifier.fillMaxSize()) {
-                TimeColumn()
+            Column(
+                Modifier
+                    .verticalScroll(scrollState)
+                    .fillMaxSize()
+            ) {
 
-                BoxWithConstraints(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(1440.dp)  // 24시간 = 1440분
-                ) {
-                    Canvas(modifier = Modifier.matchParentSize()) {
-                        for (hour in 0 until 24) {
-                            val y = hour * 60f.dp.toPx()
-                            drawLine(
-                                color = Color.LightGray,
-                                start = androidx.compose.ui.geometry.Offset(0f, y),
-                                end = androidx.compose.ui.geometry.Offset(size.width, y),
-                                strokeWidth = 1.dp.toPx()
-                            )
-                        }
-                    }
-                    // 이벤트 블록 표시
-                    groupedEvents.forEach { group ->
-                        val totalCount = group.size
-                        group.forEachIndexed { index, event ->
-                            if (selectedDay != null) { // selectedDay가 null이 아닐 때만 실행
-                                EventBlock(event, index, totalCount, maxWidth, selectedDay, onEventClick)
+                Row(modifier = Modifier.fillMaxSize()) {
+                    TimeColumn()
+
+                    BoxWithConstraints(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(1440.dp)  // 24시간 = 1440분
+                    ) {
+                        Canvas(modifier = Modifier.matchParentSize()) {
+                            for (hour in 0 until 24) {
+                                val y = hour * 60f.dp.toPx()
+                                drawLine(
+                                    color = Color.LightGray,
+                                    start = androidx.compose.ui.geometry.Offset(0f, y),
+                                    end = androidx.compose.ui.geometry.Offset(size.width, y),
+                                    strokeWidth = 1.dp.toPx()
+                                )
                             }
                         }
-                    }
+                        // 이벤트 블록 표시
+                        groupedEvents.forEach { group ->
+                            val totalCount = group.size
+                            group.forEachIndexed { index, event ->
+                                if (selectedDay != null) { // selectedDay가 null이 아닐 때만 실행
+                                    EventBlock(event, index, totalCount, maxWidth, selectedDay, onEventClick)
+                                }
+                            }
+                        }
 
-                    if (selectedDay == LocalDate.now()) {
-                        // 현재 시간 표시줄
-                        NowIndicator()
+                        if (selectedDay == LocalDate.now()) {
+                            // 현재 시간 표시줄
+                            NowIndicator()
+                        }
                     }
                 }
             }

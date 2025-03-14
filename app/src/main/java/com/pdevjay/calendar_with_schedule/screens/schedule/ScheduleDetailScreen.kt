@@ -96,9 +96,10 @@ fun ScheduleDetailScreen(
                         start = start,
                         end = end,
                         repeatType = repeatType,
+                        repeatUntil = if (isRepeatUntilEnabled) repeatUntil else null,
                         alarmOption = alarmOption
                     )
-                    scheduleViewModel.processIntent(ScheduleIntent.UpdateSchedule(updatedSchedule))
+                    scheduleViewModel.processIntent(ScheduleIntent.UpdateSingleSchedule(updatedSchedule))
                 }
                 is RecurringData -> {
                     val updatedRecurringData = schedule.copy(

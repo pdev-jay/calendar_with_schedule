@@ -2,7 +2,10 @@ package com.pdevjay.calendar_with_schedule.data.database
 
 import androidx.room.*
 import com.pdevjay.calendar_with_schedule.data.entity.RecurringScheduleEntity
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.DateTimePeriod
+import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
 import kotlinx.coroutines.flow.Flow
+import java.time.LocalDate
 
 @Dao
 interface RecurringScheduleDao {
@@ -22,12 +25,23 @@ interface RecurringScheduleDao {
      * @param months 조회할 월 목록 (yyyy-MM 형식)
      * @return 해당 월의 반복 일정 목록을 Flow 형태로 반환
      */
+//    @Query("""
+//        SELECT * FROM recurring_schedules
+//        WHERE strftime('%Y-%m', substr(startDate, 1, instr(startDate, '|') - 1)) IN (:months)
+//           OR strftime('%Y-%m', substr(endDate, 1, instr(endDate, '|') - 1)) IN (:months)
+//    """)
     @Query("""
-        SELECT * FROM recurring_schedules 
-        WHERE strftime('%Y-%m', substr(startDate, 1, instr(startDate, '|') - 1)) IN (:months)
-           OR strftime('%Y-%m', substr(endDate, 1, instr(endDate, '|') - 1)) IN (:months)
-    """)
-    fun getRecurringSchedulesForMonths(months: List<String>): Flow<List<RecurringScheduleEntity>>
+    SELECT * FROM recurring_schedules 
+    WHERE (repeatType = 'NONE' AND (
+        strftime('%Y-%m', substr(startDate, 1, instr(startDate, '|') - 1)) IN (:months)
+        OR strftime('%Y-%m', substr(endDate, 1, instr(endDate, '|') - 1)) IN (:months)
+    ))
+    OR (repeatType != 'NONE' AND 
+        strftime('%Y-%m', substr(startDate, 1, instr(startDate, '|') - 1)) <= :maxMonth
+                AND (repeatUntil IS NULL OR strftime('%Y-%m', repeatUntil) >= :minMonth) -- 🔥 추가된 조건
+    )
+""")
+    fun getRecurringSchedulesForMonths(months: List<String>, minMonth: String, maxMonth: String): Flow<List<RecurringScheduleEntity>>
 
     /**
      * 특정 날짜에 삭제된 반복 일정의 원본 이벤트 ID를 조회합니다.
@@ -55,6 +69,36 @@ interface RecurringScheduleDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRecurringSchedule(schedule: RecurringScheduleEntity)
 
+    @Query("""
+    INSERT OR IGNORE INTO recurring_schedules (
+        id, originalEventId, originalRecurringDate, originatedFrom, startDate, endDate, title, 
+        location, isAllDay, repeatType, repeatUntil, repeatRule, alarmOption, 
+        isOriginalSchedule, isDeleted, originalRepeatUntil
+    ) VALUES (
+        :id, :originalEventId, :originalRecurringDate, :originatedFrom, :startDate, :endDate, :title, 
+        :location, :isAllDay, 'NONE', :repeatUntil, :repeatRule, :alarmOption, 
+        :isOriginalSchedule, 1, :originalRepeatUntil
+    )
+""")
+    suspend fun insertRecurringScheduleIfNotExists(
+        id: String,
+        originalEventId: String,
+        originalRecurringDate: LocalDate,
+        originatedFrom: String,
+        startDate: DateTimePeriod,
+        endDate: DateTimePeriod,
+        title: String?,
+        location: String?,
+        isAllDay: Boolean,
+        repeatUntil: LocalDate?,
+        repeatRule: String?,
+        alarmOption: AlarmOption,
+        isOriginalSchedule: Boolean,
+        originalRepeatUntil: LocalDate?
+    )
+
+    @Query("UPDATE recurring_schedules SET isDeleted = 1 WHERE id = :id")
+    suspend fun markRecurringScheduleAsDeleted(id: String)
     /**
      * 특정 원본 이벤트 ID와 시작 날짜를 기반으로 반복 일정을 삭제합니다.
      *
@@ -63,4 +107,11 @@ interface RecurringScheduleDao {
      */
     @Query("DELETE FROM recurring_schedules WHERE originalEventId = :eventId AND startDate = :date")
     suspend fun deleteRecurringSchedule(eventId: String, date: String)
+
+    /**
+     * 특정 이벤트 ID를 기반으로 반복 일정의 `repeatUntil`을 업데이트합니다.
+     */
+    @Query("UPDATE recurring_schedules SET repeatUntil = :repeatUntil WHERE id = :eventId")
+    suspend fun updateRepeatUntil(eventId: String, repeatUntil: String)
+
 }

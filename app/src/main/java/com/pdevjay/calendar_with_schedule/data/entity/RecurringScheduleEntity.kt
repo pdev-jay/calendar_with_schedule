@@ -14,6 +14,7 @@ data class RecurringScheduleEntity(
     @PrimaryKey val id: String, // "originalEventId_selectedDate"
     @ColumnInfo(name = "originalEventId") val originalEventId: String,
     @ColumnInfo(name = "originalRecurringDate") val originalRecurringDate: LocalDate,
+    @ColumnInfo(name = "originatedFrom") val originatedFrom: String,
     @ColumnInfo(name = "startDate") val start: DateTimePeriod,
     @ColumnInfo(name = "endDate") val end: DateTimePeriod,
     @ColumnInfo(name = "title") val title: String?,
@@ -24,13 +25,15 @@ data class RecurringScheduleEntity(
     @ColumnInfo(name = "repeatRule") val repeatRule: String?, // ✅ 추가
     @ColumnInfo(name = "alarmOption") val alarmOption: AlarmOption, // ✅ 추가
     @ColumnInfo(name = "isOriginalSchedule") val isOriginalSchedule: Boolean = false,
-    @ColumnInfo(name = "isDeleted") val isDeleted: Boolean // 해당 날짜의 일정이 삭제되었는지 여부
+    @ColumnInfo(name = "isDeleted") val isDeleted: Boolean, // 해당 날짜의 일정이 삭제되었는지 여부
+    @ColumnInfo(name = "originalRepeatUntil") val originalRepeatUntil: LocalDate? // ✅ 추가
 )
 
 fun RecurringScheduleEntity.toRecurringData(): RecurringData {
     return RecurringData(
         id = this.id,
         originalEventId = this.originalEventId,
+        originatedFrom = this.originatedFrom,
         originalRecurringDate = this.originalRecurringDate,
         title = this.title ?: "",
         location = this.location,
@@ -42,6 +45,7 @@ fun RecurringScheduleEntity.toRecurringData(): RecurringData {
         repeatRule = this.repeatRule,
         alarmOption = this.alarmOption,
         isOriginalSchedule = this.isOriginalSchedule,
-        isDeleted = this.isDeleted
+        isDeleted = this.isDeleted,
+        originalRepeatUntil = this.originalRepeatUntil
     )
 }

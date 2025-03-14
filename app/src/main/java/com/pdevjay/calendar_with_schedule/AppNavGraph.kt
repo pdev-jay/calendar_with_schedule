@@ -61,12 +61,8 @@ fun AppNavGraph(
 
             ScheduleAddScreen(
                 selectedDate = selectedDate,
-                onDismiss = { navController.popBackStack() },
-                onSave = { scheduleData ->
-                    // 저장 처리
-                    scheduleViewModel.processIntent(ScheduleIntent.AddSchedule(scheduleData))
-                    navController.popBackStack()
-                }
+                navController = navController,
+                scheduleViewModel = scheduleViewModel,
             )
         }
     }

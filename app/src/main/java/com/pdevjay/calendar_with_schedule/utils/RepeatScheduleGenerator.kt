@@ -1,6 +1,6 @@
 package com.pdevjay.calendar_with_schedule.utils
 
-import android.util.Log
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.RecurringData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.toRecurringData
@@ -64,12 +64,61 @@ object RepeatScheduleGenerator {
 //
 //}
 
+//    fun generateRepeatedDates(
+//        repeatType: RepeatType,
+//        startDate: LocalDate,
+//        monthList: List<YearMonth>? = null,
+//        selectedDate: LocalDate? = null,
+//        dateToIgnore: List<LocalDate> = emptyList(),
+//        repeatUntil: LocalDate? = null // 🔹 repeatUntil 추가
+//    ): List<LocalDate> {
+//        if (monthList == null) {
+//            return selectedDate?.let {
+//                generateSequence(startDate) { currentDate ->
+//                    when (repeatType) {
+//                        RepeatType.DAILY -> currentDate.plusDays(1)
+//                        RepeatType.WEEKLY -> currentDate.plusWeeks(1)
+//                        RepeatType.BIWEEKLY -> currentDate.plusWeeks(2)
+//                        RepeatType.MONTHLY -> currentDate.plusMonths(1)
+//                        RepeatType.YEARLY -> currentDate.plusYears(1)
+//                        else -> null
+//                    }
+//                }
+//                    .takeWhile { it <= selectedDate && (repeatUntil == null || it <= repeatUntil) } // 🔹 repeatUntil 반영
+//                    .filterNot { dateToIgnore.contains(it) }
+//                    .find { it == selectedDate }?.let { listOf(it) }
+//                    ?: emptyList()
+//            } ?: emptyList()
+//        }
+//
+//        if (monthList.isEmpty()) return emptyList()
+//
+//        val maxMonth = monthList.maxOrNull() ?: return emptyList()
+//
+//        return generateSequence(startDate) { currentDate ->
+//            when (repeatType) {
+//                RepeatType.DAILY -> currentDate.plusDays(1)
+//                RepeatType.WEEKLY -> currentDate.plusWeeks(1)
+//                RepeatType.BIWEEKLY -> currentDate.plusWeeks(2)
+//                RepeatType.MONTHLY -> currentDate.plusMonths(1)
+//                RepeatType.YEARLY -> currentDate.plusYears(1)
+//                else -> null
+//            }
+//        }
+//            .takeWhile { date -> YearMonth.from(date) <= maxMonth && (repeatUntil == null || date <= repeatUntil) } // 🔹 repeatUntil 반영
+//            .filterNot { dateToIgnore.contains(it) }
+//            .filter { date ->
+//                selectedDate?.let { it == date }
+//                    ?: monthList.contains(YearMonth.from(date))
+//            }
+//            .toList()
+//    }
     fun generateRepeatedDates(
         repeatType: RepeatType,
         startDate: LocalDate,
         monthList: List<YearMonth>? = null,
         selectedDate: LocalDate? = null,
-        dateToIgnore: List<LocalDate> = emptyList(),
+        dateToIgnore: Set<LocalDate> = emptySet(), // 🔹 List -> Set으로 변경 (중복 제거 및 성능 향상)
         repeatUntil: LocalDate? = null // 🔹 repeatUntil 추가
     ): List<LocalDate> {
         if (monthList == null) {
@@ -85,8 +134,9 @@ object RepeatScheduleGenerator {
                     }
                 }
                     .takeWhile { it <= selectedDate && (repeatUntil == null || it <= repeatUntil) } // 🔹 repeatUntil 반영
-                    .filterNot { dateToIgnore.contains(it) }
-                    .find { it == selectedDate }?.let { listOf(it) }
+                    .filterNot { it in dateToIgnore || it == startDate} // 🔹 contains() 대신 `in` 사용 (Set으로 최적화)
+                    .find { it == selectedDate }
+                    ?.let { listOf(it) }
                     ?: emptyList()
             } ?: emptyList()
         }
@@ -106,7 +156,7 @@ object RepeatScheduleGenerator {
             }
         }
             .takeWhile { date -> YearMonth.from(date) <= maxMonth && (repeatUntil == null || date <= repeatUntil) } // 🔹 repeatUntil 반영
-            .filterNot { dateToIgnore.contains(it) }
+            .filterNot { it in dateToIgnore || it == startDate} // 🔹 contains() 대신 `in` 사용 (Set으로 최적화)
             .filter { date ->
                 selectedDate?.let { it == date }
                     ?: monthList.contains(YearMonth.from(date))
@@ -114,14 +164,28 @@ object RepeatScheduleGenerator {
             .toList()
     }
 
-    fun generateRepeatedScheduleInstances(schedule: ScheduleData, selectedDay: LocalDate): RecurringData {
-//        return schedule.copy(
-//            id = "${schedule.id}_${selectedDay}", // 🔹 ID를 다르게 하여 중복 방지
-//            start = schedule.start.copy(date = selectedDay), // 🔹 선택된 날짜에 맞게 조정
-//            end = schedule.end.copy(date = selectedDay), // 🔹 종료 날짜도 선택된 날짜로 조정
-//            isOriginalSchedule = false,
-//        )
-        return schedule.copy().toRecurringData(selectedDay)
+
+    fun generateRepeatedScheduleInstances(schedule: BaseSchedule, selectedDay: LocalDate): RecurringData {
+       return when(schedule){
+            is ScheduleData -> {
+                schedule.copy().toRecurringData(selectedDay)
+            }
+            is RecurringData -> {
+                val newId = replaceDateInId(schedule.id, selectedDay.toString())
+                schedule.copy(
+                    id = newId,
+                    start = schedule.start.copy(date = selectedDay),
+                    end = schedule.end.copy(date = selectedDay),
+                    originalEventId = schedule.originalEventId,
+                    originalRecurringDate = selectedDay,
+                    originatedFrom = schedule.id,
+                    isDeleted = false // ui에 보여지는 반복일정이니 false -> isDeleted인 일정은 이미 제외되어 있음
+                )
+
+            }
+
+           else -> { schedule as RecurringData }
+       }
     }
 
     fun isValidRepeatDate(repeatType: RepeatType, originalStartDate: LocalDate, modifiedDate: LocalDate): Boolean {
@@ -154,6 +218,10 @@ object RepeatScheduleGenerator {
 
             else -> true // NONE 또는 CUSTOM은 모든 날짜 허용
         }
+    }
+
+    fun replaceDateInId(originalId: String, newDate: String): String {
+        return originalId.replace(Regex("""\d{4}-\d{2}-\d{2}$"""), newDate)
     }
 }
 
