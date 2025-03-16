@@ -4,12 +4,16 @@ import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.RecurringData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import java.time.LocalDate
 import java.time.YearMonth
 
 interface ScheduleRepository {
+    val scheduleMap: StateFlow<Map<LocalDate, List<BaseSchedule>>>
+
     fun getAllSchedules(): Flow<List<ScheduleData>>
 
+    suspend fun loadSchedulesForMonths(months: List<YearMonth>)
 
     suspend fun deleteSingleSchedule(schedule: ScheduleData)
 

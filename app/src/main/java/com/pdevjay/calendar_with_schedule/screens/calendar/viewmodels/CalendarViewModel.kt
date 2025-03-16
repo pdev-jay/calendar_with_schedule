@@ -5,14 +5,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pdevjay.calendar_with_schedule.data.repository.ScheduleRepository
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarMonth
+import com.pdevjay.calendar_with_schedule.screens.calendar.generateMonth
 import com.pdevjay.calendar_with_schedule.screens.calendar.intents.CalendarIntent
-import com.pdevjay.calendar_with_schedule.screens.calendar.loadInitialMonths
 import com.pdevjay.calendar_with_schedule.screens.calendar.states.CalendarState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 import java.time.YearMonth
 import javax.inject.Inject
 
@@ -25,10 +24,26 @@ class CalendarViewModel @Inject constructor(
     val monthListState = mutableStateListOf<CalendarMonth>()
 
 
+    init {
+        viewModelScope.launch {
+            scheduleRepository.scheduleMap.collect { newScheduleMap ->
+                _state.value = _state.value.copy(scheduleMap = newScheduleMap)
+            }
+        }
+    }
+
     fun initializeMonths() {
         if (monthListState.isEmpty()) {
             viewModelScope.launch {
-                loadInitialMonths(monthListState)
+                monthListState.clear()
+                val now = YearMonth.now()
+                val months = (-12..12).map { offset ->
+                    val yearMonth = now.plusMonths(offset.toLong())
+                    generateMonth(yearMonth.year, yearMonth.monthValue)
+                }
+                monthListState.addAll(months)
+
+//                scheduleRepository.loadSchedulesForMonths(monthListState.map { it.yearMonth })
             }
         }
     }
@@ -59,7 +74,14 @@ class CalendarViewModel @Inject constructor(
 
             is CalendarIntent.MonthChanged -> {
                 _state.value = _state.value.copy(currentMonth = intent.month)
-                loadSchedulesForMonth(intent.month)
+                viewModelScope.launch {
+                    val monthsToLoad = listOf(
+                        intent.month.minusMonths(1), // 이전 달
+                        intent.month, // 현재 달
+                        intent.month.plusMonths(1) // 다음 달
+                    )
+                    scheduleRepository.loadSchedulesForMonths(monthsToLoad) // ✅ 일정 로드
+                }
             }
 
         }

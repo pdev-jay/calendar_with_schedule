@@ -2,6 +2,9 @@ package com.pdevjay.calendar_with_schedule.screens.calendar
 
 import android.annotation.SuppressLint
 import android.util.Log
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.interaction.DragInteraction
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,6 +13,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -22,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -34,6 +40,8 @@ import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarMonth
 import com.pdevjay.calendar_with_schedule.screens.calendar.intents.CalendarIntent
 import com.pdevjay.calendar_with_schedule.screens.calendar.viewmodels.CalendarViewModel
 import com.pdevjay.calendar_with_schedule.screens.schedule.ScheduleView
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
+import com.pdevjay.calendar_with_schedule.screens.schedule.intents.ScheduleIntent
 import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
 import com.pdevjay.calendar_with_schedule.utils.ExpandVerticallyContainerFromTop
 import com.pdevjay.calendar_with_schedule.utils.JsonUtils
@@ -44,11 +52,15 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import java.net.URLEncoder
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.YearMonth
+import java.util.stream.Collectors.toList
+import kotlin.math.abs
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
@@ -76,7 +88,7 @@ fun CalendarScreen(
     LaunchedEffect(isInitialized.value) {
 
         if (!isInitialized.value) {
-            loadInitialMonths(monthListState)
+//            loadInitialMonths(monthListState)
 
             val currentMonthIndex = monthListState.indexOfFirst { month ->
                 val now = YearMonth.now()
@@ -96,6 +108,17 @@ fun CalendarScreen(
         }
     }
 
+    LaunchedEffect(calendarState.selectedDate) {
+        if (calendarState.selectedDate != null) {
+            val currentMonthIndex = monthListState.indexOfFirst { month ->
+                val now = calendarState.selectedDate
+                month.yearMonth.year == (now?.year
+                    ?: LocalDate.now().year) && month.yearMonth.monthValue == (now?.monthValue
+                    ?: LocalDate.now().monthValue)
+            }
+            listState.scrollToItem(currentMonthIndex)
+        }
+    }
     Scaffold(
         topBar = {
             CalendarTopBar(calendarViewModel, listState, navController)
@@ -139,20 +162,17 @@ fun CalendarScreen(
             ExpandVerticallyContainerFromTop (
                 isVisible = calendarState.selectedDate != null,
             ) {
-                    ScheduleView(
-                        selectedDay = calendarState.selectedDate,
-                        scheduleViewModel = scheduleViewModel,
-                        schedules = calendarState.scheduleMap[calendarState.selectedDate] ?: emptyList(),
-                        onEventClick = { event ->
-                            val jsonSchedule = URLEncoder.encode(JsonUtils.gson.toJson(event), "UTF-8")
-
-                            navController.navigate("scheduleDetail/${URLEncoder.encode(jsonSchedule, "UTF-8")}")
-
-                        },
-                        onBackButtonClicked = {
-                            calendarViewModel.processIntent(CalendarIntent.DateUnselected)
-                        },
-                    )
+                SchedulePager(
+                    calendarViewModel = calendarViewModel,
+                    scheduleViewModel = scheduleViewModel,
+                    onEventClick = { event ->
+                        val jsonSchedule = URLEncoder.encode(JsonUtils.gson.toJson(event), "UTF-8")
+                        navController.navigate("scheduleDetail/${URLEncoder.encode(jsonSchedule, "UTF-8")}")
+                    },
+                    onBackButtonClicked = {
+                        calendarViewModel.processIntent(CalendarIntent.DateUnselected)
+                    }
+                )
             }
         }
     }
@@ -182,15 +202,6 @@ fun CalendarScreen(
             }
     }
 
-}
-
-suspend fun loadInitialMonths(monthList: MutableList<CalendarMonth>) {
-    val now = YearMonth.now()
-    monthList.clear()
-    (-12..12).forEach { offset ->
-        val yearMonth = now.plusMonths(offset.toLong())
-        monthList.add(generateMonth(yearMonth.year, yearMonth.monthValue))
-    }
 }
 
 suspend fun loadNextMonths(
@@ -272,7 +283,7 @@ fun rememberCurrentVisibleMonth(
     var lastValidMiddleItem by rememberSaveable { mutableStateOf<Int?>(null) } // ✅ recomposition에서도 유지
 
     LaunchedEffect(listState) {
-        snapshotFlow { listState.layoutInfo.viewportEndOffset }
+        snapshotFlow { listState.firstVisibleItemScrollOffset }
             .combine(snapshotFlow { listState.layoutInfo.visibleItemsInfo }) { viewportHeight, visibleItems ->
                 Log.e("DEBUG", "ViewportHeight: $viewportHeight, VisibleItemsSize: ${visibleItems.size}, lastValidMiddleItem: $lastValidMiddleItem")
 
@@ -285,7 +296,7 @@ fun rememberCurrentVisibleMonth(
                 val screenCenter = viewportHeight / 2
                 val middleItem = visibleItems.minByOrNull { item ->
                     val itemCenter = item.offset + (item.size / 2)
-                    kotlin.math.abs(itemCenter - screenCenter)
+                    abs(itemCenter - screenCenter)
                 }?.index ?: listState.firstVisibleItemIndex
 
                 // ✅ middleItem이 실제로 달라진 경우에만 업데이트
@@ -306,3 +317,75 @@ fun rememberCurrentVisibleMonth(
 
     return visibleMonth
 }
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun SchedulePager(
+    calendarViewModel: CalendarViewModel,
+    scheduleViewModel: ScheduleViewModel,
+    onEventClick: (BaseSchedule) -> Unit,
+    onBackButtonClicked: () -> Unit
+) {
+    val calendarState by calendarViewModel.state.collectAsState() // ✅ ViewModel의 State 구독
+    val coroutineScope = rememberCoroutineScope()
+
+    // ✅ scheduleList가 변경될 때 `selectedDate`를 유지하도록 설정
+    var scheduleList by remember { mutableStateOf(calendarState.scheduleMap.toList().sortedBy { it.first }) }
+
+    LaunchedEffect(calendarState.scheduleMap) {
+        scheduleList = calendarState.scheduleMap.toList().sortedBy { it.first }
+    }
+
+
+
+    // ✅ selectedDate가 리스트에서 몇 번째 인덱스인지 자동 계산
+    val selectedIndex = scheduleList.indexOfFirst { it.first == calendarState.selectedDate }
+        .takeIf { it >= 0 } ?: (scheduleList.size / 2) // 없으면 중앙값 사용
+
+    val pagerState = rememberPagerState(
+        initialPage = selectedIndex,
+        pageCount = { scheduleList.size }
+    )
+
+    // ✅ scheduleList가 변경될 때, `pagerState`를 업데이트하되, selectedDate가 변한 경우만 실행
+    LaunchedEffect(scheduleList) {
+        val newIndex = scheduleList.indexOfFirst { it.first == calendarState.selectedDate }
+            .takeIf { it >= 0 } ?: (scheduleList.size / 2)
+
+        if (newIndex != pagerState.currentPage) {
+            coroutineScope.launch {
+                pagerState.scrollToPage(newIndex) // ✅ 새로운 인덱스로 이동
+            }
+        }
+    }
+
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.settledPage } // ✅ settledPage를 감지하여 이동이 끝난 후 실행
+            .distinctUntilChanged()
+            .collectLatest { page ->
+                val newDate = scheduleList.getOrNull(page)?.first ?: calendarState.selectedDate
+                if (newDate != calendarState.selectedDate) {
+                    calendarViewModel.processIntent(CalendarIntent.DateSelected(newDate ?: LocalDate.now()))
+                    if (calendarState.currentMonth != YearMonth.from(newDate) ) {
+                        calendarViewModel.processIntent(CalendarIntent.MonthChanged(YearMonth.from(newDate)))
+                    }
+
+                }
+            }
+    }
+
+
+    HorizontalPager(
+        state = pagerState,
+        modifier = Modifier.fillMaxSize(),
+    ) { page ->
+        ScheduleView(
+            selectedDay = scheduleList[page].first,
+            scheduleViewModel = scheduleViewModel,
+            schedules = scheduleList[page].second ?: emptyList(),
+            onEventClick = onEventClick,
+            onBackButtonClicked = onBackButtonClicked
+        )
+    }
+}
+

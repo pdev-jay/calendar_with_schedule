@@ -68,6 +68,10 @@ class ScheduleViewModel @Inject constructor(
                 is ScheduleIntent.DeleteSingleSchedule -> {
                     scheduleRepository.deleteSingleSchedule(intent.schedule)
                 }
+
+                is ScheduleIntent.ChangeDate -> {
+                    _state.value = _state.value.copy(selectedDate = intent.newDate)
+                }
             }
         }
     }

@@ -2,6 +2,7 @@ package com.pdevjay.calendar_with_schedule.screens.schedule.intents
 
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.RecurringData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
+import java.time.LocalDate
 
 sealed class ScheduleIntent {
     data class AddSchedule(val schedule: ScheduleData) : ScheduleIntent()
@@ -18,4 +19,9 @@ sealed class ScheduleIntent {
 
     data class DeleteSingleSchedule(val schedule: ScheduleData) : ScheduleIntent()
     data class DeleteFutureSchedule(val schedule: ScheduleData) : ScheduleIntent()
+
+
+    data class ChangeDate(val newDate: LocalDate) : ScheduleIntent()
+
+
 }

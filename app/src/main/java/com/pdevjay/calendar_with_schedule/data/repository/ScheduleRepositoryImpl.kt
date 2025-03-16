@@ -15,6 +15,8 @@ import com.pdevjay.calendar_with_schedule.utils.RepeatScheduleGenerator
 import com.pdevjay.calendar_with_schedule.utils.RepeatScheduleGenerator.generateRepeatedScheduleInstances
 import com.pdevjay.calendar_with_schedule.utils.RepeatType
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
@@ -26,6 +28,15 @@ class ScheduleRepositoryImpl @Inject constructor(
     private val scheduleDao: ScheduleDao,
     private val recurringScheduleDao: RecurringScheduleDao // 🔥 추가
 ) : ScheduleRepository {
+
+    private val _scheduleMap = MutableStateFlow<Map<LocalDate, List<BaseSchedule>>>(emptyMap())
+    override val scheduleMap: StateFlow<Map<LocalDate, List<BaseSchedule>>> = _scheduleMap
+
+    override suspend fun loadSchedulesForMonths(months: List<YearMonth>) {
+        getSchedulesForMonths(months).collect { newScheduleMap ->
+            _scheduleMap.value = newScheduleMap
+        }
+    }
 
     // MARK: Original schedule related
     override fun getAllSchedules(): Flow<List<ScheduleData>> {
@@ -286,7 +297,20 @@ class ScheduleRepositoryImpl @Inject constructor(
             val updatedSchedules = generatedOriginalSchedules + generatedRecurringSchedules
 
             // 🔹 날짜 기준으로 그룹화하여 반환
-            updatedSchedules.groupBy({ it.first }, { it.second })
+            val groupedSchedules = updatedSchedules.groupBy({ it.first }, { it.second }).toMutableMap()
+
+            // ✅ 일정이 없는 날짜도 포함하기 위한 처리
+            val allDays = months.flatMap { month ->
+                (1..month.lengthOfMonth()).map { day ->
+                    month.atDay(day)
+                }
+            }
+
+            allDays.forEach { date ->
+                groupedSchedules.putIfAbsent(date, emptyList()) // 일정이 없는 날짜는 빈 리스트 추가
+            }
+
+            groupedSchedules.toSortedMap() // 🔹 날짜 기준 정렬 후 반환
         }
     }
 
