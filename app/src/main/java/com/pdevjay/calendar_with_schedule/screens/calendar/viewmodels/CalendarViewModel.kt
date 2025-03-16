@@ -46,7 +46,11 @@ class CalendarViewModel @Inject constructor(
             }
 
             is CalendarIntent.DateSelected -> {
-                _state.value = _state.value.copy(selectedDate = intent.date)
+                val newMonth = YearMonth.of(intent.date.year, intent.date.monthValue) // 🔹 선택된 날짜의 YearMonth 가져오기
+                _state.value = _state.value.copy(
+                    selectedDate = intent.date,
+                    currentMonth = newMonth // 🔹 선택된 날짜의 달로 업데이트
+                )
             }
 
             is CalendarIntent.DateUnselected -> {

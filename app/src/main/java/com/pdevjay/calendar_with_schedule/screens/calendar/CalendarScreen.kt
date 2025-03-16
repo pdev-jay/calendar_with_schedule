@@ -17,11 +17,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
@@ -267,27 +269,40 @@ fun rememberCurrentVisibleMonth(
     monthList: List<CalendarMonth>
 ): State<CalendarMonth?> {
     val visibleMonth = remember { mutableStateOf<CalendarMonth?>(null) }
+    var lastValidMiddleItem by rememberSaveable { mutableStateOf<Int?>(null) } // ✅ recomposition에서도 유지
 
     LaunchedEffect(listState) {
-        snapshotFlow { listState.firstVisibleItemScrollOffset }
+        snapshotFlow { listState.layoutInfo.viewportEndOffset }
+            .combine(snapshotFlow { listState.layoutInfo.visibleItemsInfo }) { viewportHeight, visibleItems ->
+                Log.e("DEBUG", "ViewportHeight: $viewportHeight, VisibleItemsSize: ${visibleItems.size}, lastValidMiddleItem: $lastValidMiddleItem")
 
-            .combine(snapshotFlow { listState.layoutInfo.visibleItemsInfo }) { scrollOffset, visibleItems ->
-                val viewportHeight = listState.layoutInfo.viewportEndOffset
-                val screenCenter = viewportHeight / 2 // 화면 중앙 위치
-                // 중앙에 가장 가까운 아이템 찾기
+                // 🛑 viewportHeight == 0 또는 visibleItems가 없으면 lastValidMiddleItem을 변경하지 않음
+                if (viewportHeight == 0 || visibleItems.isEmpty()) {
+                    Log.e("DEBUG", "ViewportHeight is 0 or visibleItems is empty -> Keeping lastValidMiddleItem: $lastValidMiddleItem")
+                    return@combine lastValidMiddleItem ?: listState.firstVisibleItemIndex
+                }
+
+                val screenCenter = viewportHeight / 2
                 val middleItem = visibleItems.minByOrNull { item ->
-                    val itemCenter = item.offset + (item.size / 2) // 아이템 중앙 위치
-                    kotlin.math.abs(itemCenter - screenCenter) // 중앙에서의 거리 계산
+                    val itemCenter = item.offset + (item.size / 2)
+                    kotlin.math.abs(itemCenter - screenCenter)
                 }?.index ?: listState.firstVisibleItemIndex
 
+                // ✅ middleItem이 실제로 달라진 경우에만 업데이트
+                if (middleItem != lastValidMiddleItem) {
+                    lastValidMiddleItem = middleItem
+                    Log.e("DEBUG", "🔄 Updating lastValidMiddleItem: $lastValidMiddleItem")
+                }
+
+                Log.e("DEBUG", "Calculated MiddleItem: $middleItem")
                 middleItem
             }
-            .distinctUntilChanged() // 불필요한 중복 업데이트 방지
+            .distinctUntilChanged()
             .collectLatest { index ->
-                visibleMonth.value = monthList.getOrNull(index) // 실시간 업데이트
+                Log.e("DEBUG", "🌙 Updating visibleMonth: ${monthList.getOrNull(index)?.yearMonth}")
+                visibleMonth.value = monthList.getOrNull(index)
             }
     }
-
 
     return visibleMonth
 }
