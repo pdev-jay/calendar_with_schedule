@@ -188,38 +188,6 @@ object RepeatScheduleGenerator {
        }
     }
 
-    fun isValidRepeatDate(repeatType: RepeatType, originalStartDate: LocalDate, modifiedDate: LocalDate): Boolean {
-        return when (repeatType) {
-            // DAILY: 하루 단위로 반복되므로, 항상 true
-            RepeatType.DAILY -> true
-
-            // WEEKLY: 7일 단위로 반복 & 요일이 동일해야 함
-            RepeatType.WEEKLY -> ChronoUnit.DAYS.between(
-                originalStartDate,
-                modifiedDate
-            ) % 7 == 0L &&
-                    originalStartDate.dayOfWeek == modifiedDate.dayOfWeek
-
-            // BIWEEKLY: 14일(2주) 단위로 반복 & 요일이 동일해야 함
-            RepeatType.BIWEEKLY -> ChronoUnit.WEEKS.between(
-                originalStartDate,
-                modifiedDate
-            ) % 2 == 0L &&
-                    originalStartDate.dayOfWeek == modifiedDate.dayOfWeek
-
-            // MONTHLY: 같은 날에 반복 (예: 매월 12일)
-            RepeatType.MONTHLY -> ChronoUnit.MONTHS.between(originalStartDate, modifiedDate) >= 0 &&
-                    originalStartDate.dayOfMonth == modifiedDate.dayOfMonth
-
-            // YEARLY: 같은 달, 같은 날에 반복 (예: 매년 3월 12일)
-            RepeatType.YEARLY -> ChronoUnit.YEARS.between(originalStartDate, modifiedDate) >= 0 &&
-                    originalStartDate.month == modifiedDate.month &&
-                    originalStartDate.dayOfMonth == modifiedDate.dayOfMonth
-
-            else -> true // NONE 또는 CUSTOM은 모든 날짜 허용
-        }
-    }
-
     fun replaceDateInId(originalId: String, newDate: String): String {
         return originalId.replace(Regex("""\d{4}-\d{2}-\d{2}$"""), newDate)
     }

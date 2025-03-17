@@ -54,13 +54,6 @@ fun ScheduleView(
     onEventClick: (BaseSchedule) -> Unit, // ✅ BaseSchedule로 변경
     onBackButtonClicked: () -> Unit
 ){
-    val scheduleState by scheduleViewModel.state.collectAsState()
-    
-//    LaunchedEffect(selectedDay) {
-//        selectedDay?.let {
-//            scheduleViewModel.getSchedulesForDate(it)
-//        }
-//    }
 
     val scrollState = rememberScrollState()
 
@@ -68,21 +61,6 @@ fun ScheduleView(
         onBackButtonClicked()
     }
 
-    // 반복 일정이 있으면 선택된 날짜(`selectedDay`)에 맞춰 변환
-//    val dayEvents = scheduleState.schedules.flatMap { schedule ->
-//        if ((schedule.repeatType == RepeatType.NONE || schedule.repeatRule.isNullOrEmpty()) || (schedule.repeatType != RepeatType.NONE && schedule.start.date == selectedDay)) {
-//            listOf(schedule) // 반복 일정이 아니면 그대로 반환
-//        } else {
-//            val repeatedDates = RepeatScheduleGenerator.generateRepeatedDates(
-//                schedule.repeatType,
-//                schedule.start.date,
-//                monthList = null,
-//                selectedDate = selectedDay
-//            )
-//            repeatedDates.map { date -> generateRepeatedScheduleInstances(schedule, date) }
-//        }
-//    }
-//
     val dayEvents = schedules
     val allDayEvents = dayEvents.filter { it.isAllDay }
     val nonAllDayEvents = dayEvents.filter { !it.isAllDay }
@@ -245,7 +223,6 @@ fun NowIndicator() {
 
 fun groupOverlappingEvents(events: List<BaseSchedule>): List<List<BaseSchedule>> {
     if (events.isEmpty()) return emptyList() //  빈 리스트가 들어오면 빈 리스트 반환
-    Log.e("","$events")
     //  일정들을 시작 시간 기준으로 정렬 (시간을 분 단위로 변환하여 비교)
     val sorted = events.sortedBy { it.start.time.hour * 60 + it.start.time.minute }
 
@@ -257,7 +234,6 @@ fun groupOverlappingEvents(events: List<BaseSchedule>): List<List<BaseSchedule>>
         val prev = currentGroup.last() //  현재 그룹에서 마지막 일정
         val curr = sorted[i] //  현재 비교 중인 일정
         val isOverlap = prev.overlapsWith(curr)
-        Log.e("", "curr : ${curr.title}, prev : ${prev.title}, isOverlap: $isOverlap")
         if (isOverlap) { //  이전 일정과 현재 일정이 겹치면 같은 그룹에 추가
             currentGroup.add(curr)
         } else { //  겹치지 않으면 새로운 그룹을 시작

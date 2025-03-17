@@ -214,7 +214,6 @@ fun ScheduleAddScreen(
                             alarmOption = alarmOption,
                             isOriginalSchedule = true // ✅ 변경됨
                         )
-                        Log.e("","ScheduleAddScreen: $newSchedule")
                         scheduleViewModel.processIntent(ScheduleIntent.AddSchedule(newSchedule))
                         isVisible = false
                         navController.popBackStack()
