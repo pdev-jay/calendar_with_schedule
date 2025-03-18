@@ -104,6 +104,7 @@ fun CalendarTopBar(
                 val newDate = baseDate.plusDays(offsetWeeks * 7L)
 
                 if (state.selectedDate != null && state.selectedDate != newDate) {
+                    Log.e("CalendarIntent.DateSelected", "pagerState2 : Date changed: $newDate")
                     viewModel.processIntent(CalendarIntent.DateSelected(newDate))
                 }
             }
@@ -126,6 +127,8 @@ fun CalendarTopBar(
                         }
                     }
                 } else {
+                    Log.e("CalendarIntent.DateSelected", "pagerState3 : Date changed: ${LocalDate.now()}")
+
                     viewModel.processIntent(CalendarIntent.DateSelected(LocalDate.now()))
                 }
             },
@@ -153,6 +156,8 @@ fun CalendarTopBar(
                     selectedDate = state.selectedDate,
                     onDateClick = { date ->
                         if (date != state.selectedDate) {
+                            Log.e("CalendarIntent.DateSelected", "pagerState4 : Date changed: ${date}")
+
                             viewModel.processIntent(CalendarIntent.DateSelected(date))
                         } else {
                             viewModel.processIntent(CalendarIntent.DateUnselected)
@@ -279,6 +284,8 @@ fun WeeklyCalendarLazyRow(viewModel: CalendarViewModel) {
                     modifier = Modifier.width(maxWidth),
                     week,
                     calendarState.selectedDate ?: LocalDate.now()) { selectedDay ->
+                    Log.e("CalendarIntent.DateSelected", "pagerState5 : Date changed: ${selectedDay}")
+
                     viewModel.processIntent(CalendarIntent.DateSelected(selectedDay))
                 }
             }

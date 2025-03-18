@@ -103,7 +103,7 @@ fun CalendarScreen(
     val calendarState by calendarViewModel.state.collectAsState()
 
     val isLoading = remember { mutableStateOf(false) }
-    val listState = rememberLazyListState(initialFirstVisibleItemIndex = 12) // 현재 달을 기준으로 앞뒤로 12개월씩 로드
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = 6) // 현재 달을 기준으로 앞뒤로 12개월씩 로드
 
     val monthListState by calendarViewModel.months.collectAsState()
     val currentVisibleMonth by rememberCurrentVisibleMonth(listState, monthListState)
@@ -131,11 +131,13 @@ fun CalendarScreen(
     // 중앙에 보이는 부분이 어느 달인지
     LaunchedEffect(currentVisibleMonth) {
         currentVisibleMonth?.let { month ->
+        Log.e("selected", "currentVisibleMonth : ${currentVisibleMonth} ")
             calendarViewModel.processIntent(CalendarIntent.MonthChanged(month.yearMonth))
         }
     }
 
     LaunchedEffect(calendarState.selectedDate) {
+        Log.e("selected", "calendarState.selectedDate : ${calendarState.selectedDate} ")
         if (calendarState.selectedDate != null) {
             val currentMonthIndex = monthListState.indexOfFirst { month ->
                 val now = calendarState.selectedDate
@@ -166,7 +168,7 @@ fun CalendarScreen(
                             modifier = Modifier.fillMaxSize()
                         ) {
 
-                            items(monthListState) { month ->
+                            items(monthListState, key = { it.yearMonth.toString() }) { month ->
                                     MonthItem(
                                         month,
                                         calendarState.scheduleMap
@@ -181,12 +183,6 @@ fun CalendarScreen(
                                             calendarViewModel.processIntent(CalendarIntent.DateUnselected)
                                         }
                                     }
-                            }
-                            item{
-                                if (!isInitialized.value) {
-                                    CircularProgressIndicator(modifier = Modifier.fillMaxWidth())
-                                }
-
                             }
 
                             item {
@@ -282,7 +278,7 @@ suspend fun loadPreviousMonths(
     // 위치 보정: 추가된 만큼 아래로 밀어주기 (기존에 보던 달 유지)
     coroutineScope {
         listState.scrollToItem(
-            firstVisibleItemIndex + newMonths.size,
+            firstVisibleItemIndex,
             firstVisibleItemOffset
         )
     }
@@ -345,7 +341,7 @@ fun SchedulePager(
             calendarState.scheduleMap.toList().sortedBy { it.first }
         }
     }
-    
+
     // 현재 선택된 날짜의 인덱스를 찾음
     val selectedIndex by remember {
         derivedStateOf {
@@ -381,6 +377,8 @@ fun SchedulePager(
 
                 // 날짜가 변경되었으면 `selectedDate` 업데이트
                 if (calendarState.selectedDate != newDate) {
+                    Log.e("CalendarIntent.DateSelected", "pagerState1 : calendarState.selectedDate ${calendarState.selectedDate} Date changed: $newDate")
+
                     calendarViewModel.processIntent(CalendarIntent.DateSelected(newDate ?: LocalDate.now()))
                 }
 

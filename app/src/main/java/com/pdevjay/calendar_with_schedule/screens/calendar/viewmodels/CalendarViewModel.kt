@@ -101,7 +101,7 @@ class CalendarViewModel @Inject constructor(
             viewModelScope.launch {
                 _months.value.clear()
                 val now = YearMonth.now()
-                val months = (-12..12).map { offset ->
+                val months = (-6..6).map { offset ->
                     val yearMonth = now.plusMonths(offset.toLong())
                     generateMonth(yearMonth.year, yearMonth.monthValue)
                 }
@@ -117,7 +117,7 @@ class CalendarViewModel @Inject constructor(
         val lastMonth = _months.value.lastOrNull() ?: return
         val lastYearMonth = YearMonth.of(lastMonth.yearMonth.year, lastMonth.yearMonth.monthValue)
 
-        val newMonths = (1..12).map { offset ->
+        val newMonths = (1..6).map { offset ->
             val target = lastYearMonth.plusMonths(offset.toLong())
             generateMonth(target.year, target.monthValue)
         }
@@ -130,7 +130,7 @@ class CalendarViewModel @Inject constructor(
         val firstYearMonth = YearMonth.of(firstMonth.yearMonth.year, firstMonth.yearMonth.monthValue)
         Log.e("LazyRow", "loadPreviousMonths")
 
-        val newMonths = (1..12).map { offset ->
+        val newMonths = (1..6).map { offset ->
             val target = firstYearMonth.minusMonths(offset.toLong())
             generateMonth(target.year, target.monthValue)
         }.reversed()
