@@ -2,8 +2,14 @@ package com.pdevjay.calendar_with_schedule.screens.calendar
 
 import android.annotation.SuppressLint
 import android.util.Log
+import androidx.compose.animation.core.AnimationState
+import androidx.compose.animation.core.animateDecay
+import androidx.compose.animation.core.calculateTargetValue
+import androidx.compose.animation.rememberSplineBasedDecay
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.FlingBehavior
+import androidx.compose.foundation.gestures.ScrollScope
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.interaction.DragInteraction
@@ -69,13 +75,16 @@ import com.pdevjay.calendar_with_schedule.utils.LocalDateAdapter
 import com.pdevjay.calendar_with_schedule.utils.LocalTimeAdapter
 import com.pdevjay.calendar_with_schedule.utils.SlideInVerticallyContainerFromBottom
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 import java.net.URLEncoder
 import java.time.LocalDate
 import java.time.LocalTime
@@ -94,28 +103,26 @@ fun CalendarScreen(
     val calendarState by calendarViewModel.state.collectAsState()
 
     val isLoading = remember { mutableStateOf(false) }
-    val listState = rememberLazyListState()
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = 12) // 현재 달을 기준으로 앞뒤로 12개월씩 로드
 
-    val monthListState = calendarViewModel.monthListState
+    val monthListState by calendarViewModel.months.collectAsState()
     val currentVisibleMonth by rememberCurrentVisibleMonth(listState, monthListState)
 
     val isInitialized = rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        calendarViewModel.initializeMonths() // 화면 이동 후에도 유지됨
-    }
-
     LaunchedEffect(isInitialized.value) {
 
         if (!isInitialized.value) {
-//            loadInitialMonths(monthListState)
 
             val currentMonthIndex = monthListState.indexOfFirst { month ->
                 val now = YearMonth.now()
                 month.yearMonth.year == now.year && month.yearMonth.monthValue == now.monthValue
             }
 
-            listState.scrollToItem(currentMonthIndex)
+            coroutineScope {
+
+                listState.scrollToItem(currentMonthIndex)
+            }
 
             isInitialized.value = true  // 다음부터는 실행 안 함
         }
@@ -154,28 +161,39 @@ fun CalendarScreen(
                 isVisible = calendarState.selectedDate == null,
             ) {
                 key(calendarState.selectedDate) {
-                    LazyColumn(
-                        state = listState,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        items(monthListState, key = { it.yearMonth }, contentType = { "month_item" }) { month ->
-                            MonthItem(
-                                month,
-                                calendarState.scheduleMap
-                            ) { date ->
-                                if (calendarState.selectedDate == null || calendarState.selectedDate != date.date) {
-                                    calendarViewModel.processIntent(CalendarIntent.DateSelected(date.date))
-                                } else {
-                                    calendarViewModel.processIntent(CalendarIntent.DateUnselected)
+                        LazyColumn(
+                            state = listState,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+
+                            items(monthListState) { month ->
+                                    MonthItem(
+                                        month,
+                                        calendarState.scheduleMap
+                                    ) { date ->
+                                        if (calendarState.selectedDate == null || calendarState.selectedDate != date.date) {
+                                            calendarViewModel.processIntent(
+                                                CalendarIntent.DateSelected(
+                                                    date.date
+                                                )
+                                            )
+                                        } else {
+                                            calendarViewModel.processIntent(CalendarIntent.DateUnselected)
+                                        }
+                                    }
+                            }
+                            item{
+                                if (!isInitialized.value) {
+                                    CircularProgressIndicator(modifier = Modifier.fillMaxWidth())
+                                }
+
+                            }
+
+                            item {
+                                if (isLoading.value) {
+                                    CircularProgressIndicator(modifier = Modifier.fillMaxWidth())
                                 }
                             }
-                        }
-
-                        item {
-                            if (isLoading.value) {
-                                CircularProgressIndicator(modifier = Modifier.fillMaxWidth())
-                            }
-                        }
                     }
                 }
             }
@@ -200,46 +218,46 @@ fun CalendarScreen(
 
     // 아래 끝 감지 → 미래 데이터 추가 로드
     LaunchedEffect(listState) {
-        snapshotFlow { listState.layoutInfo.visibleItemsInfo }
-            .map { it.lastOrNull()?.index }
+        // ✅ 첫 번째 아이템 감지 → 이전 달 데이터 로드
+        snapshotFlow { listState.firstVisibleItemIndex }
             .distinctUntilChanged()
-            .collect { lastVisibleIndex ->
-                if (lastVisibleIndex == monthListState.lastIndex && !isLoading.value) {
-                    loadNextMonths(monthListState, isLoading)
+            .collectLatest { firstVisibleIndex ->
+                Log.e("LazyRow", "🔼 현재 첫 번째 아이템 인덱스: $firstVisibleIndex") // ✅ 디버깅 로그 추가
+
+                if (firstVisibleIndex <= 0 && !isLoading.value) {
+                    loadPreviousMonths(monthListState, isLoading, listState, calendarViewModel)
                 }
             }
     }
 
     LaunchedEffect(listState) {
-        snapshotFlow { listState.firstVisibleItemIndex }
+        // ✅ 마지막 아이템 감지 → 다음 달 데이터 로드
+        snapshotFlow {
+            listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
+        }
+            .filterNotNull() // ✅ Null 방지
             .distinctUntilChanged()
-            .collect { firstVisibleIndex ->
-
-                if (firstVisibleIndex == 0 && !isLoading.value) {
-                    loadPreviousMonths(monthListState, isLoading, listState)
+            .collectLatest { lastVisibleIndex ->
+                if (lastVisibleIndex == monthListState.lastIndex && !isLoading.value) {
+                    Log.e("LazyRow", "🔽 현재 마지막 아이템 인덱스: $lastVisibleIndex") // ✅ 디버깅 로그 추가
+                    loadNextMonths(monthListState, isLoading, calendarViewModel)
                 }
             }
     }
+
+
 
 }
 
 suspend fun loadNextMonths(
     monthList: MutableList<CalendarMonth>,
-    isLoading: MutableState<Boolean>
+    isLoading: MutableState<Boolean>,
+    viewModel: CalendarViewModel
 ) {
     if (isLoading.value) return
 
     isLoading.value = true
-
-    val lastMonth = monthList.lastOrNull() ?: return
-    val lastYearMonth = YearMonth.of(lastMonth.yearMonth.year, lastMonth.yearMonth.monthValue)
-
-    val newMonths = (1..12).map { offset ->
-        val target = lastYearMonth.plusMonths(offset.toLong())
-        generateMonth(target.year, target.monthValue)
-    }
-
-    monthList.addAll(newMonths)
+    viewModel.loadNextMonth()
 
     isLoading.value = false
 }
@@ -247,50 +265,28 @@ suspend fun loadNextMonths(
 suspend fun loadPreviousMonths(
     monthList: MutableList<CalendarMonth>,
     isLoading: MutableState<Boolean>,
-    listState: LazyListState
-) {
-    if (isLoading.value) return
+    listState: LazyListState,
+    viewModel: CalendarViewModel
+): Int {
+    if (isLoading.value) return 0
 
     isLoading.value = true
-
+    Log.e("LazyRow", "loadPreviousMonths")
     // 현재 가장 위 아이템과 스크롤 위치 기억
     val firstVisibleItemIndex = listState.firstVisibleItemIndex
     val firstVisibleItemOffset = listState.firstVisibleItemScrollOffset
-
-    val firstMonth = monthList.first()
-    val firstYearMonth = YearMonth.of(firstMonth.yearMonth.year, firstMonth.yearMonth.monthValue)
-
-    val newMonths = (1..12).map { offset ->
-        val target = firstYearMonth.minusMonths(offset.toLong())
-        generateMonth(target.year, target.monthValue)
-    }.reversed()
-
-    monthList.addAll(0, newMonths)
+    val newMonths = viewModel.loadPreviousMonth()
 
     isLoading.value = false
 
     // 위치 보정: 추가된 만큼 아래로 밀어주기 (기존에 보던 달 유지)
-    listState.scrollToItem(
-        firstVisibleItemIndex + newMonths.size,
-        firstVisibleItemOffset
-    )
-}
-
-fun generateMonth(year: Int, month: Int): CalendarMonth {
-    val firstDay = LocalDate.of(year, month, 1)
-    val daysInMonth = firstDay.lengthOfMonth()
-    val today = LocalDate.now()
-
-    val days = (1..daysInMonth).map { day ->
-        val date = LocalDate.of(year, month, day)
-        CalendarDay(
-            date = date,
-            dayOfWeek = date.dayOfWeek,
-            isToday = date == today
+    coroutineScope {
+        listState.scrollToItem(
+            firstVisibleItemIndex + newMonths.size,
+            firstVisibleItemOffset
         )
     }
-
-    return CalendarMonth(YearMonth.of(year, month), days)
+    return newMonths.size
 }
 
 @Composable
@@ -396,6 +392,13 @@ fun SchedulePager(
             }
     }
 
+    LaunchedEffect(selectedIndex) {
+        coroutineScope {
+            if (calendarState.selectedDate != null){
+                pagerState.animateScrollToPage(selectedIndex)
+            }
+        }
+    }
     Box(modifier = modifier.fillMaxSize()) {
         HorizontalPager(
             state = pagerState,
