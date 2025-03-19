@@ -116,11 +116,11 @@ fun CalendarTopBar(
             navController,
             onTodayClick = {
                 if (state.selectedDate == null) {
+                    viewModel.initializeMonths()
                     val now = YearMonth.now()
                     val currentMonthIndex = months.indexOfFirst { month ->
                         month.yearMonth == now
                     }
-
                     if (currentMonthIndex != -1) {
                         coroutineScope.launch {
                             listState.animateScrollToItem(currentMonthIndex)

@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.compose.animation.core.AnimationState
 import androidx.compose.animation.core.animateDecay
 import androidx.compose.animation.core.calculateTargetValue
+import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.rememberSplineBasedDecay
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -30,6 +31,8 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerDefaults
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
@@ -45,9 +48,11 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -75,14 +80,18 @@ import com.pdevjay.calendar_with_schedule.utils.LocalDateAdapter
 import com.pdevjay.calendar_with_schedule.utils.LocalTimeAdapter
 import com.pdevjay.calendar_with_schedule.utils.SlideInVerticallyContainerFromBottom
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.android.awaitFrame
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import java.net.URLEncoder
@@ -108,26 +117,6 @@ fun CalendarScreen(
     val monthListState by calendarViewModel.months.collectAsState()
     val currentVisibleMonth by rememberCurrentVisibleMonth(listState, monthListState)
 
-    val isInitialized = rememberSaveable { mutableStateOf(false) }
-
-    LaunchedEffect(isInitialized.value) {
-
-        if (!isInitialized.value) {
-
-            val currentMonthIndex = monthListState.indexOfFirst { month ->
-                val now = YearMonth.now()
-                month.yearMonth.year == now.year && month.yearMonth.monthValue == now.monthValue
-            }
-
-            coroutineScope {
-
-                listState.scrollToItem(currentMonthIndex)
-            }
-
-            isInitialized.value = true  // 다음부터는 실행 안 함
-        }
-    }
-
     // 중앙에 보이는 부분이 어느 달인지
     LaunchedEffect(currentVisibleMonth) {
         currentVisibleMonth?.let { month ->
@@ -137,17 +126,18 @@ fun CalendarScreen(
     }
 
     LaunchedEffect(calendarState.selectedDate) {
-        Log.e("selected", "calendarState.selectedDate : ${calendarState.selectedDate} ")
         if (calendarState.selectedDate != null) {
+            val selectedDate = calendarState.selectedDate ?: return@LaunchedEffect
             val currentMonthIndex = monthListState.indexOfFirst { month ->
-                val now = calendarState.selectedDate
-                month.yearMonth.year == (now?.year
-                    ?: LocalDate.now().year) && month.yearMonth.monthValue == (now?.monthValue
-                    ?: LocalDate.now().monthValue)
+                month.yearMonth == YearMonth.from(selectedDate)
             }
-            listState.scrollToItem(currentMonthIndex)
+
+            if (currentMonthIndex != listState.firstVisibleItemIndex) { // ✅ 중복 실행 방지
+//                listState.scrollToItem(currentMonthIndex)
+            }
         }
     }
+
     Scaffold(
         topBar = {
             CalendarTopBar(calendarViewModel, listState, navController)
@@ -217,10 +207,11 @@ fun CalendarScreen(
         // ✅ 첫 번째 아이템 감지 → 이전 달 데이터 로드
         snapshotFlow { listState.firstVisibleItemIndex }
             .distinctUntilChanged()
+            .debounce(100)
             .collectLatest { firstVisibleIndex ->
                 Log.e("LazyRow", "🔼 현재 첫 번째 아이템 인덱스: $firstVisibleIndex") // ✅ 디버깅 로그 추가
 
-                if (firstVisibleIndex <= 0 && !isLoading.value) {
+                if (firstVisibleIndex <= 1 && !isLoading.value) {
                     loadPreviousMonths(monthListState, isLoading, listState, calendarViewModel)
                 }
             }
@@ -233,6 +224,7 @@ fun CalendarScreen(
         }
             .filterNotNull() // ✅ Null 방지
             .distinctUntilChanged()
+            .debounce(100)
             .collectLatest { lastVisibleIndex ->
                 if (lastVisibleIndex == monthListState.lastIndex && !isLoading.value) {
                     Log.e("LazyRow", "🔽 현재 마지막 아이템 인덱스: $lastVisibleIndex") // ✅ 디버깅 로그 추가
@@ -263,27 +255,54 @@ suspend fun loadPreviousMonths(
     isLoading: MutableState<Boolean>,
     listState: LazyListState,
     viewModel: CalendarViewModel
-): Int {
-    if (isLoading.value) return 0
+) {
+    if (isLoading.value) return
 
     isLoading.value = true
-    Log.e("LazyRow", "loadPreviousMonths")
-    // 현재 가장 위 아이템과 스크롤 위치 기억
-    val firstVisibleItemIndex = listState.firstVisibleItemIndex
-    val firstVisibleItemOffset = listState.firstVisibleItemScrollOffset
-    val newMonths = viewModel.loadPreviousMonth()
-
+    val newMonths = viewModel.loadPreviousMonth() // 6개월 추가됨
     isLoading.value = false
-
-    // 위치 보정: 추가된 만큼 아래로 밀어주기 (기존에 보던 달 유지)
-    coroutineScope {
-        listState.scrollToItem(
-            firstVisibleItemIndex,
-            firstVisibleItemOffset
-        )
-    }
-    return newMonths.size
 }
+
+
+//@Composable
+//fun rememberCurrentVisibleMonth(
+//    listState: LazyListState,
+//    monthList: List<CalendarMonth>
+//): State<CalendarMonth?> {
+//    val visibleMonth = remember { mutableStateOf<CalendarMonth?>(null) }
+//    var lastValidMiddleItem by rememberSaveable { mutableStateOf<Int?>(null) }
+//
+//    val updatedMonthList = rememberUpdatedState(monthList)
+//
+//    LaunchedEffect(listState, updatedMonthList.value) {
+//        snapshotFlow { listState.layoutInfo.visibleItemsInfo }
+//            .onStart {
+//                awaitFrame() // ✅ UI 업데이트를 보장하기 위해 다음 프레임까지 대기
+//            }
+//            .collectLatest { visibleItems ->
+//                if (visibleItems.isEmpty()) {
+//                    lastValidMiddleItem?.let {
+//                        visibleMonth.value = updatedMonthList.value.getOrNull(it)
+//                    }
+//                    return@collectLatest
+//                }
+//
+//                val screenCenter = listState.layoutInfo.viewportSize.height / 2
+//                val middleItem = visibleItems.minByOrNull { item ->
+//                    val itemCenter = item.offset + (item.size / 2)
+//                    abs(itemCenter - screenCenter)
+//                }?.index ?: listState.firstVisibleItemIndex
+//
+//                if (middleItem != lastValidMiddleItem) {
+//                    lastValidMiddleItem = middleItem
+//                    visibleMonth.value = updatedMonthList.value.getOrNull(middleItem)
+//                    Log.e("LazyRow", "🆕 보여지는 month 변경 : updated currentVisibleMonth: $visibleMonth")
+//                }
+//            }
+//    }
+//
+//    return visibleMonth
+//}
 
 @Composable
 fun rememberCurrentVisibleMonth(
@@ -292,8 +311,9 @@ fun rememberCurrentVisibleMonth(
 ): State<CalendarMonth?> {
     val visibleMonth = remember { mutableStateOf<CalendarMonth?>(null) }
     var lastValidMiddleItem by rememberSaveable { mutableStateOf<Int?>(null) } // recomposition에서도 유지
+    val updatedMonthList = rememberUpdatedState(monthList)
 
-    LaunchedEffect(listState) {
+    LaunchedEffect(listState, updatedMonthList.value) {
         snapshotFlow { listState.firstVisibleItemScrollOffset }
             .combine(snapshotFlow { listState.layoutInfo.visibleItemsInfo }) { viewportHeight, visibleItems ->
 
@@ -333,83 +353,159 @@ fun SchedulePager(
     onBackButtonClicked: () -> Unit
 ) {
     val calendarState by calendarViewModel.state.collectAsState() // ViewModel의 State 구독
-    val coroutineScope = rememberCoroutineScope()
 
-    // scheduleList가 변경될 때 `selectedDate`를 유지하도록 설정
-    val scheduleList by remember {
-        derivedStateOf {
-            calendarState.scheduleMap.toList().sortedBy { it.first }
-        }
-    }
+    // ✅ `PagerState`를 remember로 유지 (이제 `initialPage` 제거)
+    val index =
+        calendarState.scheduleMap.toList().indexOfFirst { it.first == calendarState.selectedDate }
+    val pagerState =
+        rememberPagerState(initialPage = index, pageCount = { calendarState.scheduleMap.size })
 
-    // 현재 선택된 날짜의 인덱스를 찾음
-    val selectedIndex by remember {
-        derivedStateOf {
-            scheduleList.indexOfFirst { it.first == calendarState.selectedDate }
-                .takeIf { it >= 0 } ?: 0
-        }
-    }
-
-    // PagerState를 유지하면서 현재 `selectedDate`를 반영
-    val pagerState = rememberPagerState(
-        initialPage = selectedIndex,
-        pageCount = { scheduleList.size }
-    )
-
-    // `scheduleList`가 변경될 때 현재 페이지 유지 + 로딩 추가
-    LaunchedEffect(scheduleList) {
-        val newIndex = scheduleList.indexOfFirst { it.first == calendarState.selectedDate }
-            .takeIf { it >= 0 } ?: 0
-
-        if (newIndex != pagerState.currentPage) {
-            coroutineScope.launch {
-                pagerState.scrollToPage(newIndex) // 부드러운 전환
-            }
-        }
-    }
-
-    // 사용자가 스크롤할 때 `selectedDate` 및 `MonthChanged` 업데이트
-    LaunchedEffect(pagerState) {
-        snapshotFlow { pagerState.settledPage } // settledPage를 감지하여 이동이 끝난 후 실행
+    LaunchedEffect(calendarState.selectedDate){
+        snapshotFlow { calendarState.selectedDate }
             .distinctUntilChanged()
+            .collect{
+                val page = calendarState.scheduleMap.toList().indexOfFirst { it.first == calendarState.selectedDate }
+                Log.e("","CalendarIntent.DateSelected1 : page -> $page")
+                Log.e("","CalendarIntent.DateSelected1 : calendarState.selectedDate -> ${calendarState.selectedDate}")
+
+                if (calendarState.selectedDate != null && pagerState.currentPage != page) {
+                    pagerState.animateScrollToPage(page)
+                }
+            }
+    }
+    LaunchedEffect(pagerState){
+        snapshotFlow{pagerState.targetPage}
+            .distinctUntilChanged()
+            .debounce(200)
+//            .filter { targetPage ->
+//                abs(targetPage - pagerState.currentPage) <= 1 // 1페이지 이상 변화할 때만 반영
+//            }
             .collectLatest { page ->
-                val newDate = scheduleList.getOrNull(page)?.first ?: calendarState.selectedDate
+                val page1 = calendarState.scheduleMap.toList().indexOfFirst { it.first == calendarState.selectedDate }
 
-                // 날짜가 변경되었으면 `selectedDate` 업데이트
-                if (calendarState.selectedDate != newDate) {
-                    Log.e("CalendarIntent.DateSelected", "pagerState1 : calendarState.selectedDate ${calendarState.selectedDate} Date changed: $newDate")
+                Log.e("","CalendarIntent.DateSelected : page -> $page")
+                Log.e("","CalendarIntent.DateSelected : page1 -> $page1")
+                Log.e("","CalendarIntent.DateSelected : page2 -> ${calendarState.selectedDate}")
+                Log.e("","CalendarIntent.DateSelected : ${calendarState.scheduleMap.toList()[page].first}")
+                calendarViewModel.processIntent(CalendarIntent.DateSelected(calendarState.scheduleMap.toList()[page].first))
 
-                    calendarViewModel.processIntent(CalendarIntent.DateSelected(newDate ?: LocalDate.now()))
-                }
-
-                // 페이지가 첫 번째 또는 마지막일 때 `MonthChanged` 호출
-                if (page == scheduleList.size - 1 || page == 0) {
-                    val newMonth = YearMonth.from(newDate)
-                    calendarViewModel.processIntent(CalendarIntent.MonthChanged(newMonth))
+                if (pagerState.currentPage == 0){
+                    calendarViewModel.loadPreviousMonth()
+                } else if(pagerState.currentPage == pagerState.pageCount - 1) {
+                    calendarViewModel.loadNextMonth()
                 }
             }
     }
 
-    LaunchedEffect(selectedIndex) {
-        coroutineScope {
-            if (calendarState.selectedDate != null){
-                pagerState.animateScrollToPage(selectedIndex)
-            }
-        }
-    }
     Box(modifier = modifier.fillMaxSize()) {
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize(),
+//            flingBehavior = PagerDefaults.flingBehavior(
+//                state = pagerState,
+//                snapPositionalThreshold =  0.3f,
+//                decayAnimationSpec = exponentialDecay(0.2f)
+//            ),
+            key = { index -> calendarState.scheduleMap.toList()[index].first.toString() }, // 🔥 페이지 고유 키 설정
         ) { page ->
             ScheduleView(
                 modifier = modifier,
-                selectedDay = scheduleList[page].first,
+                selectedDay = calendarState.scheduleMap.toList()[page].first,
                 scheduleViewModel = scheduleViewModel,
-                schedules = if (page == scheduleList.size -1 || page == 0) emptyList() else scheduleList[page].second, // scheduleList가 갱신되면서 깜빡이는 것처럼 보이는 현상때문에 처음, 마지막 page에서 recomposition 되기 전에는 빈 리스트로 설정
+                schedules = calendarState.scheduleMap.toList()[page].second, // scheduleList가 갱신되면서 깜빡이는 것처럼 보이는 현상때문에 처음, 마지막 page에서 recomposition 되기 전에는 빈 리스트로 설정
                 onEventClick = onEventClick,
                 onBackButtonClicked = onBackButtonClicked
             )
         }
     }
 }
+//}@Composable
+//fun SchedulePager(
+//    modifier: Modifier = Modifier,
+//    calendarViewModel: CalendarViewModel,
+//    scheduleViewModel: ScheduleViewModel,
+//    onEventClick: (BaseSchedule) -> Unit,
+//    onBackButtonClicked: () -> Unit
+//) {
+//    val calendarState by calendarViewModel.state.collectAsState() // ViewModel의 State 구독
+//    val coroutineScope = rememberCoroutineScope()
+//
+//    // scheduleList가 변경될 때 `selectedDate`를 유지하도록 설정
+//    // ✅ `scheduleList` 최신 상태 유지
+//    // ✅ 항상 최신 상태 유지
+//    val scheduleList by remember(calendarState) {
+//        derivedStateOf {
+//            val sortedList = calendarState.scheduleMap.toList().sortedBy { it.first }
+//            Log.e("SchedulePager", "🔄 scheduleList 변경됨: $sortedList")
+//            sortedList
+//        }
+//    }
+//
+//    val selectedIndex by remember(scheduleList, calendarState.selectedDate) {
+//        derivedStateOf {
+//            val index = scheduleList.indexOfFirst { it.first == calendarState.selectedDate }
+//                .takeIf { it >= 0 } ?: 0
+//            Log.e("SchedulePager", "📌 selectedIndex 변경됨: $index, selectedDate: ${calendarState.selectedDate}")
+//            index
+//        }
+//    }
+//
+//    // ✅ `PagerState`를 remember로 유지 (이제 `initialPage` 제거)
+//    val pagerState = remember {
+//        PagerState(pageCount = { scheduleList.size })
+//    }
+//
+//    // ✅ `scheduleList`와 `selectedIndex`를 최신 상태로 유지 (PagerState 재생성 X)
+//    val currentScheduleList by rememberUpdatedState(scheduleList)
+//    val currentSelectedIndex by rememberUpdatedState(selectedIndex)
+//
+//    // ✅ `scheduleList`가 변경될 때 현재 페이지 유지 (PagerState 유지)
+//    LaunchedEffect(currentScheduleList, currentSelectedIndex) {
+//        Log.e("SchedulePager", "🚀 LaunchedEffect 실행됨: newIndex=$currentSelectedIndex, currentPage=${pagerState.currentPage}")
+//
+//        if (currentSelectedIndex != pagerState.currentPage) {
+//            pagerState.scrollToPage(currentSelectedIndex)
+//        }
+//    }
+//
+//    // ✅ 사용자가 스크롤하면 `selectedDate` 및 `MonthChanged` 업데이트
+//    LaunchedEffect(pagerState) {
+//        snapshotFlow { pagerState.settledPage }
+//            .distinctUntilChanged()
+//            .collectLatest { page ->
+//                val newDate = currentScheduleList.getOrNull(page)?.first ?: calendarState.selectedDate
+//
+//                Log.e("SchedulePager", "📌 PagerState 페이지 변경됨: page=$page, newDate=$newDate")
+//
+//                // ✅ 날짜 변경 감지
+//                if (calendarState.selectedDate != newDate) {
+//                    Log.e("CalendarIntent", "📆 DateSelected 변경됨: ${calendarState.selectedDate} → $newDate")
+////                    calendarViewModel.processIntent(CalendarIntent.DateSelected(newDate ?: LocalDate.now()))
+//                }
+//
+//                // ✅ 첫 페이지 또는 마지막 페이지일 때 `MonthChanged` 호출
+//                if (page == currentScheduleList.size - 1 || page == 0) {
+//                    val newMonth = YearMonth.from(newDate)
+//                    Log.e("CalendarIntent", "📅 MonthChanged 호출됨: $newMonth")
+////                    calendarViewModel.processIntent(CalendarIntent.MonthChanged(newMonth))
+//                }
+//            }
+//    }
+//
+//
+//    Box(modifier = modifier.fillMaxSize()) {
+//        HorizontalPager(
+//            state = pagerState,
+//            modifier = Modifier.fillMaxSize(),
+//        ) { page ->
+//            ScheduleView(
+//                modifier = modifier,
+//                selectedDay = scheduleList[page].first,
+//                scheduleViewModel = scheduleViewModel,
+//                schedules = if (page == scheduleList.size -1 || page == 0) emptyList() else scheduleList[page].second, // scheduleList가 갱신되면서 깜빡이는 것처럼 보이는 현상때문에 처음, 마지막 page에서 recomposition 되기 전에는 빈 리스트로 설정
+//                onEventClick = onEventClick,
+//                onBackButtonClicked = onBackButtonClicked
+//            )
+//        }
+//    }
+//}

@@ -25,7 +25,6 @@ class CalendarViewModel @Inject constructor(
 ) : ViewModel() {
     private val _state = MutableStateFlow(CalendarState())
     val state: StateFlow<CalendarState> = _state
-//    val monthListState = mutableStateListOf<CalendarMonth>()
     private val _months = MutableStateFlow<MutableList<CalendarMonth>>(emptyList<CalendarMonth>().toMutableList())
     val months: StateFlow<MutableList<CalendarMonth>> = _months.asStateFlow()
     private val _weeks = MutableStateFlow<List<CalendarWeek>>(emptyList())
@@ -35,6 +34,7 @@ class CalendarViewModel @Inject constructor(
 
     init {
         initializeMonths()
+
         viewModelScope.launch {
             scheduleRepository.scheduleMap.collect { newScheduleMap ->
                 _state.value = _state.value.copy(scheduleMap = newScheduleMap)
@@ -97,7 +97,8 @@ class CalendarViewModel @Inject constructor(
     }
 
     fun initializeMonths() {
-        if (_months.value.isEmpty()) {
+        Log.e("", "initializeMonths")
+//        if (_months.value.isEmpty()) {
             viewModelScope.launch {
                 _months.value.clear()
                 val now = YearMonth.now()
@@ -109,8 +110,9 @@ class CalendarViewModel @Inject constructor(
 
                 // 🔹 초기 주 데이터 설정
                 loadInitialWeeks(LocalDate.now())
+                loadScheduleMap(YearMonth.now())
             }
-        }
+//        }
     }
 
     fun loadNextMonth(){
@@ -122,7 +124,8 @@ class CalendarViewModel @Inject constructor(
             generateMonth(target.year, target.monthValue)
         }
 
-        _months.value.addAll(newMonths)
+        loadScheduleMap(lastYearMonth)
+        _months.value = (_months.value.drop(6) + newMonths).toMutableList()
     }
 
     fun loadPreviousMonth(): List<CalendarMonth> {
@@ -135,7 +138,8 @@ class CalendarViewModel @Inject constructor(
             generateMonth(target.year, target.monthValue)
         }.reversed()
 
-        _months.value.addAll(0, newMonths)
+        loadScheduleMap(firstYearMonth)
+        _months.value = (newMonths + _months.value).take(_months.value.size).toMutableList()
 
         return newMonths
     }
@@ -169,14 +173,17 @@ class CalendarViewModel @Inject constructor(
 
             is CalendarIntent.MonthChanged -> {
                 _state.value = _state.value.copy(currentMonth = intent.month)
-                viewModelScope.launch {
-                    val monthsToLoad = listOf(
-                        intent.month.minusMonths(1), // 이전 달
-                        intent.month, // 현재 달
-                        intent.month.plusMonths(1) // 다음 달
-                    )
-                    scheduleRepository.loadSchedulesForMonths(monthsToLoad)
-                }
+//                viewModelScope.launch {
+//                    val monthsToLoad = (-6..6).map{
+//                        intent.month.plusMonths(it.toLong())
+//                    }
+//                    val monthsToLoad = listOf(
+//                        intent.month.minusMonths(1), // 이전 달
+//                        intent.month, // 현재 달
+//                        intent.month.plusMonths(1) // 다음 달
+//                    )
+//                    scheduleRepository.loadSchedulesForMonths(monthsToLoad)
+//                }
             }
         }
     }
@@ -197,17 +204,12 @@ class CalendarViewModel @Inject constructor(
         return CalendarMonth(YearMonth.of(year, month), days)
     }
 
-    private fun loadSchedulesForMonth(centerMonth: YearMonth) {
-        val monthsToLoad = listOf(
-            centerMonth.minusMonths(1),
-            centerMonth,
-            centerMonth.plusMonths(1)
-        )
-
+    private fun loadScheduleMap(month: YearMonth) {
         viewModelScope.launch {
-            scheduleRepository.getSchedulesForMonths(monthsToLoad).collect { monthSchedules ->
-                _state.value = _state.value.copy(scheduleMap = monthSchedules)
+            val monthsToLoad = (-6..6).map{
+                month.plusMonths(it.toLong())
             }
+            scheduleRepository.loadSchedulesForMonths(monthsToLoad)
         }
     }
 }
