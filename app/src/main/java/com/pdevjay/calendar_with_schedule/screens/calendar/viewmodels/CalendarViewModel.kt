@@ -9,10 +9,12 @@ import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarMonth
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarWeek
 import com.pdevjay.calendar_with_schedule.screens.calendar.intents.CalendarIntent
 import com.pdevjay.calendar_with_schedule.screens.calendar.states.CalendarState
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -25,12 +27,11 @@ class CalendarViewModel @Inject constructor(
 ) : ViewModel() {
     private val _state = MutableStateFlow(CalendarState())
     val state: StateFlow<CalendarState> = _state
-    private val _months = MutableStateFlow<MutableList<CalendarMonth>>(emptyList<CalendarMonth>().toMutableList())
-    val months: StateFlow<MutableList<CalendarMonth>> = _months.asStateFlow()
     private val _weeks = MutableStateFlow<List<CalendarWeek>>(emptyList())
     val weeks: StateFlow<List<CalendarWeek>> = _weeks.asStateFlow()
 
     var selectedDate = MutableStateFlow(LocalDate.now()) // 사용자가 선택한 날짜
+
 
     init {
         initializeMonths()
@@ -38,6 +39,7 @@ class CalendarViewModel @Inject constructor(
         viewModelScope.launch {
             scheduleRepository.scheduleMap.collect { newScheduleMap ->
                 _state.value = _state.value.copy(scheduleMap = newScheduleMap)
+                Log.e("", "scheduleMap updated ")
             }
         }
     }
@@ -88,7 +90,7 @@ class CalendarViewModel @Inject constructor(
             } else {
                 startDate.minusWeeks(i.toLong()).with(DayOfWeek.SUNDAY) // 🔹 이전 주 일요일로 이동
             }
-            CalendarWeek.from(weekStart, _months.value.flatMap { it.days })
+            CalendarWeek.from(weekStart, _state.value.months.flatMap { it.days })
         }
 
         return generatedWeeks
@@ -98,25 +100,28 @@ class CalendarViewModel @Inject constructor(
 
     fun initializeMonths() {
         Log.e("", "initializeMonths")
-//        if (_months.value.isEmpty()) {
             viewModelScope.launch {
-                _months.value.clear()
                 val now = YearMonth.now()
                 val months = (-6..6).map { offset ->
                     val yearMonth = now.plusMonths(offset.toLong())
                     generateMonth(yearMonth.year, yearMonth.monthValue)
                 }
-                _months.value.addAll(months)
-
+//                val months = (-12 * 25..12 * 25).map { offset ->
+//                    val yearMonth = now.plusMonths(offset.toLong())
+//                    generateMonth(yearMonth.year, yearMonth.monthValue)
+//                }
+                _state.value = _state.value.copy(months = months.toMutableList())
                 // 🔹 초기 주 데이터 설정
-                loadInitialWeeks(LocalDate.now())
-                loadScheduleMap(YearMonth.now())
+//                loadInitialWeeks(LocalDate.now())
+//                loadScheduleMap(YearMonth.now())
+                loadScheduleMap(now)
+//                scheduleRepository.loadSchedulesForMonths(months.map { it.yearMonth })
+
             }
-//        }
     }
 
     fun loadNextMonth(){
-        val lastMonth = _months.value.lastOrNull() ?: return
+        val lastMonth = _state.value.months.lastOrNull() ?: return
         val lastYearMonth = YearMonth.of(lastMonth.yearMonth.year, lastMonth.yearMonth.monthValue)
 
         val newMonths = (1..6).map { offset ->
@@ -125,11 +130,12 @@ class CalendarViewModel @Inject constructor(
         }
 
         loadScheduleMap(lastYearMonth)
-        _months.value = (_months.value.drop(6) + newMonths).toMutableList()
+        val months = (_state.value.months.drop(6) + newMonths).toMutableList()
+        _state.value = _state.value.copy(months = months)
     }
 
     fun loadPreviousMonth(): List<CalendarMonth> {
-        val firstMonth = _months.value.first()
+        val firstMonth = _state.value.months.first()
         val firstYearMonth = YearMonth.of(firstMonth.yearMonth.year, firstMonth.yearMonth.monthValue)
         Log.e("LazyRow", "loadPreviousMonths")
 
@@ -139,7 +145,8 @@ class CalendarViewModel @Inject constructor(
         }.reversed()
 
         loadScheduleMap(firstYearMonth)
-        _months.value = (newMonths + _months.value).take(_months.value.size).toMutableList()
+        val months = (newMonths + _state.value.months).take(_state.value.months.size).toMutableList()
+        _state.value = _state.value.copy(months = months)
 
         return newMonths
     }
@@ -173,17 +180,13 @@ class CalendarViewModel @Inject constructor(
 
             is CalendarIntent.MonthChanged -> {
                 _state.value = _state.value.copy(currentMonth = intent.month)
-//                viewModelScope.launch {
-//                    val monthsToLoad = (-6..6).map{
-//                        intent.month.plusMonths(it.toLong())
-//                    }
-//                    val monthsToLoad = listOf(
-//                        intent.month.minusMonths(1), // 이전 달
-//                        intent.month, // 현재 달
-//                        intent.month.plusMonths(1) // 다음 달
-//                    )
-//                    scheduleRepository.loadSchedulesForMonths(monthsToLoad)
-//                }
+            }
+
+            is CalendarIntent.LoadNextMonths -> {
+                loadNextMonth()
+            }
+            is CalendarIntent.LoadPreviousMonths -> {
+                loadPreviousMonth()
             }
         }
     }
@@ -211,5 +214,10 @@ class CalendarViewModel @Inject constructor(
             }
             scheduleRepository.loadSchedulesForMonths(monthsToLoad)
         }
+    }
+
+    fun getMappedSchedulesForMonth(month: CalendarMonth): Map<LocalDate, List<BaseSchedule>> {
+        val scheduleMap = _state.value.scheduleMap // ✅ 최신 일정 데이터 가져오기
+        return month.mapSchedulesToDays(scheduleMap)
     }
 }

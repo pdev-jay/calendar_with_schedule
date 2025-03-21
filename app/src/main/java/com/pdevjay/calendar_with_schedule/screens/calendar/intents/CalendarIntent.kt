@@ -1,5 +1,6 @@
 package com.pdevjay.calendar_with_schedule.screens.calendar.intents
 
+import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarMonth
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -10,4 +11,6 @@ sealed class CalendarIntent {
     data class DateSelected(val date: LocalDate) : CalendarIntent()
     object DateUnselected : CalendarIntent()
     data class MonthChanged(val month: YearMonth) : CalendarIntent()
+    object LoadNextMonths : CalendarIntent()
+    object LoadPreviousMonths : CalendarIntent()
 }

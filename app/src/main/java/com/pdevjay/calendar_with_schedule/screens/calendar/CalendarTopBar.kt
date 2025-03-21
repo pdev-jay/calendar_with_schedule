@@ -3,18 +3,13 @@ package com.pdevjay.calendar_with_schedule.screens.calendar
 import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.FlingBehavior
-import androidx.compose.foundation.gestures.ScrollScope
-import androidx.compose.foundation.gestures.snapping.SnapFlingBehavior
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -22,18 +17,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,31 +35,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.pdevjay.calendar_with_schedule.data.database.RecurringScheduleDao
-import com.pdevjay.calendar_with_schedule.data.database.ScheduleDao
-import com.pdevjay.calendar_with_schedule.data.repository.ScheduleRepository
-import com.pdevjay.calendar_with_schedule.data.repository.ScheduleRepositoryImpl
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarDay
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarWeek
 import com.pdevjay.calendar_with_schedule.screens.calendar.intents.CalendarIntent
 import com.pdevjay.calendar_with_schedule.screens.calendar.viewmodels.CalendarViewModel
 import com.pdevjay.calendar_with_schedule.utils.ExpandVerticallyContainerFromTop
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
-import java.nio.file.Files.find
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.temporal.ChronoUnit
-import kotlin.math.abs
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -78,7 +60,7 @@ fun CalendarTopBar(
     navController: NavController
 ) {
     val state by viewModel.state.collectAsState()
-    val months by viewModel.months.collectAsState()
+//    val months by viewModel.months.collectAsState()
     val coroutineScope = rememberCoroutineScope()
 
     val baseDate = state.selectedDate ?: LocalDate.now()
@@ -117,19 +99,30 @@ fun CalendarTopBar(
             onTodayClick = {
                 if (state.selectedDate == null) {
                     viewModel.initializeMonths()
-                    val now = YearMonth.now()
-                    val currentMonthIndex = months.indexOfFirst { month ->
-                        month.yearMonth == now
-                    }
-                    if (currentMonthIndex != -1) {
-                        coroutineScope.launch {
-                            listState.animateScrollToItem(currentMonthIndex)
+                    coroutineScope.launch {
+                        viewModel.state.collect { newState -> // ✅ state 변경을 감지한 후 실행
+                            val now = YearMonth.now()
+                            val currentMonthIndex = newState.months.indexOfFirst { month ->
+                                month.yearMonth == now
+                            }
+                            if (currentMonthIndex != -1) {
+                                listState.animateScrollToItem(currentMonthIndex)
+                            }
+                            cancel() // ✅ 한 번 실행한 후 collect 종료
                         }
                     }
                 } else {
-                    Log.e("CalendarIntent.DateSelected", "pagerState3 : Date changed: ${LocalDate.now()}")
+                    viewModel.initializeMonths()
+                    coroutineScope.launch {
+                        viewModel.state.collect { newState -> // ✅ state 변경을 감지한 후 실행
+                            Log.e("CalendarIntent.DateSelected", "pagerState3 : new state")
 
-                    viewModel.processIntent(CalendarIntent.DateSelected(LocalDate.now()))
+                            viewModel.processIntent(CalendarIntent.MonthChanged(YearMonth.now()))
+                            viewModel.processIntent(CalendarIntent.DateSelected(LocalDate.now()))
+                            Log.e("CalendarIntent.DateSelected", "pagerState3 : date selected ${newState.selectedDate}}")
+                            cancel() // ✅ 한 번 실행한 후 collect 종료
+                        }
+                    }
                 }
             },
             onClick = { viewModel.processIntent(CalendarIntent.DateUnselected) }
@@ -141,15 +134,6 @@ fun CalendarTopBar(
         ExpandVerticallyContainerFromTop(
             isVisible = state.selectedDate != null
         ) {
-//            WeeklyCalendarLazyRow(viewModel)
-//            HorizontalPager(
-//                state = pagerState,
-//                modifier = Modifier.fillMaxWidth(),
-//            ) { pageIndex ->
-//                val offsetWeeks = pageIndex - infiniteStartPage
-//                val currentWeekStart = baseDate.plusDays(offsetWeeks.toLong()) // 🔹 현재 주 시작일 계산
-//                val weekDates = getWeekDatesForDate(currentWeekStart)
-//
             if (weekDates != null) {
                 WeekRow(
                     weekDates = weekDates,

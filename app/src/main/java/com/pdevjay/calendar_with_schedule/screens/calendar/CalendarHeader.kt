@@ -59,14 +59,6 @@ fun CalendarHeader(state: CalendarState,
             }
         },
         navigationIcon = {
-//            SlideInHorizontallyContainerFromStart(modifier = Modifier.wrapContentSize(), state.selectedDate != null){
-//                IconButton(onClick = onClick) {
-//                    Icon(
-//                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-//                        contentDescription = "Back"
-//                    )
-//                }
-//            }
                 IconButton(onClick = onClick) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,

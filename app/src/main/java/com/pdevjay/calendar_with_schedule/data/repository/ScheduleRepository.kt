@@ -13,6 +13,7 @@ interface ScheduleRepository {
 
     fun getAllSchedules(): Flow<List<ScheduleData>>
 
+
     suspend fun loadSchedulesForMonths(months: List<YearMonth>)
 
     suspend fun deleteSingleSchedule(schedule: ScheduleData)
