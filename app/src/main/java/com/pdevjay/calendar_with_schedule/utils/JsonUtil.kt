@@ -18,8 +18,8 @@ object JsonUtils {
         .registerTypeAdapter(LocalTime::class.java, LocalTimeAdapter())
         .create()
 
-    fun parseScheduleJson(scheduleJson: String): BaseSchedule {
-        return gson.fromJson(URLDecoder.decode(scheduleJson, "UTF-8"), BaseSchedule::class.java)
+    fun parseScheduleJson(scheduleJson: String): RecurringData {
+        return gson.fromJson(URLDecoder.decode(scheduleJson, "UTF-8"), RecurringData::class.java)
     }
 }
 

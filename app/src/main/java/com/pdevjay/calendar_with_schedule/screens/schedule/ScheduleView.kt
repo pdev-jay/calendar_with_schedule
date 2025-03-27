@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.times
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.RecurringData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.overlapsWith
 import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
 import com.pdevjay.calendar_with_schedule.utils.RepeatType
@@ -41,8 +42,8 @@ fun ScheduleView(
     modifier: Modifier = Modifier,
     scheduleViewModel: ScheduleViewModel,
     selectedDay: LocalDate?,
-    schedules: List<BaseSchedule>, // ✅ BaseSchedule 사용 (ScheduleData + RecurringData 모두 처리 가능)
-    onEventClick: (BaseSchedule) -> Unit, // ✅ BaseSchedule로 변경
+    schedules: List<RecurringData>, // ✅ BaseSchedule 사용 (ScheduleData + RecurringData 모두 처리 가능)
+    onEventClick: (RecurringData) -> Unit, // ✅ BaseSchedule로 변경
     onBackButtonClicked: () -> Unit
 ){
 
@@ -146,7 +147,7 @@ fun TimeColumn() {
 }
 
 @Composable
-fun EventBlock(event: BaseSchedule, index: Int, totalCount: Int, maxWidth: Dp, selectedDay: LocalDate, onEventClick: (BaseSchedule) -> Unit) {
+fun EventBlock(event: RecurringData, index: Int, totalCount: Int, maxWidth: Dp, selectedDay: LocalDate, onEventClick: (RecurringData) -> Unit) {
     val startMinutes = if (event.start.date < selectedDay) {
         0  // 전날부터 이어진 이벤트는 오늘 0시부터 표시
     } else {
@@ -212,12 +213,12 @@ fun NowIndicator() {
     )
 }
 
-fun groupOverlappingEvents(events: List<BaseSchedule>): List<List<BaseSchedule>> {
+fun groupOverlappingEvents(events: List<RecurringData>): List<List<RecurringData>> {
     if (events.isEmpty()) return emptyList() //  빈 리스트가 들어오면 빈 리스트 반환
     //  일정들을 시작 시간 기준으로 정렬 (시간을 분 단위로 변환하여 비교)
     val sorted = events.sortedBy { it.start.time.hour * 60 + it.start.time.minute }
 
-    val result = mutableListOf<MutableList<BaseSchedule>>() //  그룹화된 결과 리스트
+    val result = mutableListOf<MutableList<RecurringData>>() //  그룹화된 결과 리스트
     var currentGroup = mutableListOf(sorted.first()) //  첫 번째 일정으로 첫 그룹 시작
 
     //  두 번째 일정부터 순회하면서 그룹화 진행

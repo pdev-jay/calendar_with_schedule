@@ -1,12 +1,15 @@
 package com.pdevjay.calendar_with_schedule.screens.schedule
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -16,8 +19,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,13 +35,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import com.pdevjay.calendar_with_schedule.R
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.DateTimePeriod
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.RecurringData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.getDiffsComparedTo
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
+import com.pdevjay.calendar_with_schedule.screens.schedule.enums.ScheduleEditType
 import com.pdevjay.calendar_with_schedule.screens.schedule.intents.ScheduleIntent
 import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
 import com.pdevjay.calendar_with_schedule.utils.RepeatType
@@ -46,7 +55,7 @@ import java.time.LocalTime
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun ScheduleDetailScreen(
-    schedule: BaseSchedule,
+    schedule: RecurringData,
     navController: NavController,
     scheduleViewModel: ScheduleViewModel
 ) {
@@ -59,6 +68,8 @@ fun ScheduleDetailScreen(
     var showDatePickerForRepeatUntil by remember { mutableStateOf(false) }
     var showDeleteBottomSheet by remember{ mutableStateOf(false) }
     var showUpdateBottomSheet by remember{ mutableStateOf(false) }
+
+    var showWarning by remember { mutableStateOf(false) }
 
     BackHandler {
         isVisible = false
@@ -86,44 +97,51 @@ fun ScheduleDetailScreen(
     LaunchedEffect(Unit) { isVisible = true }
 
 
-    fun updateSchedule(schedule: BaseSchedule, isFuture: Boolean) {
+    fun updateSchedule(schedule: RecurringData, editType: ScheduleEditType) {
         try {
-            when (schedule) {
-                is ScheduleData -> {
-                    val updatedSchedule = schedule.copy(
-                        title = title,
-                        location = location,
-                        start = start,
-                        end = end,
-                        repeatType = repeatType,
-                        repeatUntil = if (isRepeatUntilEnabled) repeatUntil else null,
-                        alarmOption = alarmOption
+            val updatedRecurringData = schedule.copy(
+                title = title,
+                location = location,
+                start = start,
+                end = end,
+                repeatType = repeatType,
+                repeatUntil = if (isRepeatUntilEnabled) repeatUntil else null,
+                alarmOption = alarmOption
+            )
+
+            if (
+                editType == ScheduleEditType.ONLY_THIS_EVENT &&
+                (schedule.repeatUntil != updatedRecurringData.repeatUntil ||
+                        schedule.repeatType != updatedRecurringData.repeatType ||
+                        schedule.repeatRule != updatedRecurringData.repeatRule)
+            ) {
+                showWarning = true
+            } else {
+
+                val diffs = updatedRecurringData.getDiffsComparedTo(schedule)
+                val isOnlyContentChanged = diffs.all {
+                    it.field in listOf(
+                        "title",
+                        "location",
+                        "alarmOption",
+                        "isAllDay"
                     )
-                    scheduleViewModel.processIntent(ScheduleIntent.UpdateSingleSchedule(updatedSchedule))
                 }
-                is RecurringData -> {
-                    val updatedRecurringData = schedule.copy(
-                        title = title,
-                        location = location,
-                        start = start,
-                        end = end,
-                        repeatType = repeatType,
-                        repeatUntil = if (isRepeatUntilEnabled) repeatUntil else null,
-                        alarmOption = alarmOption
+                scheduleViewModel.processIntent(
+                    ScheduleIntent.UpdateSchedule(
+                        updatedRecurringData,
+                        editType,
+                        isOnlyContentChanged
                     )
-                    val intent = if (isFuture) {
-                        ScheduleIntent.UpdateFutureRecurringSchedule(updatedRecurringData)
-                    } else {
-                        ScheduleIntent.UpdateSingleRecurringSchedule(updatedRecurringData)
-                    }
-                    scheduleViewModel.processIntent(intent)
-                }
+                )
             }
         } catch (e: Exception) {
             e.printStackTrace()
         } finally {
-            isVisible = false
-            navController.popBackStack()
+            if (!showWarning) {
+                isVisible = false
+                navController.popBackStack()
+            }
         }
     }
 
@@ -181,10 +199,15 @@ fun ScheduleDetailScreen(
                     // 반복 옵션을 선택하면 나타나는 반복 마지막 날 선택 옵션
                     if (repeatType != RepeatType.NONE) {
                         HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 2.dp, color = Color.LightGray)
-                        SwitchSelector(label = stringResource(R.string.set_repeat_until), option = isRepeatUntilEnabled, onSwitch = {isRepeatUntilEnabled = it})
+                        SwitchSelector(label = stringResource(R.string.set_repeat_until), option = isRepeatUntilEnabled,
+                            onSwitch = {
+                                repeatUntil = if (it) schedule.repeatUntil ?: LocalDate.now() else null
+                                isRepeatUntilEnabled = it
+                            }
+                        )
                         HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 2.dp, color = Color.LightGray)
                         if (isRepeatUntilEnabled){
-                            DateTimeSelector(stringResource(R.string.repeat_until), date = repeatUntil, onDateClick = {showDatePickerForRepeatUntil = true})
+                            DateTimeSelector(stringResource(R.string.repeat_until), date = repeatUntil ?: LocalDate.now(), onDateClick = {showDatePickerForRepeatUntil = true})
                         }
                     }
                 }
@@ -273,10 +296,21 @@ fun ScheduleDetailScreen(
 
         if (showDatePickerForRepeatUntil) {
             DatePickerView(
-                initialDate = repeatUntil,
+                initialDate = repeatUntil ?: LocalDate.now(),
                 minDate = start.date, // 시작 날짜 이후만 선택 가능
                 onDateSelected = { repeatUntil = it },
                 onDismiss = { showDatePickerForRepeatUntil = false }
+            )
+        }
+
+        if (showWarning) {
+            RepeatSettingsIgnoredDialog(
+                onDismissRequest = { showWarning = false },
+                onConfirm = {
+                    showWarning = false
+                    // 계속 진행
+
+                }
             )
         }
 
@@ -285,38 +319,14 @@ fun ScheduleDetailScreen(
             description = stringResource(R.string.update_description),
             single = stringResource(R.string.update_single),
             future = stringResource(R.string.update_future),
+            isSingleAvailable = (schedule.repeatUntil == repeatUntil && schedule.repeatType == repeatType),
             isVisible = showUpdateBottomSheet,
             onDismiss = { showUpdateBottomSheet = false },
             onSingle = {
-
-                updateSchedule(schedule, false)
-//                try {
-//                    scheduleViewModel.processIntent(
-//                        ScheduleIntent.UpdateSingleRecurringSchedule(
-//                            schedule as RecurringData
-//                        )
-//                    )
-//                } catch (e: Exception) {
-//                    e.printStackTrace()
-//                } finally {
-//                    isVisible = false
-//                    navController.popBackStack()
-//                }
+                updateSchedule(schedule, ScheduleEditType.ONLY_THIS_EVENT)
             },
             onFuture = {
-                updateSchedule(schedule, true)
-//                try {
-//                    scheduleViewModel.processIntent(
-//                        ScheduleIntent.UpdateFutureRecurringSchedule(
-//                            schedule as RecurringData
-//                        )
-//                    )
-//                } catch (e: Exception) {
-//                    e.printStackTrace()
-//                } finally {
-//                    isVisible = false
-//                    navController.popBackStack()
-//                }
+                updateSchedule(schedule, ScheduleEditType.THIS_AND_FUTURE)
             },
         )
 
@@ -328,24 +338,9 @@ fun ScheduleDetailScreen(
             isVisible = showDeleteBottomSheet,
             onDismiss = { showDeleteBottomSheet = false },
             onSingle = {
-                try {
-                    when(schedule){
-                        is ScheduleData -> {
-                            scheduleViewModel.processIntent(
-                                ScheduleIntent.DeleteSingleSchedule(
-                                    schedule as ScheduleData
-                                )
-                            )
-                        }
-                        is RecurringData -> {
-                            scheduleViewModel.processIntent(
-                                ScheduleIntent.DeleteSingleRecurringSchedule(
-                                    schedule as RecurringData
-                                )
-                            )
-                        }
-                    }
 
+                try {
+                    scheduleViewModel.processIntent(ScheduleIntent.DeleteSchedule(schedule, ScheduleEditType.ONLY_THIS_EVENT))
                 } catch (e: Exception) {
                     e.printStackTrace()
                 } finally {
@@ -355,23 +350,7 @@ fun ScheduleDetailScreen(
             },
             onFuture = {
                 try {
-                    when(schedule){
-                        is ScheduleData -> {
-                            scheduleViewModel.processIntent(
-                                ScheduleIntent.DeleteFutureSchedule(
-                                    schedule as ScheduleData
-                                )
-                            )
-                        }
-                        is RecurringData -> {
-                            scheduleViewModel.processIntent(
-                                ScheduleIntent.DeleteFutureRecurringSchedule(
-                                    schedule as RecurringData
-                                )
-                            )
-                        }
-                    }
-
+                    scheduleViewModel.processIntent(ScheduleIntent.DeleteSchedule(schedule, ScheduleEditType.THIS_AND_FUTURE))
                 } catch (e: Exception) {
                     e.printStackTrace()
                 } finally {
@@ -384,3 +363,44 @@ fun ScheduleDetailScreen(
     }
 }
 
+@Composable
+fun RepeatSettingsIgnoredDialog(
+    onDismissRequest: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismissRequest) {
+        Surface(
+            shape = MaterialTheme.shapes.medium,
+            tonalElevation = 6.dp
+        ) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                Text(
+                    text = "반복 설정 변경은 적용되지 않습니다",
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = "이 일정만 변경하는 경우, 반복 종료일이나 반복 주기 설정은 무시됩니다.\n\n반복 설정을 변경하려면 '이후 일정부터 변경' 또는 '전체 일정 변경'을 선택해 주세요.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    TextButton(onClick = onDismissRequest) {
+                        Text("취소")
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    TextButton(onClick = onConfirm) {
+                        Text("계속")
+                    }
+                }
+            }
+        }
+    }
+}

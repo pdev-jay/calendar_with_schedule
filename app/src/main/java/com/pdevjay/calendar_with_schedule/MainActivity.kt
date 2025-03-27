@@ -1,6 +1,7 @@
 package com.pdevjay.calendar_with_schedule
 
 import android.annotation.SuppressLint
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -10,10 +11,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.rememberNavController
+import com.pdevjay.calendar_with_schedule.notification.AlarmScheduler
+import com.pdevjay.calendar_with_schedule.notification.RequestNotificationPermission
 import com.pdevjay.calendar_with_schedule.ui.theme.AppTheme
 import com.pdevjay.calendar_with_schedule.screens.calendar.viewmodels.CalendarViewModel
 import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
@@ -39,7 +44,8 @@ fun AppRoot() {
     val navController = rememberNavController()
     val calendarViewModel: CalendarViewModel = hiltViewModel()
     val scheduleViewModel: ScheduleViewModel = hiltViewModel()
-
+    RequestNotificationPermission()
+    AlarmScheduler.createNotificationChannel(LocalContext.current)
     AppTheme{
         Scaffold(modifier = Modifier.fillMaxSize()) {
             AppNavGraph(navController, calendarViewModel, scheduleViewModel)

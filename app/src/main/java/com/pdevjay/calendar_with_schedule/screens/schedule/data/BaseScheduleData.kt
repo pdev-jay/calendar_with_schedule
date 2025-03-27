@@ -1,5 +1,6 @@
 package com.pdevjay.calendar_with_schedule.screens.schedule.data
 
+import com.google.gson.annotations.SerializedName
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
 import com.pdevjay.calendar_with_schedule.utils.RepeatType
 import java.time.LocalDate
@@ -12,6 +13,7 @@ abstract class BaseSchedule(
     @Transient open val isAllDay: Boolean,
     @Transient open val start: DateTimePeriod,
     @Transient open val end: DateTimePeriod,
+    @Transient open val originalStartDate: LocalDate,
     @Transient open val repeatType: RepeatType,
     @Transient open val repeatUntil: LocalDate?,
     @Transient open val repeatRule: String?,
@@ -33,4 +35,25 @@ fun BaseSchedule.overlapsWith(other: BaseSchedule): Boolean {
     //    1. 현재 일정의 시작 시간이 다른 일정의 종료 시간보다 앞이어야 함 (thisStart < otherEnd)
     //    2. 현재 일정의 종료 시간이 다른 일정의 시작 시간보다 뒤이어야 함 (thisEnd > otherStart)
     return thisStart < otherEnd && thisEnd > otherStart
+}
+
+data class ScheduleDiff(
+    val field: String,
+    val oldValue: Any?,
+    val newValue: Any?
+)
+
+fun BaseSchedule.getDiffsComparedTo(other: BaseSchedule): List<ScheduleDiff> {
+    val diffs = mutableListOf<ScheduleDiff>()
+
+    if (title != other.title) diffs.add(ScheduleDiff("title", other.title, title))
+    if (location != other.location) diffs.add(ScheduleDiff("location", other.location, location))
+    if (isAllDay != other.isAllDay) diffs.add(ScheduleDiff("isAllDay", other.isAllDay, isAllDay))
+    if (start != other.start) diffs.add(ScheduleDiff("start", other.start, start))
+    if (end != other.end) diffs.add(ScheduleDiff("end", other.end, end))
+    if (repeatType != other.repeatType) diffs.add(ScheduleDiff("repeatType", other.repeatType, repeatType))
+    if (repeatUntil != other.repeatUntil) diffs.add(ScheduleDiff("repeatUntil", other.repeatUntil, repeatUntil))
+    if (alarmOption != other.alarmOption) diffs.add(ScheduleDiff("alarmOption", other.alarmOption, alarmOption))
+
+    return diffs
 }

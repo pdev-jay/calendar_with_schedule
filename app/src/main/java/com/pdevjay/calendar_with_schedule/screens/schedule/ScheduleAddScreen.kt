@@ -204,6 +204,7 @@ fun ScheduleAddScreen(
                             isAllDay = allDay,
                             start = start,
                             end = end,
+                            originalStartDate = start.date,
                             repeatType = repeatType,
                             repeatUntil = if (isRepeatUntilEnabled) repeatUntil else null,
                             repeatRule = generateRRule(

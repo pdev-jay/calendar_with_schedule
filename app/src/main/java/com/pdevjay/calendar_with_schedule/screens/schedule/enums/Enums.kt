@@ -19,6 +19,7 @@ enum class RepeatOption(val label: String) {
 // 🔹 일정 알림 옵션 Enum
 enum class AlarmOption(val label: String) {
     NONE("알림 없음"),
+    AT_TIME("정시에 알림"),
     MIN_5("5분 전"),
     MIN_10("10분 전"),
     MIN_15("15분 전"),
@@ -34,4 +35,10 @@ enum class AlarmOption(val label: String) {
             return entries.find { it.label == label } ?: NONE
         }
     }
+}
+
+enum class ScheduleEditType {
+    ONLY_THIS_EVENT,
+    THIS_AND_FUTURE,
+    ALL_EVENTS
 }

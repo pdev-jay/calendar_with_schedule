@@ -7,6 +7,7 @@ import com.pdevjay.calendar_with_schedule.screens.schedule.data.toRecurringData
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.temporal.ChronoUnit
+import java.util.UUID
 
 object RepeatScheduleGenerator {
     /**
@@ -134,7 +135,7 @@ object RepeatScheduleGenerator {
                     }
                 }
                     .takeWhile { it <= selectedDate && (repeatUntil == null || it <= repeatUntil) } // 🔹 repeatUntil 반영
-                    .filterNot { it in dateToIgnore || it == startDate} // 🔹 contains() 대신 `in` 사용 (Set으로 최적화)
+                    .filterNot { it in dateToIgnore }
                     .find { it == selectedDate }
                     ?.let { listOf(it) }
                     ?: emptyList()
@@ -156,7 +157,7 @@ object RepeatScheduleGenerator {
             }
         }
             .takeWhile { date -> YearMonth.from(date) <= maxMonth && (repeatUntil == null || date <= repeatUntil) } // 🔹 repeatUntil 반영
-            .filterNot { it in dateToIgnore || it == startDate} // 🔹 contains() 대신 `in` 사용 (Set으로 최적화)
+            .filterNot { it in dateToIgnore } // 🔹 contains() 대신 `in` 사용 (Set으로 최적화)
             .filter { date ->
                 selectedDate?.let { it == date }
                     ?: monthList.contains(YearMonth.from(date))
@@ -168,17 +169,20 @@ object RepeatScheduleGenerator {
     fun generateRepeatedScheduleInstances(schedule: BaseSchedule, selectedDay: LocalDate): RecurringData {
        return when(schedule){
             is ScheduleData -> {
-                schedule.copy().toRecurringData(selectedDay)
+                schedule.toRecurringData(selectedDate = selectedDay)
+                    .copy(isFirstSchedule = selectedDay == schedule.start.date)
             }
             is RecurringData -> {
                 val newId = replaceDateInId(schedule.id, selectedDay.toString())
                 schedule.copy(
-                    id = newId,
+                    id = UUID.randomUUID().toString(),
                     start = schedule.start.copy(date = selectedDay),
                     end = schedule.end.copy(date = selectedDay),
+                    originalStartDate = selectedDay,
                     originalEventId = schedule.originalEventId,
                     originalRecurringDate = selectedDay,
                     originatedFrom = schedule.id,
+                    isFirstSchedule = false,
                     isDeleted = false // ui에 보여지는 반복일정이니 false -> isDeleted인 일정은 이미 제외되어 있음
                 )
 

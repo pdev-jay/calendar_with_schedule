@@ -44,60 +44,6 @@ class CalendarViewModel @Inject constructor(
         }
     }
 
-    private fun loadInitialWeeks(selectedDate: LocalDate) {
-        val initialWeeks = generateWeeksAround(selectedDate) // 선택된 날짜 기준
-        _weeks.value = initialWeeks
-    }
-
-    fun findWeekIndexForDate(date: LocalDate): Int {
-        val index = weeks.value.indexOfFirst { week -> week.contains(date) }
-
-        if (index == -1) {
-            Log.e("CalendarViewModel", "❌ 해당 날짜 ($date)의 주가 리스트에 없음!")
-            Log.e("CalendarViewModel", "📅 현재 주 리스트: ${weeks.value.map { it.startDate }}")
-        }
-
-        return index
-    }
-
-    fun loadMoreWeeks(isNext: Boolean) {
-        val referenceDate = if (isNext) {
-            _weeks.value.last().endDate.plusDays(1)
-        } else {
-            _weeks.value.first().startDate.minusDays(7)
-        }
-
-        val newWeeks = generateWeeks(referenceDate, isNext)
-
-        _weeks.value = if (isNext) {
-            // ✅ 중복 방지: 기존 리스트에 없는 주만 추가
-            (_weeks.value + newWeeks).distinctBy { it.startDate }
-        } else {
-            (newWeeks + _weeks.value).distinctBy { it.startDate }
-        }
-    }
-
-    private fun generateWeeksAround(date: LocalDate): List<CalendarWeek> {
-        val pastWeeks = generateWeeks(date, isNext = false)
-        val futureWeeks = generateWeeks(date, isNext = true)
-        return pastWeeks + futureWeeks
-    }
-
-    private fun generateWeeks(startDate: LocalDate, isNext: Boolean, count: Int = 5): List<CalendarWeek> {
-        val generatedWeeks = (0 until count).map { i ->
-            val weekStart = if (isNext) {
-                startDate.plusWeeks(i.toLong()).with(DayOfWeek.SUNDAY) // 🔹 다음 주 일요일로 이동
-            } else {
-                startDate.minusWeeks(i.toLong()).with(DayOfWeek.SUNDAY) // 🔹 이전 주 일요일로 이동
-            }
-            CalendarWeek.from(weekStart, _state.value.months.flatMap { it.days })
-        }
-
-        return generatedWeeks
-            .distinctBy { it.startDate }
-            .sortedBy { it.startDate }
-    }
-
     fun initializeMonths() {
         Log.e("", "initializeMonths")
             viewModelScope.launch {
@@ -111,12 +57,7 @@ class CalendarViewModel @Inject constructor(
 //                    generateMonth(yearMonth.year, yearMonth.monthValue)
 //                }
                 _state.value = _state.value.copy(months = months.toMutableList())
-                // 🔹 초기 주 데이터 설정
-//                loadInitialWeeks(LocalDate.now())
-//                loadScheduleMap(YearMonth.now())
                 loadScheduleMap(now)
-//                scheduleRepository.loadSchedulesForMonths(months.map { it.yearMonth })
-
             }
     }
 
@@ -169,9 +110,6 @@ class CalendarViewModel @Inject constructor(
                     selectedDate = intent.date,
                     currentMonth = newMonth
                 )
-
-                // 🔹 선택된 날짜가 속한 주로 `weeks` 업데이트
-                loadInitialWeeks(intent.date)
             }
 
             is CalendarIntent.DateUnselected -> {

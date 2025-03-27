@@ -1,20 +1,12 @@
 package com.pdevjay.calendar_with_schedule.data.database
 
 import androidx.room.*
-import com.pdevjay.calendar_with_schedule.data.entity.RecurringScheduleEntity
 import com.pdevjay.calendar_with_schedule.data.entity.ScheduleEntity
+import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ScheduleDao {
-
-    /**
-     * 모든 스케줄을 조회합니다.
-     *
-     * @return 모든 스케줄 목록을 Flow 형태로 반환
-     */
-    @Query("SELECT * FROM schedules")
-    fun getAllSchedules(): Flow<List<ScheduleEntity>>
 
     /**
      * 특정 날짜의 스케줄을 조회합니다.
@@ -67,13 +59,15 @@ interface ScheduleDao {
     suspend fun deleteSchedule(schedule: ScheduleEntity)
 
     /**
-     * 특정 ID를 포함하며, 지정된 날짜 이후의 모든 스케줄을 삭제합니다.
+     * 오리지널 스케쥴 데이터를 지우는 함수
+     *
      *
      * @param scheduleId 삭제할 스케줄의 ID
      * @param date 해당 날짜(yyyy-MM-dd) 이후의 스케줄 삭제
      */
-    @Query("DELETE FROM schedules WHERE id LIKE :scheduleId || '%' AND strftime('%Y-%m-%d', substr(startDate, 1, instr(startDate, '|') - 1)) >= :date")
-    suspend fun deleteFutureSchedule(scheduleId: String, date: String)
+//    @Query("DELETE FROM schedules WHERE id LIKE :scheduleId || '%' AND strftime('%Y-%m-%d', substr(startDate, 1, instr(startDate, '|') - 1)) >= :date")
+    @Query("DELETE FROM schedules WHERE id = :scheduleId")
+    suspend fun deleteFutureSchedule(scheduleId: String)
 
 
     /**
@@ -85,7 +79,32 @@ interface ScheduleDao {
     /**
      * 특정 원본 이벤트 ID와 반복 일정의 `repeatUntil`을 기반으로 `repeatUntil` 이후 반복 일정을 삭제합니다.
      */
-    @Query("DELETE FROM schedules WHERE id LIKE :originalEventId || '%' AND strftime('%Y-%m-%d', substr(startDate, 1, instr(startDate, '|') - 1)) >= :repeatUntil")
-    suspend fun deleteFutureRecurringSchedule(originalEventId: String, repeatUntil: String)
+//    @Query("DELETE FROM schedules WHERE id LIKE :originalEventId || '%' AND strftime('%Y-%m-%d', substr(startDate, 1, instr(startDate, '|') - 1)) >= :repeatUntil")
+//    suspend fun deleteFutureRecurringSchedule(originalEventId: String, repeatUntil: String)
 
+    suspend fun updateContentOnly(scheduleId: String? = null, schedule: ScheduleEntity){
+        updateContentOnly(
+            scheduleId = scheduleId ?: schedule.id,
+            title = schedule.title,
+            location = schedule.location ?: "",
+            isAllDay = schedule.isAllDay,
+            alarmOption = schedule.alarmOption
+        )
+    }
+
+    @Query("""
+    UPDATE schedules 
+    SET title = :title, 
+        location = :location, 
+        isAllDay = :isAllDay, 
+        alarmOption = :alarmOption 
+    WHERE id = :scheduleId
+""")
+    suspend fun updateContentOnly(
+        scheduleId: String,
+        title: String,
+        location: String,
+        isAllDay: Boolean,
+        alarmOption: AlarmOption
+    )
 }
