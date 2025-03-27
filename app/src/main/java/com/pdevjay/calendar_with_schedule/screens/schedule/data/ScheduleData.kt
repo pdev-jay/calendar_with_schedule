@@ -19,15 +19,12 @@ data class ScheduleData(
     @SerializedName("isAllDay") override val isAllDay: Boolean = false,
     @SerializedName("start") override val start: DateTimePeriod,
     @SerializedName("end") override val end: DateTimePeriod,
-    @SerializedName("originalStartDate") override val originalStartDate: LocalDate = start.date,
     @SerializedName("repeatType") override val repeatType: RepeatType = RepeatType.NONE,
     @SerializedName("repeatUntil") override val repeatUntil: LocalDate? = null,
     @SerializedName("repeatRule") override val repeatRule: String? = null,
     @SerializedName("alarmOption") override val alarmOption: AlarmOption = AlarmOption.NONE,
-    @SerializedName("isOriginalSchedule") override val isOriginalSchedule: Boolean = true,
-    @SerializedName("originalRepeatUntil") val originalRepeatUntil: LocalDate? = null,
-    @SerializedName("branchId") val branchId: String? = UUID.randomUUID().toString()
-) : BaseSchedule(id, title, location, isAllDay, start, end, originalStartDate, repeatType, repeatUntil, repeatRule, alarmOption, isOriginalSchedule)
+    @SerializedName("branchId") override val branchId: String? = UUID.randomUUID().toString()
+) : BaseSchedule(id, title, location, isAllDay, start, end, repeatType, repeatUntil, repeatRule, alarmOption, branchId)
 
 // ScheduleData <-> TaskEntity 변환 함수들
 fun ScheduleData.toScheduleEntity(): ScheduleEntity {
@@ -38,13 +35,13 @@ fun ScheduleData.toScheduleEntity(): ScheduleEntity {
         isAllDay = this.isAllDay,
         start = this.start,
         end = this.end,
-        originalStartDate = this.start.date,
+//        originalStartDate = this.start.date,
         repeatType = this.repeatType,
         repeatUntil = this.repeatUntil,
         repeatRule = RRuleHelper.generateRRule(this.repeatType, this.start.date, this.repeatUntil),
         alarmOption = this.alarmOption,
-        isOriginalSchedule = this.isOriginalSchedule,
-        originalRepeatUntil = this.originalRepeatUntil,
+//        isOriginalSchedule = this.isOriginalSchedule,
+//        originalRepeatUntil = this.originalRepeatUntil,
         branchId = this.branchId
     )
 }
@@ -65,9 +62,9 @@ fun ScheduleData.toRecurringData(originalStartDate: LocalDate? = null, selectedD
         repeatUntil = this.repeatUntil,
         repeatRule = this.repeatRule,
         alarmOption = this.alarmOption,
-        isOriginalSchedule = false,
+//        isOriginalSchedule = false,
         isDeleted = false, // 기본적으로 삭제되지 않음
-        originalRepeatUntil = this.originalRepeatUntil,
+//        originalRepeatUntil = this.originalRepeatUntil,
         branchId = this.branchId
     )
 }

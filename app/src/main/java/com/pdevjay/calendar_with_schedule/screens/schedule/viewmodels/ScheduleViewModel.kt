@@ -35,83 +35,15 @@ class ScheduleViewModel @Inject constructor(
                     scheduleRepository.saveSchedule(intent.schedule)
                     AlarmScheduler.scheduleAlarm(context, intent.schedule)  // 알람 예약
                 }
-                is ScheduleIntent.UpdateFutureSchedule -> {
-                    scheduleRepository.saveFutureScheduleChange(intent.schedule)
-                    AlarmScheduler.scheduleAlarm(context, intent.schedule)  // 알람 예약
-                }
-                is ScheduleIntent.UpdateSingleSchedule -> {
-                    scheduleRepository.saveSingleScheduleChange(intent.schedule)
-                    AlarmScheduler.scheduleAlarm(context, intent.schedule)  // 알람 예약
-                }
-                is ScheduleIntent.DeleteFutureSchedule -> {
-                    scheduleRepository.deleteFutureSchedule(intent.schedule)
-                }
-                is ScheduleIntent.DeleteSingleSchedule -> {
-                    scheduleRepository.deleteSingleSchedule(intent.schedule)
-                }
-
-                is ScheduleIntent.UpdateFutureRecurringSchedule -> {
-                    scheduleRepository.saveFutureRecurringScheduleChange(intent.schedule)
-                    AlarmScheduler.scheduleAlarm(context, intent.schedule)  // 알람 예약
-                }
-                is ScheduleIntent.UpdateSingleRecurringSchedule -> {
-                    scheduleRepository.saveSingleRecurringScheduleChange(intent.schedule)
-                    AlarmScheduler.scheduleAlarm(context, intent.schedule)  // 알람 예약
-                }
-
-                is ScheduleIntent.DeleteFutureRecurringSchedule -> {
-                    scheduleRepository.deleteFutureRecurringSchedule(intent.schedule)
-                }
-
-                is ScheduleIntent.DeleteSingleRecurringSchedule -> {
-                    scheduleRepository.deleteRecurringSchedule(intent.schedule)
-                }
 
                 is ScheduleIntent.UpdateSchedule -> {
                     scheduleRepository.updateSchedule(intent.schedule, intent.editType, intent.isOnlyContentChanged)
-//                    when (intent.schedule){
-//                        is ScheduleData -> {
-//                            when (intent.editType){
-//                                ScheduleEditType.ONLY_THIS_EVENT -> scheduleRepository.saveSingleScheduleChange(intent.schedule)
-//                                ScheduleEditType.THIS_AND_FUTURE -> scheduleRepository.saveFutureScheduleChange(intent.schedule)
-//                                ScheduleEditType.ALL_EVENTS -> TODO()
-//                            }
-//                        }
-//
-//                        is RecurringData -> {
-//                            when (intent.editType){
-//                                ScheduleEditType.ONLY_THIS_EVENT -> scheduleRepository.saveSingleRecurringScheduleChange(intent.schedule.copy(repeatType = RepeatType.NONE))
-//                                ScheduleEditType.THIS_AND_FUTURE -> scheduleRepository.saveFutureRecurringScheduleChange(intent.schedule)
-//                                ScheduleEditType.ALL_EVENTS -> TODO()
-//                            }
-//                        }
-//                    }
+
                     AlarmScheduler.scheduleAlarm(context, intent.schedule)  // 알람 예약
                 }
 
                 is ScheduleIntent.DeleteSchedule -> {
                     scheduleRepository.deleteSchedule(intent.schedule, intent.editType)
-//                    when (intent.editType) {
-//                        ScheduleEditType.ONLY_THIS_EVENT -> {
-//                            when (intent.schedule) {
-//                                is ScheduleData -> scheduleRepository.deleteSingleSchedule(intent.schedule)
-//                                is RecurringData -> scheduleRepository.deleteRecurringSchedule(
-//                                    intent.schedule
-//                                )
-//                            }
-//                        }
-//
-//                        ScheduleEditType.THIS_AND_FUTURE -> {
-//                            when (intent.schedule) {
-//                                is ScheduleData -> scheduleRepository.deleteFutureSchedule(intent.schedule)
-//                                is RecurringData -> scheduleRepository.deleteFutureRecurringSchedule(
-//                                    intent.schedule
-//                                )
-//                            }
-//                        }
-
-//                        ScheduleEditType.ALL_EVENTS -> TODO()
-//                    }
                 }
             }
         }

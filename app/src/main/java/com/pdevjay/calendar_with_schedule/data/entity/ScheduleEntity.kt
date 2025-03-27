@@ -18,13 +18,10 @@ data class ScheduleEntity(
     @ColumnInfo(name = "isAllDay") val isAllDay: Boolean,
     @ColumnInfo(name = "startDate") val start: DateTimePeriod,
     @ColumnInfo(name = "endDate") val end: DateTimePeriod,
-    @ColumnInfo(name = "originalStartDate") val originalStartDate: LocalDate,
     @ColumnInfo(name = "repeatType") val repeatType: RepeatType = RepeatType.NONE,
     @ColumnInfo(name = "repeatUntil") val repeatUntil: LocalDate? = null,
     @ColumnInfo(name = "repeatRule") val repeatRule: String? = null,
     @ColumnInfo(name = "alarmOption") val alarmOption: AlarmOption,
-    @ColumnInfo(name = "isOriginalSchedule") val isOriginalSchedule: Boolean = true,
-    @ColumnInfo(name = "originalRepeatUntil") val originalRepeatUntil: LocalDate?, // ✅ 추가
     @ColumnInfo(name = "branchId") val branchId: String? = null
 )
 
@@ -36,13 +33,10 @@ fun ScheduleEntity.toScheduleData(): ScheduleData {
         isAllDay = this.isAllDay,
         start = this.start,
         end = this.end,
-        originalStartDate = this.originalStartDate,
         repeatType = this.repeatType,
         repeatUntil = this.repeatUntil,
         repeatRule = this.repeatRule,
         alarmOption = this.alarmOption,
-        isOriginalSchedule = this.isOriginalSchedule,
-        originalRepeatUntil = this.originalRepeatUntil,
         branchId = this.branchId
     )
 }

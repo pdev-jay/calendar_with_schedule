@@ -90,7 +90,7 @@ fun ScheduleDetailScreen(
     var allDay by remember { mutableStateOf(false) }
     var repeatType by remember { mutableStateOf(schedule?.repeatType ?: RepeatType.NONE) }
     var isRepeatUntilEnabled by remember { mutableStateOf(if (schedule.repeatUntil == null) false else true) }
-    var repeatUntil by remember { mutableStateOf(schedule.repeatUntil ?: LocalDate.now().plusWeeks(1)) }
+    var repeatUntil by remember { mutableStateOf(schedule.repeatUntil) }
     var alarmOption by remember { mutableStateOf(schedule?.alarmOption ?: AlarmOption.NONE) }
 
 

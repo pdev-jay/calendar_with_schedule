@@ -13,12 +13,11 @@ abstract class BaseSchedule(
     @Transient open val isAllDay: Boolean,
     @Transient open val start: DateTimePeriod,
     @Transient open val end: DateTimePeriod,
-    @Transient open val originalStartDate: LocalDate,
     @Transient open val repeatType: RepeatType,
     @Transient open val repeatUntil: LocalDate?,
     @Transient open val repeatRule: String?,
     @Transient open val alarmOption: AlarmOption,
-    @Transient open val isOriginalSchedule: Boolean
+    @Transient open val branchId: String?
 )
 
 // 겹침 여부 확인 함수

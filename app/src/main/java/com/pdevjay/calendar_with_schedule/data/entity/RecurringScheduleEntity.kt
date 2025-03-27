@@ -11,13 +11,12 @@ import java.time.LocalDate
 
 @Entity(tableName = "recurring_schedules")
 data class RecurringScheduleEntity(
-    @PrimaryKey val id: String, // "originalEventId_selectedDate"
+    @PrimaryKey val id: String,
     @ColumnInfo(name = "originalEventId") val originalEventId: String,
     @ColumnInfo(name = "originalRecurringDate") val originalRecurringDate: LocalDate,
     @ColumnInfo(name = "originatedFrom") val originatedFrom: String,
     @ColumnInfo(name = "startDate") val start: DateTimePeriod,
     @ColumnInfo(name = "endDate") val end: DateTimePeriod,
-    @ColumnInfo(name = "originalStartDate") val originalStartDate: LocalDate,
     @ColumnInfo(name = "title") val title: String?,
     @ColumnInfo(name = "location") val location: String?, // ✅ 추가
     @ColumnInfo(name = "isAllDay") val isAllDay: Boolean, // ✅ 추가
@@ -25,9 +24,7 @@ data class RecurringScheduleEntity(
     @ColumnInfo(name = "repeatUntil") val repeatUntil: LocalDate?, // ✅ 추가
     @ColumnInfo(name = "repeatRule") val repeatRule: String?, // ✅ 추가
     @ColumnInfo(name = "alarmOption") val alarmOption: AlarmOption, // ✅ 추가
-    @ColumnInfo(name = "isOriginalSchedule") val isOriginalSchedule: Boolean = false,
     @ColumnInfo(name = "isDeleted") val isDeleted: Boolean, // 해당 날짜의 일정이 삭제되었는지 여부
-    @ColumnInfo(name = "originalRepeatUntil") val originalRepeatUntil: LocalDate?, // ✅ 추가
     @ColumnInfo(name = "isFirstSchedule") val isFirstSchedule: Boolean = false,
     @ColumnInfo(name = "branchId") val branchId: String? = null
 )
@@ -43,14 +40,11 @@ fun RecurringScheduleEntity.toRecurringData(): RecurringData {
         isAllDay = this.isAllDay,
         start = this.start,
         end = this.end,
-        originalStartDate = this.originalStartDate,
         repeatType = this.repeatType,
         repeatUntil = this.repeatUntil,
         repeatRule = this.repeatRule,
         alarmOption = this.alarmOption,
-        isOriginalSchedule = this.isOriginalSchedule,
         isDeleted = this.isDeleted,
-        originalRepeatUntil = this.originalRepeatUntil,
         isFirstSchedule = this.isFirstSchedule,
         branchId = this.branchId
     )

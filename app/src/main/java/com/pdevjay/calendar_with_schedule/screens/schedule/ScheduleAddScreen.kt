@@ -204,7 +204,6 @@ fun ScheduleAddScreen(
                             isAllDay = allDay,
                             start = start,
                             end = end,
-                            originalStartDate = start.date,
                             repeatType = repeatType,
                             repeatUntil = if (isRepeatUntilEnabled) repeatUntil else null,
                             repeatRule = generateRRule(
@@ -213,7 +212,6 @@ fun ScheduleAddScreen(
                                 repeatUntil = if (isRepeatUntilEnabled) repeatUntil else null
                             ), // RRule 자동 생성
                             alarmOption = alarmOption,
-                            isOriginalSchedule = true // ✅ 변경됨
                         )
                         scheduleViewModel.processIntent(ScheduleIntent.AddSchedule(newSchedule))
                         isVisible = false

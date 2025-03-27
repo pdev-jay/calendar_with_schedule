@@ -20,100 +20,6 @@ object RepeatScheduleGenerator {
      * @return 반복 일정이 적용된 날짜 리스트
      */
 
-//      // while이 성능에 더 좋을 수 있음
-//    fun generateRepeatedDates(
-//        repeatType: RepeatType,
-//        startDate: LocalDate,
-//        monthList: List<YearMonth>? = null,  // 🔹 특정 월 리스트
-//        selectedDate: LocalDate? = null // 🔹 특정 날짜만 반환할 경우
-//    ): List<LocalDate> {
-//        val dates = mutableListOf<LocalDate>()
-//        var currentDate = startDate
-//
-//        while (true) {
-//            // 특정 날짜가 주어진 경우, 해당 날짜만 반환
-//            if (selectedDate != null) {
-//            Log.e("RepeatScheduleGenerator", "generateRepeatedDates: $selectedDate")
-//            Log.e("RepeatScheduleGenerator", "currentDate: $currentDate")
-//                if (currentDate == selectedDate) return listOf(currentDate)
-//                if (currentDate > selectedDate) return dates
-//            }
-//
-//            // 현재 날짜가 monthList 범위를 벗어나면 중단
-//            val currentYearMonth = YearMonth.from(currentDate)
-//            if (monthList != null) {
-//                Log.e("RepeatScheduleGenerator", "monthList: $monthList")
-//                Log.e("RepeatScheduleGenerator", "currentYearMonth: $currentYearMonth")
-//                if (currentYearMonth > monthList.maxOrNull()!!) return dates // 🔹 종료 조건
-//
-//                // 특정 월 리스트에 포함된 날짜만 저장
-//                if (monthList.contains(currentYearMonth)) {
-//                    dates.add(currentDate)
-//                }
-//            }
-//            // 다음 반복 날짜 설정
-//            currentDate = when (repeatType) {
-//                RepeatType.DAILY -> currentDate.plusDays(1)
-//                RepeatType.WEEKLY -> currentDate.plusWeeks(1)
-//                RepeatType.BIWEEKLY -> currentDate.plusWeeks(2)
-//                RepeatType.MONTHLY -> currentDate.plusMonths(1)
-//                RepeatType.YEARLY -> currentDate.plusYears(1)
-//                else -> return dates // NONE 또는 CUSTOM일 경우 즉시 반환
-//            }
-//        }
-//    }
-//
-//}
-
-//    fun generateRepeatedDates(
-//        repeatType: RepeatType,
-//        startDate: LocalDate,
-//        monthList: List<YearMonth>? = null,
-//        selectedDate: LocalDate? = null,
-//        dateToIgnore: List<LocalDate> = emptyList(),
-//        repeatUntil: LocalDate? = null // 🔹 repeatUntil 추가
-//    ): List<LocalDate> {
-//        if (monthList == null) {
-//            return selectedDate?.let {
-//                generateSequence(startDate) { currentDate ->
-//                    when (repeatType) {
-//                        RepeatType.DAILY -> currentDate.plusDays(1)
-//                        RepeatType.WEEKLY -> currentDate.plusWeeks(1)
-//                        RepeatType.BIWEEKLY -> currentDate.plusWeeks(2)
-//                        RepeatType.MONTHLY -> currentDate.plusMonths(1)
-//                        RepeatType.YEARLY -> currentDate.plusYears(1)
-//                        else -> null
-//                    }
-//                }
-//                    .takeWhile { it <= selectedDate && (repeatUntil == null || it <= repeatUntil) } // 🔹 repeatUntil 반영
-//                    .filterNot { dateToIgnore.contains(it) }
-//                    .find { it == selectedDate }?.let { listOf(it) }
-//                    ?: emptyList()
-//            } ?: emptyList()
-//        }
-//
-//        if (monthList.isEmpty()) return emptyList()
-//
-//        val maxMonth = monthList.maxOrNull() ?: return emptyList()
-//
-//        return generateSequence(startDate) { currentDate ->
-//            when (repeatType) {
-//                RepeatType.DAILY -> currentDate.plusDays(1)
-//                RepeatType.WEEKLY -> currentDate.plusWeeks(1)
-//                RepeatType.BIWEEKLY -> currentDate.plusWeeks(2)
-//                RepeatType.MONTHLY -> currentDate.plusMonths(1)
-//                RepeatType.YEARLY -> currentDate.plusYears(1)
-//                else -> null
-//            }
-//        }
-//            .takeWhile { date -> YearMonth.from(date) <= maxMonth && (repeatUntil == null || date <= repeatUntil) } // 🔹 repeatUntil 반영
-//            .filterNot { dateToIgnore.contains(it) }
-//            .filter { date ->
-//                selectedDate?.let { it == date }
-//                    ?: monthList.contains(YearMonth.from(date))
-//            }
-//            .toList()
-//    }
     fun generateRepeatedDates(
         repeatType: RepeatType,
         startDate: LocalDate,
@@ -173,12 +79,10 @@ object RepeatScheduleGenerator {
                     .copy(isFirstSchedule = selectedDay == schedule.start.date)
             }
             is RecurringData -> {
-                val newId = replaceDateInId(schedule.id, selectedDay.toString())
                 schedule.copy(
                     id = UUID.randomUUID().toString(),
                     start = schedule.start.copy(date = selectedDay),
                     end = schedule.end.copy(date = selectedDay),
-                    originalStartDate = selectedDay,
                     originalEventId = schedule.originalEventId,
                     originalRecurringDate = selectedDay,
                     originatedFrom = schedule.id,
@@ -192,9 +96,6 @@ object RepeatScheduleGenerator {
        }
     }
 
-    fun replaceDateInId(originalId: String, newDate: String): String {
-        return originalId.replace(Regex("""\d{4}-\d{2}-\d{2}$"""), newDate)
-    }
 }
 
 enum class RepeatType(val label: String) {
