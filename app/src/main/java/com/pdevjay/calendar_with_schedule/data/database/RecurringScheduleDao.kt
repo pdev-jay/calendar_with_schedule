@@ -38,8 +38,8 @@ interface RecurringScheduleDao {
     /**
      * 특정 이벤트 ID를 기반으로 반복 일정의 `repeatUntil`을 업데이트합니다.
      */
-    @Query("UPDATE recurring_schedules SET repeatUntil = :repeatUntil WHERE id = :eventId")
-    suspend fun updateRepeatUntil(eventId: String, repeatUntil: String)
+    @Query("UPDATE recurring_schedules SET repeatUntil = :repeatUntil WHERE branchId = :branchId")
+    suspend fun updateRepeatUntil(branchId: String, repeatUntil: String)
 
     suspend fun updateContentOnly(schedule: RecurringScheduleEntity){
         updateContentOnly(

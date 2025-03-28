@@ -201,6 +201,7 @@ fun ScheduleDetailScreen(
                         HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 2.dp, color = Color.LightGray)
                         SwitchSelector(label = stringResource(R.string.set_repeat_until), option = isRepeatUntilEnabled,
                             onSwitch = {
+                                // FIXME:
                                 repeatUntil = if (it) schedule.repeatUntil ?: LocalDate.now() else null
                                 isRepeatUntilEnabled = it
                             }

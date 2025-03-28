@@ -6,6 +6,7 @@ import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
 import com.pdevjay.calendar_with_schedule.utils.RRuleHelper
 import com.pdevjay.calendar_with_schedule.utils.RepeatType
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 data class RecurringData(
@@ -24,7 +25,8 @@ data class RecurringData(
     @SerializedName("alarmOption") override val alarmOption: AlarmOption,
     @SerializedName("isDeleted") val isDeleted: Boolean,
     @SerializedName("isFirstSchedule") val isFirstSchedule: Boolean = false,
-    @SerializedName("branchId") override val branchId: String? = null
+    @SerializedName("branchId") override val branchId: String? = null,
+    @SerializedName("repeatIndex") val repeatIndex: Int
 ) : BaseSchedule(id, title, location, isAllDay, start, end, repeatType, repeatUntil, repeatRule, alarmOption, branchId)
 
 
@@ -45,7 +47,8 @@ fun RecurringData.toRecurringScheduleEntity(): RecurringScheduleEntity {
         alarmOption = this.alarmOption,
         isDeleted = this.isDeleted,
         isFirstSchedule = this.isFirstSchedule,
-        branchId = this.branchId
+        branchId = this.branchId,
+        repeatIndex = this.repeatIndex
     )
 }
 
@@ -72,7 +75,8 @@ fun RecurringData.toNewBranchData(): RecurringData {
         branchId = UUID.randomUUID().toString(),
         originalRecurringDate = this.start.date,
         start = this.start.copy(date = this.start.date),
-        end = this.end.copy(date = this.start.date)
+        end = this.end.copy(date = this.start.date),
+//        repeatIndex = 1
     )
 }
 
@@ -84,4 +88,78 @@ fun RecurringData.resolveDisplayOnly(branchRoot: RecurringData): RecurringData {
     )
 }
 
+fun RecurringData.resolveDisplayFieldsFromBranch(branchRoots: List<RecurringData>): RecurringData {
+    val branchRoot = branchRoots.find { it.branchId == this.branchId && it.isFirstSchedule } ?: return this
 
+    // ✅ 수정된 인스턴스에 대해서는 branch 정보를 덮어씌움
+    val resolved = this.copy(
+        repeatType = branchRoot.repeatType,
+        repeatUntil = branchRoot.repeatUntil,
+        repeatRule = branchRoot.repeatRule,
+    )
+
+    // ✅ 반복 주기 안에 있는 경우 날짜도 보정
+    return if (isInRepeatPattern(this.start.date, branchRoot.start.date, branchRoot.repeatType)) {
+        val newDate = calculateRepeatDateFromIndex(
+            startDate = branchRoot.start.date,
+            repeatType = branchRoot.repeatType,
+            index = this.repeatIndex
+        )
+
+        resolved.copy(
+            start = resolved.start.copy(date = newDate),
+            end = resolved.end.copy(date = newDate)
+        )
+    } else {
+        resolved
+    }
+}
+
+
+fun calculateRepeatDateFromIndex(
+    startDate: LocalDate,
+    repeatType: RepeatType,
+    index: Int
+): LocalDate {
+    return when (repeatType) {
+        RepeatType.DAILY -> startDate.plusDays((index - 1).toLong())
+        RepeatType.WEEKLY -> startDate.plusWeeks((index - 1).toLong())
+        RepeatType.BIWEEKLY -> startDate.plusWeeks(2L * (index - 1))
+        RepeatType.MONTHLY -> startDate.plusMonths((index - 1).toLong())
+        RepeatType.YEARLY -> startDate.plusYears((index - 1).toLong())
+        else -> startDate
+    }
+}
+
+fun isInRepeatPattern(
+    candidateDate: LocalDate,
+    startDate: LocalDate,
+    repeatType: RepeatType
+): Boolean {
+    if (candidateDate < startDate) return false
+
+    return when (repeatType) {
+        RepeatType.DAILY -> true
+        RepeatType.WEEKLY -> {
+            val weeks = ChronoUnit.WEEKS.between(startDate, candidateDate)
+            startDate.plusWeeks(weeks) == candidateDate
+        }
+
+        RepeatType.BIWEEKLY -> {
+            val weeks = ChronoUnit.WEEKS.between(startDate, candidateDate)
+            weeks >= 0 && weeks % 2L == 0L && startDate.plusWeeks(weeks) == candidateDate
+        }
+
+        RepeatType.MONTHLY -> {
+            val months = ChronoUnit.MONTHS.between(startDate, candidateDate)
+            startDate.plusMonths(months) == candidateDate
+        }
+
+        RepeatType.YEARLY -> {
+            val years = ChronoUnit.YEARS.between(startDate, candidateDate)
+            startDate.plusYears(years) == candidateDate
+        }
+
+        else -> false
+    }
+}

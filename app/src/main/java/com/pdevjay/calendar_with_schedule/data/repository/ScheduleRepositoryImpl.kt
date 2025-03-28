@@ -8,6 +8,7 @@ import com.pdevjay.calendar_with_schedule.data.entity.toScheduleData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.RecurringData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.resolveDisplayFieldsFromBranch
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.resolveDisplayOnly
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.toMarkAsDeletedData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.toNewBranchData
@@ -16,6 +17,7 @@ import com.pdevjay.calendar_with_schedule.screens.schedule.data.toScheduleEntity
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.toSingleChangeData
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.ScheduleEditType
 import com.pdevjay.calendar_with_schedule.utils.RepeatScheduleGenerator
+import com.pdevjay.calendar_with_schedule.utils.RepeatScheduleGenerator.generateRepeatedDatesWithIndex
 import com.pdevjay.calendar_with_schedule.utils.RepeatScheduleGenerator.generateRepeatedScheduleInstances
 import com.pdevjay.calendar_with_schedule.utils.RepeatType
 import kotlinx.coroutines.CoroutineScope
@@ -104,55 +106,50 @@ class ScheduleRepositoryImpl @Inject constructor(
 
             // 🔹 (1) ScheduleData → RecurringData 변환 후 반복 인스턴스 생성
             originalSchedules.forEach { schedule ->
-                val dateToIgnore = recurringSchedules
-                    .filter { it.originalEventId == schedule.id && (it.isDeleted || it.repeatType == RepeatType.NONE) }
-                    .map { it.originalRecurringDate }
+                val indicesToIgnore = recurringSchedules
+                    .filter { it.branchId == schedule.branchId && (it.isDeleted || it.repeatType == RepeatType.NONE) }
+                    .mapNotNull { it.repeatIndex }
                     .toSet()
 
-                val repeatedDates = RepeatScheduleGenerator.generateRepeatedDates(
-                    schedule.repeatType,
-                    schedule.start.date,
+                val indexedDates = generateRepeatedDatesWithIndex(
+                    repeatType = schedule.repeatType,
+                    startDate = schedule.start.date,
                     monthList = months,
-                    dateToIgnore = dateToIgnore,
+                    indicesToIgnore = indicesToIgnore,
                     repeatUntil = schedule.repeatUntil
                 )
 
-                repeatedDates.forEach { date ->
-                    val recurring = generateRepeatedScheduleInstances(schedule, date).copy(
-                        isFirstSchedule = (date == schedule.start.date)
+                indexedDates.forEach { (index, date) ->
+                    allSchedules.add(
+                        generateRepeatedScheduleInstances(schedule, date, index)
                     )
-                    allSchedules.add(recurring)
                 }
             }
 
             // 🔹 (2) 기존 RecurringData에서 파생된 반복들 처리 (분기 루트 기준)
-            val recurringByBranch = recurringSchedules.groupBy { it.originatedFrom }
-
             recurringSchedules.filter { it.isFirstSchedule }.forEach { branchRoot ->
-                val children = recurringByBranch[branchRoot.id].orEmpty()
+                val children = recurringSchedules.filter { it.branchId == branchRoot.branchId }
 
-                val overriddenInstances = children.filter {
-                    !it.isDeleted && !it.isFirstSchedule
-                }
-
-                val dateToIgnore = children
+                val indicesToIgnore = children
                     .filter { it.isDeleted || it.repeatType == RepeatType.NONE }
-                    .map { it.originalRecurringDate }
+                    .mapNotNull { it.repeatIndex }
                     .toSet()
 
-                val repeatedDates = RepeatScheduleGenerator.generateRepeatedDates(
+
+                val indexedDates = RepeatScheduleGenerator.generateRepeatedDatesWithIndex(
                     branchRoot.repeatType,
                     branchRoot.start.date,
                     monthList = months,
-                    dateToIgnore = dateToIgnore,
+                    indicesToIgnore = indicesToIgnore,
                     repeatUntil = branchRoot.repeatUntil
                 )
 
-                repeatedDates.forEach { date ->
-                    allSchedules.add(generateRepeatedScheduleInstances(branchRoot, date))
+                indexedDates.forEach { (index, date) ->
+                    allSchedules.add(
+                        generateRepeatedScheduleInstances(branchRoot, date, index)
+                    )
                 }
 
-                allSchedules.addAll(overriddenInstances)
             }
 
             // 🔹 (3) 단일 오버라이드 일정 (branch 없이 단독 저장된)
@@ -204,35 +201,38 @@ class ScheduleRepositoryImpl @Inject constructor(
                 recurringScheduleDao.insertRecurringSchedule(overridden.toRecurringScheduleEntity())
             }
             ScheduleEditType.THIS_AND_FUTURE -> {
-                val previousRepeatDate = findPreviousRepeatDateFromScheduleMap(
+//                val previousRepeatDate = findPreviousRepeatDateFromScheduleMap(
+//                    scheduleMap = scheduleMap.value,
+//                    currentDate = schedule.originalRecurringDate,
+//                    eventId = schedule.originalEventId
+//                )
+                val previousRepeatDate = findPreviousRepeatDateFromScheduleMapByIndex(
                     scheduleMap = scheduleMap.value,
-                    currentDate = schedule.originalRecurringDate,
-                    eventId = schedule.originalEventId
+                    currentIndex = schedule.repeatIndex ?: 0,
+                    branchId = schedule.branchId ?: return
                 )
                 val newRepeatUntil = previousRepeatDate ?: schedule.start.date.minusDays(1)
 
                 // ScheduleData에서 파생된 반복일정이면 schedules 테이블도 자름
                 if (schedule.originatedFrom == schedule.originalEventId) {
                     scheduleDao.updateRepeatUntil(
-                        originalEventId = schedule.originatedFrom,
+                        branchId = schedule.branchId,
                         repeatUntil = newRepeatUntil.toString()
                     )
                 }
 
                 // RecurringData 루트인 경우 recurring 테이블도 자름
                 recurringScheduleDao.updateRepeatUntil(
-                    eventId = schedule.originatedFrom,
+                    branchId = schedule.branchId,
                     repeatUntil = newRepeatUntil.toString()
                 )
 
-                val deletedInstance = schedule.toMarkAsDeletedData(schedule.originalRecurringDate)
-
-                recurringScheduleDao.insertRecurringSchedule(deletedInstance.toRecurringScheduleEntity())
-
-                val branched = schedule.toNewBranchData()
+                val branched = if (schedule.isFirstSchedule) { schedule } else { schedule.toNewBranchData() }
                 recurringScheduleDao.insertRecurringSchedule(branched.toRecurringScheduleEntity())
 
-                recurringScheduleDao.updateContentOnly(schedule.toRecurringScheduleEntity())
+                if (isOnlyContentChanged){
+                    recurringScheduleDao.updateContentOnly(schedule.toRecurringScheduleEntity())
+                }
             }
             ScheduleEditType.ALL_EVENTS -> TODO()
         }
@@ -253,24 +253,24 @@ class ScheduleRepositoryImpl @Inject constructor(
                 }
             }
             ScheduleEditType.THIS_AND_FUTURE -> {
-                val previousRepeatDate = findPreviousRepeatDateFromScheduleMap(
+                val previousRepeatDate = findPreviousRepeatDateFromScheduleMapByIndex(
                     scheduleMap = scheduleMap.value,
-                    currentDate = schedule.originalRecurringDate,
-                    eventId = schedule.originalEventId
+                    currentIndex = schedule.repeatIndex ?: 0,
+                    branchId = schedule.branchId ?: return
                 )
                 val newRepeatUntil = previousRepeatDate ?: schedule.start.date.minusDays(1)
 
                 // ScheduleData에서 파생된 반복일정이면 schedules 테이블도 자름
                 if (schedule.originatedFrom == schedule.originalEventId) {
                     scheduleDao.updateRepeatUntil(
-                        originalEventId = schedule.originatedFrom,
+                        branchId = schedule.branchId ?: return,
                         repeatUntil = newRepeatUntil.toString()
                     )
                 }
 
                 // RecurringData 루트인 경우 recurring 테이블도 자름
                 recurringScheduleDao.updateRepeatUntil(
-                    eventId = schedule.originatedFrom,
+                    branchId = schedule.branchId ?: return,
                     repeatUntil = newRepeatUntil.toString()
                 )
 
@@ -305,6 +305,18 @@ class ScheduleRepositoryImpl @Inject constructor(
                 }
             }
             ?.key
+    }
+    private fun findPreviousRepeatDateFromScheduleMapByIndex(
+        scheduleMap: Map<LocalDate, List<BaseSchedule>>,
+        currentIndex: Int,
+        branchId: String
+    ): LocalDate? {
+        return scheduleMap.values
+            .flatten()
+            .filterIsInstance<RecurringData>()
+            .filter { it.branchId == branchId && (it.repeatIndex) < currentIndex }
+            .maxByOrNull { it.repeatIndex ?: Int.MIN_VALUE }
+            ?.start?.date
     }
 
 }

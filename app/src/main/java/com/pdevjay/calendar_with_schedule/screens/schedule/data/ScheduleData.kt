@@ -47,7 +47,7 @@ fun ScheduleData.toScheduleEntity(): ScheduleEntity {
 }
 
 
-fun ScheduleData.toRecurringData(originalStartDate: LocalDate? = null, selectedDate: LocalDate): RecurringData {
+fun ScheduleData.toRecurringData(originalStartDate: LocalDate? = null, selectedDate: LocalDate, repeatIndex: Int): RecurringData {
     return RecurringData(
         id = UUID.randomUUID().toString(), // ✅ 항상 새 UUID로 고유하게 생성
         originalEventId = this.id,
@@ -65,7 +65,8 @@ fun ScheduleData.toRecurringData(originalStartDate: LocalDate? = null, selectedD
 //        isOriginalSchedule = false,
         isDeleted = false, // 기본적으로 삭제되지 않음
 //        originalRepeatUntil = this.originalRepeatUntil,
-        branchId = this.branchId
+        branchId = this.branchId,
+        repeatIndex = repeatIndex
     )
 }
 
