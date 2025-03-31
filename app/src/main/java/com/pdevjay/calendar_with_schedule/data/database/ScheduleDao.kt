@@ -44,10 +44,14 @@ interface ScheduleDao {
     @Delete
     suspend fun deleteSchedule(schedule: ScheduleEntity)
 
+    @Query("""
+        DELETE FROM schedules WHERE id = :scheduleId
+    """)
+    suspend fun deleteScheduleById(scheduleId: String)
     /**
      * 특정 원본 이벤트 ID를 기반으로 반복 일정의 `repeatUntil`을 업데이트합니다.
      */
-    @Query("UPDATE schedules SET repeatUntil = :repeatUntil WHERE branchId = :branchId")
+    @Query("UPDATE schedules SET repeatUntil = :repeatUntil WHERE branchId = :branchId AND (repeatUntil >= :repeatUntil OR repeatUntil IS NULL)")
     suspend fun updateRepeatUntil(branchId: String, repeatUntil: String)
 
     suspend fun updateContentOnly(scheduleId: String? = null, schedule: ScheduleEntity){

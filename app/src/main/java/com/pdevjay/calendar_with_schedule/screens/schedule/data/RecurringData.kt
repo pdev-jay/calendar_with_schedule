@@ -52,6 +52,21 @@ fun RecurringData.toRecurringScheduleEntity(): RecurringScheduleEntity {
     )
 }
 
+fun RecurringData.toScheduleData(): ScheduleData {
+    return ScheduleData(
+        id = this.originalEventId,
+        start = this.start,
+        end = this.end,
+        location = this.location,
+        title = this.title,
+        repeatType = this.repeatType,
+        repeatUntil = this.repeatUntil,
+        repeatRule = this.repeatRule,
+        alarmOption = this.alarmOption,
+        isAllDay = this.isAllDay
+    )
+}
+
 fun RecurringData.toSingleChangeData(): RecurringData{
     return this.copy(
         id = UUID.randomUUID().toString(),
@@ -76,7 +91,7 @@ fun RecurringData.toNewBranchData(): RecurringData {
         originalRecurringDate = this.start.date,
         start = this.start.copy(date = this.start.date),
         end = this.end.copy(date = this.start.date),
-//        repeatIndex = 1
+        repeatIndex = 1
     )
 }
 

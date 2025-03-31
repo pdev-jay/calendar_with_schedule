@@ -38,7 +38,6 @@ class ScheduleViewModel @Inject constructor(
 
                 is ScheduleIntent.UpdateSchedule -> {
                     scheduleRepository.updateSchedule(intent.schedule, intent.editType, intent.isOnlyContentChanged)
-
                     AlarmScheduler.scheduleAlarm(context, intent.schedule)  // 알람 예약
                 }
 

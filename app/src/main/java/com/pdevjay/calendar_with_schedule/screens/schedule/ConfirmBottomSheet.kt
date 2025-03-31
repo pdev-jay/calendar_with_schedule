@@ -29,6 +29,7 @@ fun ConfirmBottomSheet(
     single: String,
     future: String,
     isSingleAvailable: Boolean? = true,
+    isFutureAvailable: Boolean? = true,
     isVisible: Boolean,
     onDismiss: () -> Unit,
     onSingle: () -> Unit,
@@ -80,6 +81,7 @@ fun ConfirmBottomSheet(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Button(
+                    enabled = isFutureAvailable ?: true,
                     onClick = {
                         scope.launch {
                             try {

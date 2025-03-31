@@ -23,7 +23,7 @@ data class ScheduleData(
     @SerializedName("repeatUntil") override val repeatUntil: LocalDate? = null,
     @SerializedName("repeatRule") override val repeatRule: String? = null,
     @SerializedName("alarmOption") override val alarmOption: AlarmOption = AlarmOption.NONE,
-    @SerializedName("branchId") override val branchId: String? = UUID.randomUUID().toString()
+    @SerializedName("branchId") override val branchId: String? = if(repeatType == RepeatType.NONE) null else UUID.randomUUID().toString()
 ) : BaseSchedule(id, title, location, isAllDay, start, end, repeatType, repeatUntil, repeatRule, alarmOption, branchId)
 
 // ScheduleData <-> TaskEntity 변환 함수들
@@ -65,6 +65,7 @@ fun ScheduleData.toRecurringData(originalStartDate: LocalDate? = null, selectedD
 //        isOriginalSchedule = false,
         isDeleted = false, // 기본적으로 삭제되지 않음
 //        originalRepeatUntil = this.originalRepeatUntil,
+        isFirstSchedule = repeatIndex == 1,
         branchId = this.branchId,
         repeatIndex = repeatIndex
     )

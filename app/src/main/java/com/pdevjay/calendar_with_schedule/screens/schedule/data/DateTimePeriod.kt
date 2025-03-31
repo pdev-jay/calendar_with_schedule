@@ -17,3 +17,13 @@ fun DateTimePeriod.toDateTime(): LocalDateTime {
 fun DateTimePeriod.toMinutes(): Int {
     return this.date.dayOfYear * 1440 + this.time.hour * 60 + this.time.minute
 }
+
+operator fun LocalDate.rangeTo(other: LocalDate): List<LocalDate> {
+    val dates = mutableListOf<LocalDate>()
+    var current = this
+    while (!current.isAfter(other)) {
+        dates.add(current)
+        current = current.plusDays(1)
+    }
+    return dates
+}

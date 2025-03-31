@@ -12,14 +12,18 @@ import com.pdevjay.calendar_with_schedule.screens.schedule.data.resolveDisplayFi
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.resolveDisplayOnly
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.toMarkAsDeletedData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.toNewBranchData
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.toRecurringData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.toRecurringScheduleEntity
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.toScheduleEntity
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.toSingleChangeData
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.ScheduleEditType
 import com.pdevjay.calendar_with_schedule.utils.RepeatScheduleGenerator
+import com.pdevjay.calendar_with_schedule.utils.RepeatScheduleGenerator.generateRepeatedDates
 import com.pdevjay.calendar_with_schedule.utils.RepeatScheduleGenerator.generateRepeatedDatesWithIndex
 import com.pdevjay.calendar_with_schedule.utils.RepeatScheduleGenerator.generateRepeatedScheduleInstances
 import com.pdevjay.calendar_with_schedule.utils.RepeatType
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.rangeTo
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.toScheduleData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -89,7 +93,7 @@ class ScheduleRepositoryImpl @Inject constructor(
         _currentMonths.value = months // 🔥 `currentMonths` 를 갱신하면 자동으로 `scheduleMap` 업데이트됨
     }
 
-    override fun getSchedulesForMonths(months: List<YearMonth>): Flow<Map<LocalDate, List<RecurringData>>> {
+     override fun getSchedulesForMonths(months: List<YearMonth>): Flow<Map<LocalDate, List<RecurringData>>> {
         val monthStrings = months.map { it.toString() }
         val maxMonth = months.maxOrNull()?.toString() ?: YearMonth.now().toString()
         val minMonth = months.minOrNull()?.toString() ?: YearMonth.now().toString()
@@ -155,7 +159,10 @@ class ScheduleRepositoryImpl @Inject constructor(
             // 🔹 (3) 단일 오버라이드 일정 (branch 없이 단독 저장된)
             allSchedules.addAll(
                 recurringSchedules.filter {
-                    it.repeatType == RepeatType.NONE && !it.isDeleted && !it.isFirstSchedule
+                    it.repeatType == RepeatType.NONE &&
+                            !it.isDeleted &&
+//                            !it.isFirstSchedule &&
+                            (it.repeatUntil == null || it.start.date <= it.repeatUntil)
                 }
             )
 
@@ -168,18 +175,27 @@ class ScheduleRepositoryImpl @Inject constructor(
                     if (root != null) item.resolveDisplayOnly(root) else item
                 } else item
             }
-
-            // 🔹 (5) 삭제 제외, 날짜 기준 정리
-            val filtered = resolvedSchedules
+// 🔹 (5) 삭제 제외, 날짜 기준 정리 (여러 날짜에 걸친 일정 고려)
+            val expanded = resolvedSchedules
                 .filter { !it.isDeleted }
-                .groupBy { it.start.date }
+                .flatMap { item ->
+                    val startDate = item.start.date
+                    val endDate = item.end.date
+
+                    if (startDate == endDate) {
+                        listOf(startDate to item)
+                    } else {
+                        startDate.rangeTo(endDate).map { it to item } // 🔥 날짜 범위 전체에 매핑
+                    }
+                }
+                .groupBy({ it.first }, { it.second })
                 .mapValues { it.value.sortedBy { item -> item.start.time } }
 
-            // 🔹 (6) 빈 날짜 처리
+// 🔹 (6) 빈 날짜 처리
             val validDates = months.flatMap { month -> (1..month.lengthOfMonth()).map { month.atDay(it) } }
-            val result = validDates.associateWith { date -> filtered[date].orEmpty() }
+            val result = validDates.associateWith { date -> expanded[date].orEmpty() }
 
-            result.toSortedMap()
+            return@combine result.toSortedMap()
         }
     }
 
@@ -189,23 +205,22 @@ class ScheduleRepositoryImpl @Inject constructor(
         when (scheduleEditType){
             ScheduleEditType.ONLY_THIS_EVENT -> {
                 // update 시도
-                val row = recurringScheduleDao.markRecurringScheduleAsDeleted(schedule.id)
-                // update 실패 시 isDeleted = true로 insert
-                if (row == 0){
-                    val deleted = schedule.toMarkAsDeletedData(schedule.originalRecurringDate)
-                    recurringScheduleDao.insertRecurringSchedule(deleted.toRecurringScheduleEntity())
-                }
+//                val row = recurringScheduleDao.markRecurringScheduleAsDeleted(schedule.id)
+//                // update 실패 시 isDeleted = true로 insert
+//                if (row == 0){
+//                    val deleted = schedule.toMarkAsDeletedData(schedule.originalRecurringDate)
+//                    recurringScheduleDao.insertRecurringSchedule(deleted.toRecurringScheduleEntity())
+//                }
 
-                // 새롭게 수정되는 데이터 insert
-                val overridden = schedule.toSingleChangeData()
-                recurringScheduleDao.insertRecurringSchedule(overridden.toRecurringScheduleEntity())
+                // 반복 일정이 아닌 경우
+                if (schedule.branchId == null){
+                    scheduleDao.insertSchedule(schedule.toScheduleData().toScheduleEntity())
+                } else {
+                    val overridden = schedule.toSingleChangeData()
+                    recurringScheduleDao.insertRecurringSchedule(overridden.toRecurringScheduleEntity())
+                }
             }
             ScheduleEditType.THIS_AND_FUTURE -> {
-//                val previousRepeatDate = findPreviousRepeatDateFromScheduleMap(
-//                    scheduleMap = scheduleMap.value,
-//                    currentDate = schedule.originalRecurringDate,
-//                    eventId = schedule.originalEventId
-//                )
                 val previousRepeatDate = findPreviousRepeatDateFromScheduleMapByIndex(
                     scheduleMap = scheduleMap.value,
                     currentIndex = schedule.repeatIndex ?: 0,
@@ -226,10 +241,17 @@ class ScheduleRepositoryImpl @Inject constructor(
                     branchId = schedule.branchId,
                     repeatUntil = newRepeatUntil.toString()
                 )
+                // branch의 root인 경우 새로운 branch를 생성하지 않고 기존 branch를 업데이트
+                if (schedule.isFirstSchedule){
+                    recurringScheduleDao.insertRecurringSchedule(schedule.toRecurringScheduleEntity())
+                } else {
+                    // 새로운 branch를 만드는 경우
+                    // 단일 수정 일정에서 시작하는 경우 단일 수정 일정을 삭제
+                    recurringScheduleDao.markRecurringScheduleAsDeleted(schedule.id)
+                    // 새로운 branch를 생성
+                    recurringScheduleDao.insertRecurringSchedule(schedule.toNewBranchData().toRecurringScheduleEntity())
 
-                val branched = if (schedule.isFirstSchedule) { schedule } else { schedule.toNewBranchData() }
-                recurringScheduleDao.insertRecurringSchedule(branched.toRecurringScheduleEntity())
-
+                }
                 if (isOnlyContentChanged){
                     recurringScheduleDao.updateContentOnly(schedule.toRecurringScheduleEntity())
                 }
@@ -244,12 +266,16 @@ class ScheduleRepositoryImpl @Inject constructor(
     ) {
         when (scheduleEditType){
             ScheduleEditType.ONLY_THIS_EVENT -> {
-                // update 시도
-                val row = recurringScheduleDao.markRecurringScheduleAsDeleted(schedule.id)
-                // update 실패 시 isDeleted = true로 insert
-                if (row == 0){
-                    val deleted = schedule.toMarkAsDeletedData(schedule.originalRecurringDate)
-                    recurringScheduleDao.insertRecurringSchedule(deleted.toRecurringScheduleEntity())
+                if (schedule.branchId == null){
+                    scheduleDao.deleteScheduleById(schedule.originatedFrom)
+                } else {
+                    // update 시도
+                    val row = recurringScheduleDao.markRecurringScheduleAsDeleted(schedule.id)
+                    // update 실패 시 isDeleted = true로 insert
+                    if (row == 0) {
+                        val deleted = schedule.toMarkAsDeletedData(schedule.originalRecurringDate)
+                        recurringScheduleDao.insertRecurringSchedule(deleted.toRecurringScheduleEntity())
+                    }
                 }
             }
             ScheduleEditType.THIS_AND_FUTURE -> {
@@ -311,12 +337,25 @@ class ScheduleRepositoryImpl @Inject constructor(
         currentIndex: Int,
         branchId: String
     ): LocalDate? {
-        return scheduleMap.values
+        val candidates = scheduleMap.values
             .flatten()
             .filterIsInstance<RecurringData>()
-            .filter { it.branchId == branchId && (it.repeatIndex) < currentIndex }
-            .maxByOrNull { it.repeatIndex ?: Int.MIN_VALUE }
+            .filter { it.branchId == branchId && it.repeatIndex != null }
+
+        // 1. 이전 repeatIndex 중 가장 큰 값의 날짜 반환 (currentIndex보다 작은 repeatIndex)
+        val previous = candidates
+            .filter { it.repeatIndex!! < currentIndex }
+            .maxByOrNull { it.repeatIndex!! }
             ?.start?.date
+
+        if (previous != null) return previous
+
+        // 2. 동일한 repeatIndex가 존재하면 → 해당 날짜 - 1일 반환
+        val sameIndexDate = candidates
+            .find { it.repeatIndex == currentIndex }
+            ?.start?.date
+
+        return sameIndexDate?.minusDays(1)
     }
 
 }

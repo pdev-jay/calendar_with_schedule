@@ -108,7 +108,7 @@ fun ScheduleDetailScreen(
                 repeatUntil = if (isRepeatUntilEnabled) repeatUntil else null,
                 alarmOption = alarmOption
             )
-
+            if (schedule == updatedRecurringData) return
             if (
                 editType == ScheduleEditType.ONLY_THIS_EVENT &&
                 (schedule.repeatUntil != updatedRecurringData.repeatUntil ||
@@ -254,6 +254,7 @@ fun ScheduleDetailScreen(
                 onDateSelected = {
                     start = start.copy(date = it)
                     end = end.copy(date = it)
+                    if (repeatUntil != null && repeatUntil!! < start.date) repeatUntil = start.date
                 },
                 onDismiss = { showDatePickerForStart = false }
             )
@@ -321,6 +322,7 @@ fun ScheduleDetailScreen(
             single = stringResource(R.string.update_single),
             future = stringResource(R.string.update_future),
             isSingleAvailable = (schedule.repeatUntil == repeatUntil && schedule.repeatType == repeatType),
+            isFutureAvailable = (schedule.branchId != null),
             isVisible = showUpdateBottomSheet,
             onDismiss = { showUpdateBottomSheet = false },
             onSingle = {

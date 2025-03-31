@@ -22,8 +22,6 @@ import javax.inject.Inject
 object AlarmScheduler {
 
     fun scheduleAlarm(context: Context, schedule: BaseSchedule, baseTimeMillis: Long? = null) {
-//        val triggerTimeMillis = baseTimeMillis ?: calculateTriggerTimeMillis(schedule)
-//        if (triggerTimeMillis <= System.currentTimeMillis()) return
 
         var triggerTimeMillis = baseTimeMillis ?: calculateTriggerTimeMillis(schedule)
 
@@ -39,6 +37,8 @@ object AlarmScheduler {
             do {
                 triggerTimeMillis = calculateNextTriggerTime(triggerTimeMillis, schedule.repeatType)
             } while (triggerTimeMillis <= now)
+        } else if (triggerTimeMillis <= now && schedule.repeatType == RepeatType.NONE) {
+            return
         }
 
 
