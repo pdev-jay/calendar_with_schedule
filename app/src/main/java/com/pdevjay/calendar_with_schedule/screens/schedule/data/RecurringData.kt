@@ -69,7 +69,7 @@ fun RecurringData.toScheduleData(): ScheduleData {
 
 fun RecurringData.toSingleChangeData(): RecurringData{
     return this.copy(
-        id = UUID.randomUUID().toString(),
+//        id = UUID.randomUUID().toString(),
         repeatType = RepeatType.NONE,
         repeatUntil = null,
         repeatRule = null,

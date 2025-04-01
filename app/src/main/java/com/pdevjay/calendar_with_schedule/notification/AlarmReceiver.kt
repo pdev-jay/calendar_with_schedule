@@ -25,10 +25,6 @@ class AlarmReceiver : BroadcastReceiver() {
         val alarmOption = intent?.getStringExtra("alarmOption")?.let {
             AlarmOption.valueOf(it)
         } ?: AlarmOption.NONE
-        val repeatType = intent?.getStringExtra("repeatType")?.let {
-            RepeatType.valueOf(it)
-        } ?: RepeatType.NONE
-        val repeatUntil = intent?.getStringExtra("repeatUntil") ?: ""
 
         val contentText = when (alarmOption) {
             AlarmOption.AT_TIME -> "지금 일정이 시작됩니다."
@@ -63,11 +59,5 @@ class AlarmReceiver : BroadcastReceiver() {
         }
         Log.e("AlarmReceiver", "Alarm scheduled for $title notified")
 
-        // 🔁 다음 반복 알림 예약
-        if (repeatType != RepeatType.NONE) {
-            AlarmScheduler.scheduleNextAlarm(
-                context, scheduleId, title, alarmOption, repeatType, repeatUntil, System.currentTimeMillis()
-            )
-        }
     }
 }

@@ -75,63 +75,6 @@ object RepeatScheduleGenerator {
     }
 
 
-//    fun generateRepeatedScheduleInstances(schedule: BaseSchedule, selectedDay: LocalDate): RecurringData {
-//       return when(schedule){
-//            is ScheduleData -> {
-//                schedule.toRecurringData(selectedDate = selectedDay)
-//                    .copy(isFirstSchedule = selectedDay == schedule.start.date)
-//            }
-//            is RecurringData -> {
-//                schedule.copy(
-//                    id = UUID.randomUUID().toString(),
-//                    start = schedule.start.copy(date = selectedDay),
-//                    end = schedule.end.copy(date = selectedDay),
-//                    originalEventId = schedule.originalEventId,
-//                    originalRecurringDate = selectedDay,
-//                    originatedFrom = schedule.id,
-//                    isFirstSchedule = false,
-//                    isDeleted = false // ui에 보여지는 반복일정이니 false -> isDeleted인 일정은 이미 제외되어 있음
-//                )
-//
-//            }
-//
-//           else -> { schedule as RecurringData }
-//       }
-//    }
-fun generateRepeatedDatesWithIndex(
-    repeatType: RepeatType,
-    startDate: LocalDate,
-    monthList: List<YearMonth>? = null,
-    indicesToIgnore: Set<Int> = emptySet(),
-    repeatUntil: LocalDate? = null,
-    startIndex: Int = 1
-): List<Pair<Int, LocalDate>> {
-    val result = mutableListOf<Pair<Int, LocalDate>>()
-    var current = startDate
-    var index = startIndex
-
-    while (true) {
-        if (repeatUntil != null && current > repeatUntil) break
-        if (monthList != null && YearMonth.from(current) > monthList.maxOrNull()) break
-        if (index !in indicesToIgnore) {
-            result.add(index to current)
-        }
-
-        current = when (repeatType) {
-            RepeatType.DAILY -> current.plusDays(1)
-            RepeatType.WEEKLY -> current.plusWeeks(1)
-            RepeatType.BIWEEKLY -> current.plusWeeks(2)
-            RepeatType.MONTHLY -> current.plusMonths(1)
-            RepeatType.YEARLY -> current.plusYears(1)
-            else -> break
-        }
-        index++
-    }
-
-    return result
-}
-
-
     fun generateRepeatedDatesWithIndex(
         repeatType: RepeatType,
         startDate: LocalDate,
@@ -167,7 +110,7 @@ fun generateRepeatedDatesWithIndex(
 
 
     fun generateRepeatedScheduleInstances(
-        schedule: ScheduleData,
+        schedule: BaseSchedule,
         selectedDate: LocalDate,
         index: Int
     ): RecurringData {
@@ -186,49 +129,99 @@ fun generateRepeatedDatesWithIndex(
             time = newEndDateTime.toLocalTime()
         )
 
-        return schedule.toRecurringData(selectedDate = selectedDate, repeatIndex = index).copy(
-            isFirstSchedule = (index == 1),
-            start = newStart,
-            end = newEnd,
+        return when(schedule) {
+            is ScheduleData -> {
+                schedule.toRecurringData(selectedDate = selectedDate, repeatIndex = index).copy(
+                    isFirstSchedule = (index == 1),
+                    start = newStart,
+                    end = newEnd,
 
-            repeatIndex = index
-        )
+                    repeatIndex = index
+                )
+            }
+
+            is RecurringData -> {
+                schedule.copy(
+                    id = if (index == 1) schedule.id else UUID.randomUUID().toString(),
+                    start = newStart,
+                    end = newEnd,
+                    originalEventId = schedule.originalEventId,
+                    originalRecurringDate = selectedDate,
+                    originatedFrom = schedule.id,
+                    isFirstSchedule = (index == 1),
+                    isDeleted = false,
+                    repeatIndex = index
+                )
+            }
+
+            else -> {
+                throw IllegalArgumentException("Invalid schedule type")
+            }
+        }
     }
+//    fun generateRepeatedScheduleInstances(
+//        schedule: ScheduleData,
+//        selectedDate: LocalDate,
+//        index: Int
+//    ): RecurringData {
+//        // 시작일 → LocalDateTime
+//        val originalStartDateTime = schedule.start.toDateTime()
+//        val originalEndDateTime = schedule.end.toDateTime()
+//
+//        // duration 계산
+//        val duration = Duration.between(originalStartDateTime, originalEndDateTime)
+//
+//        // 새 start 시간 기준의 end 계산
+//        val newStart = schedule.start.copy(date = selectedDate)
+//        val newEndDateTime = newStart.toDateTime().plus(duration)
+//        val newEnd = DateTimePeriod(
+//            date = newEndDateTime.toLocalDate(),
+//            time = newEndDateTime.toLocalTime()
+//        )
+//
+//        return schedule.toRecurringData(selectedDate = selectedDate, repeatIndex = index).copy(
+//            isFirstSchedule = (index == 1),
+//            start = newStart,
+//            end = newEnd,
+//
+//            repeatIndex = index
+//        )
+//    }
 
-    fun generateRepeatedScheduleInstances(
-        schedule: RecurringData,
-        selectedDate: LocalDate,
-        index: Int
-    ): RecurringData {
-        // 시작일 → LocalDateTime
-        val originalStartDateTime = schedule.start.toDateTime()
-        val originalEndDateTime = schedule.end.toDateTime()
-
-        // duration 계산
-        val duration = Duration.between(originalStartDateTime, originalEndDateTime)
-
-        // 새 start 시간 기준의 end 계산
-        val newStart = schedule.start.copy(date = selectedDate)
-        val newEndDateTime = newStart.toDateTime().plus(duration)
-        val newEnd = DateTimePeriod(
-            date = newEndDateTime.toLocalDate(),
-            time = newEndDateTime.toLocalTime()
-        )
-
-        return schedule.copy(
-            id = if (index == 1) schedule.id else UUID.randomUUID().toString(),
-            start = newStart,
-            end = newEnd,
-            originalEventId = schedule.originalEventId,
-            originalRecurringDate = selectedDate,
-            originatedFrom = schedule.id,
-            isFirstSchedule = (index == 1),
-            isDeleted = false,
-            repeatIndex = index
-        )
-    }
-
-
+//    fun generateRepeatedScheduleInstances(
+//        schedule: RecurringData,
+//        selectedDate: LocalDate,
+//        index: Int
+//    ): RecurringData {
+//        // 시작일 → LocalDateTime
+//        val originalStartDateTime = schedule.start.toDateTime()
+//        val originalEndDateTime = schedule.end.toDateTime()
+//
+//        // duration 계산
+//        val duration = Duration.between(originalStartDateTime, originalEndDateTime)
+//
+//        // 새 start 시간 기준의 end 계산
+//        val newStart = schedule.start.copy(date = selectedDate)
+//        val newEndDateTime = newStart.toDateTime().plus(duration)
+//        val newEnd = DateTimePeriod(
+//            date = newEndDateTime.toLocalDate(),
+//            time = newEndDateTime.toLocalTime()
+//        )
+//
+//        return schedule.copy(
+//            id = if (index == 1) schedule.id else UUID.randomUUID().toString(),
+//            start = newStart,
+//            end = newEnd,
+//            originalEventId = schedule.originalEventId,
+//            originalRecurringDate = selectedDate,
+//            originatedFrom = schedule.id,
+//            isFirstSchedule = (index == 1),
+//            isDeleted = false,
+//            repeatIndex = index
+//        )
+//    }
+//
+//
 }
 
 enum class RepeatType(val label: String) {

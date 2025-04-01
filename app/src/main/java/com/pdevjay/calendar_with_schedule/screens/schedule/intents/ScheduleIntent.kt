@@ -9,6 +9,6 @@ import java.time.LocalDate
 sealed class ScheduleIntent {
     data class AddSchedule(val schedule: ScheduleData) : ScheduleIntent()
 
-    data class UpdateSchedule(val schedule: RecurringData, val editType: ScheduleEditType, val isOnlyContentChanged: Boolean = false) : ScheduleIntent()
+    data class UpdateSchedule(val oldSchedule: RecurringData, val newSchedule: RecurringData, val editType: ScheduleEditType, val isOnlyContentChanged: Boolean = false) : ScheduleIntent()
     data class DeleteSchedule(val schedule: RecurringData, val editType: ScheduleEditType) : ScheduleIntent()
 }

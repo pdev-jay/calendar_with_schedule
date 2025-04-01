@@ -8,9 +8,13 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.util.Log
+import com.pdevjay.calendar_with_schedule.BuildConfig
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.RecurringData
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.toDateTime
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
+import com.pdevjay.calendar_with_schedule.utils.RepeatScheduleGenerator
 import com.pdevjay.calendar_with_schedule.utils.RepeatType
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.Instant
@@ -21,38 +25,67 @@ import javax.inject.Inject
 
 object AlarmScheduler {
 
+    fun scheduleAlarmsFromScheduleMap(context: Context, scheduleMap: Map<LocalDate, List<BaseSchedule>>, daysAhead: Long = 30) {
+        val today = LocalDate.now()
+        val until = today.plusDays(daysAhead)
+
+        scheduleMap
+            .filterKeys { it in today..until }
+            .forEach { (_, schedules) ->
+                schedules.filterIsInstance<RecurringData>()
+                    .filter { it.alarmOption != AlarmOption.NONE && !it.isDeleted }
+                    .forEach { recurring ->
+                        val triggerTime = calculateTriggerTimeMillis(recurring)
+                        if (triggerTime > System.currentTimeMillis()) {
+                            scheduleAlarm(context, recurring, triggerTime)
+                        }
+                    }
+            }
+    }
+
+    fun scheduleMultipleAlarms(context: Context, schedule: RecurringData, daysAhead: Long = 30) {
+        if (schedule.repeatType == RepeatType.NONE) {
+            scheduleAlarm(context, schedule)
+            return
+        }
+        val today = LocalDate.now()
+        val until = today.plusDays(daysAhead)
+
+        val repeatedDates = RepeatScheduleGenerator.generateRepeatedDates(
+            repeatType = schedule.repeatType,
+            startDate = schedule.start.date,
+            monthList = null,
+            repeatUntil = schedule.repeatUntil ?: until // 🔥 repeatUntil 없어도 안전하게 범위 제한
+        ).takeWhile { it <= LocalDate.now().plusDays(daysAhead) }
+
+        for (date in repeatedDates) {
+            val temp = schedule.copy(start = schedule.start.copy(date = date))
+            val triggerTime = calculateTriggerTimeMillis(temp)
+            if (triggerTime > System.currentTimeMillis()) {
+                scheduleAlarm(context, temp, triggerTime)
+            }
+        }
+    }
+
     fun scheduleAlarm(context: Context, schedule: BaseSchedule, baseTimeMillis: Long? = null) {
 
         var triggerTimeMillis = baseTimeMillis ?: calculateTriggerTimeMillis(schedule)
 
-        if (triggerTimeMillis <= 0L) {
-            Log.e("Alarm", "❌ 유효하지 않은 triggerTimeMillis: $triggerTimeMillis → 알람 예약하지 않음")
+        if (triggerTimeMillis <= System.currentTimeMillis()) {
+            Log.e("AlarmLogger", "과거 알람 시도: $triggerTimeMillis → 무시됨")
             return
         }
-
-        // 🔥 과거면 다음 반복으로 보정
-        val now = System.currentTimeMillis()
-        if (triggerTimeMillis <= now && schedule.repeatType != RepeatType.NONE) {
-            // 반복이 있는 경우 → 미래 반복 알림을 계산
-            do {
-                triggerTimeMillis = calculateNextTriggerTime(triggerTimeMillis, schedule.repeatType)
-            } while (triggerTimeMillis <= now)
-        } else if (triggerTimeMillis <= now && schedule.repeatType == RepeatType.NONE) {
-            return
-        }
-
 
         val intent = Intent(context, AlarmReceiver::class.java).apply {
             putExtra("scheduleId", schedule.id.hashCode())
             putExtra("title", schedule.title)
             putExtra("alarmOption", schedule.alarmOption.name)
-            putExtra("repeatType", schedule.repeatType.name)
-            putExtra("repeatUntil", schedule.repeatUntil?.toString() ?: "")
         }
+        val requestCode = getAlarmRequestCode(schedule)
 
         val pendingIntent = PendingIntent.getBroadcast(
             context,
-            schedule.id.hashCode(),
+            requestCode,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -62,7 +95,7 @@ object AlarmScheduler {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
                 !alarmManager.canScheduleExactAlarms()) {
-                Log.w("AlarmScheduler", "Exact alarm permission not granted.")
+                Log.w("AlarmLogger", "Exact alarm permission not granted.")
                 return
             }
             alarmManager.setExactAndAllowWhileIdle(
@@ -70,91 +103,106 @@ object AlarmScheduler {
                 triggerTimeMillis,
                 pendingIntent
             )
-            Log.e("AlarmScheduler", "Alarm scheduled for $triggerTimeMillis")
+            Log.e("AlarmLogger", "Alarm scheduled for ${schedule.title} / ${schedule.start.date} / ${schedule.alarmOption.name}")
         } catch (e: SecurityException) {
-            Log.e("AlarmScheduler", "SecurityException when setting alarm", e)
+            Log.e("AlarmLogger", "SecurityException when setting alarm", e)
         }
     }
 
-    fun scheduleNextAlarm(
+    fun cancelAlarmsFromScheduleMap(
         context: Context,
-        id: Int,
-        title: String,
-        alarmOption: AlarmOption,
-        repeatType: RepeatType,
-        repeatUntil: String,
-        baseTimeMillis: Long
+        scheduleMap: Map<LocalDate, List<BaseSchedule>>,
+        daysAhead: Long = 30
     ) {
-        if (repeatType == RepeatType.NONE) return
-
-        // 🔥 repeatUntil 검사
-        val nextDate = Instant.ofEpochMilli(baseTimeMillis)
-            .atZone(ZoneId.systemDefault())
-            .toLocalDate()
-
-        val nextRepeatDate = when (repeatType) {
-            RepeatType.DAILY -> nextDate.plusDays(1)
-            RepeatType.WEEKLY -> nextDate.plusWeeks(1)
-            RepeatType.BIWEEKLY -> nextDate.plusWeeks(2)
-            RepeatType.MONTHLY -> nextDate.plusMonths(1)
-            RepeatType.YEARLY -> nextDate.plusYears(1)
-            else -> nextDate
-        }
-
-        if (nextRepeatDate.isAfter(LocalDate.parse(repeatUntil))) {
-            Log.i("AlarmScheduler", "다음 반복 날짜가 repeatUntil 이후이므로 알림 예약 안 함")
-            return
-        }
-
-
-        val nextTime = calculateNextTriggerTime(baseTimeMillis, repeatType)
-
-        val intent = Intent(context, AlarmReceiver::class.java).apply {
-            putExtra("scheduleId", id)
-            putExtra("title", title)
-            putExtra("alarmOption", alarmOption.name)
-            putExtra("repeatType", repeatType.name)
-        }
-
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            id,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
+        val today = LocalDate.now()
+        val until = today.plusDays(daysAhead)
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-                !alarmManager.canScheduleExactAlarms()) {
-                Log.w("AlarmScheduler", "Exact alarm permission not granted.")
-                return
-            }
+        scheduleMap
+            .filterKeys { it in today..until }
+            .forEach { (_, schedules) ->
+                schedules.filterIsInstance<RecurringData>()
+                    .filter { it.alarmOption != AlarmOption.NONE && !it.isDeleted }
+                    .forEach { schedule ->
+                        val requestCode = getAlarmRequestCode(schedule)
 
-            alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                nextTime,
-                pendingIntent
-            )
-        } catch (e: SecurityException) {
-            Log.e("AlarmScheduler", "SecurityException when setting next alarm", e)
-        }
+                        val intent = Intent(context, AlarmReceiver::class.java).apply {
+                            putExtra("scheduleId", schedule.id.hashCode())
+                            putExtra("title", schedule.title)
+                            putExtra("alarmOption", schedule.alarmOption.name)
+                        }
+                        val pendingIntent = PendingIntent.getBroadcast(
+                            context,
+                            requestCode,  // 또는 schedule.id.hashCode() + repeatIndex
+                            intent,
+                            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+                        )
+                        pendingIntent?.let {
+                            alarmManager.cancel(it)
+                            Log.i("AlarmScheduler", "❌ 알람 취소됨: ${schedule.title} (${schedule.start.date})")
+                        }
+                    }
+            }
     }
 
-    fun cancelAlarm(context: Context, schedule: BaseSchedule) {
-        val intent = Intent(context, AlarmReceiver::class.java)
+
+    fun cancelAlarm(context: Context, schedule: RecurringData) {
+        val intent = Intent(context, AlarmReceiver::class.java).apply {
+            putExtra("scheduleId", schedule.id.hashCode())
+            putExtra("title", schedule.title)
+            putExtra("alarmOption", schedule.alarmOption.name)
+        }
+        val requestCode = getAlarmRequestCode(schedule)
+
         val pendingIntent = PendingIntent.getBroadcast(
             context,
-            schedule.id.hashCode(),
+            requestCode,
             intent,
             PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
         )
         pendingIntent?.let {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
             alarmManager.cancel(it)
+            Log.e("AlarmLogger", "❌ 알람 취소됨: ${schedule.title} ${schedule.start.date} $requestCode")
         }
     }
+
+    fun cancelThisAndFutureAlarms(
+        context: Context,
+        schedule: RecurringData,
+        scheduleMap: Map<LocalDate, List<BaseSchedule>>
+    ) {
+        if (schedule.branchId == null || schedule.repeatIndex == null) return
+
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+        val candidates = scheduleMap
+            .flatMap { it.value }
+            .filterIsInstance<RecurringData>()
+            .filter {
+                it.branchId == schedule.branchId &&
+                        it.repeatIndex != null &&
+                        it.repeatIndex!! >= schedule.repeatIndex!! &&
+                        !it.isDeleted &&
+                        it.alarmOption != AlarmOption.NONE
+            }
+
+        for (target in candidates) {
+            val requestCode = getAlarmRequestCode(target)
+            val intent = Intent(context, AlarmReceiver::class.java)
+            val pendingIntent = PendingIntent.getBroadcast(
+                context,
+                requestCode,
+                intent,
+                PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+            )
+            pendingIntent?.let {
+                alarmManager.cancel(it)
+                Log.e("AlarmLogger", "❌ 알람 취소됨 (THIS_AND_FUTURE): ${target.title} ${target.start.date}")
+            }
+        }
+    }
+
 
     fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -173,7 +221,7 @@ object AlarmScheduler {
     }
 
     private fun calculateTriggerTimeMillis(schedule: BaseSchedule): Long {
-        val baseTime = schedule.start?.toDateTime() ?: return Long.MIN_VALUE
+        val baseTime = schedule.start.toDateTime() ?: return Long.MIN_VALUE
         val offsetMinutes = when (schedule.alarmOption) {
             AlarmOption.AT_TIME -> 0
             AlarmOption.MIN_5 -> 5
@@ -206,4 +254,70 @@ object AlarmScheduler {
         }
         return next.toInstant().toEpochMilli()
     }
+
+    fun getAlarmRequestCode(schedule: BaseSchedule): Int {
+        val baseId = when (schedule) {
+            is RecurringData -> {
+                val key = listOfNotNull(
+                    schedule.originalEventId,       // 반복의 기준 ID
+                    schedule.start.date.toString(), // 반복 인스턴스의 날짜
+                    schedule.repeatIndex?.toString(), // 반복 인덱스 (있다면 넣기)
+                    schedule.alarmOption.name       // 알람 옵션
+                ).joinToString("_")
+                key
+            }
+
+            is ScheduleData -> {
+                val key = listOfNotNull(
+                    schedule.id,                    // ScheduleData는 고정 ID
+                    schedule.start.date.toString(),
+                    schedule.alarmOption.name
+                ).joinToString("_")
+                key
+            }
+
+            else -> throw IllegalArgumentException("Unknown schedule type")
+        }
+
+        return baseId.hashCode()
+    }
+
+    fun logRegisteredAlarms(context: Context, scheduleMap: Map<LocalDate, List<BaseSchedule>>) {
+        if (!BuildConfig.DEBUG) return  // ✅ release 빌드에서는 아예 실행 안 함
+
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        var total = 0
+        var found = 0
+
+        for ((_, schedules) in scheduleMap) {
+            for (schedule in schedules) {
+                total++
+                val intent = Intent(context, AlarmReceiver::class.java)
+                val requestCode = getAlarmRequestCode(schedule)
+
+                val pendingIntent = PendingIntent.getBroadcast(
+                    context,
+                    requestCode,
+                    intent,
+                    PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+                )
+
+                if (pendingIntent != null) {
+                    found++
+                    Log.e(
+                        "AlarmLogger",
+                        "✅ 등록됨: ${schedule.title} | ${schedule.start.date} | ${schedule.alarmOption.name} | requestCode=$requestCode"
+                    )
+                } else {
+                    Log.e(
+                        "AlarmLogger",
+                        "❌ 미등록: ${schedule.title} | ${schedule.start.date} | ${schedule.alarmOption.name} | requestCode=$requestCode"
+                    )
+                }
+            }
+        }
+
+        Log.i("AlarmLogger", "총 $total 개 중 $found 개 알람이 등록되어 있음.")
+    }
+
 }

@@ -1,16 +1,21 @@
 package com.pdevjay.calendar_with_schedule.screens.calendar.viewmodels
 
+import android.content.Context
 import android.util.Log
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pdevjay.calendar_with_schedule.data.repository.ScheduleRepository
+import com.pdevjay.calendar_with_schedule.notification.AlarmScheduler
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarDay
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarMonth
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarWeek
 import com.pdevjay.calendar_with_schedule.screens.calendar.intents.CalendarIntent
 import com.pdevjay.calendar_with_schedule.screens.calendar.states.CalendarState
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
+import dagger.hilt.android.internal.Contexts.getApplication
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,7 +28,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class CalendarViewModel @Inject constructor(
-    private val scheduleRepository: ScheduleRepository
+    private val scheduleRepository: ScheduleRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
     private val _state = MutableStateFlow(CalendarState())
     val state: StateFlow<CalendarState> = _state
@@ -40,6 +46,7 @@ class CalendarViewModel @Inject constructor(
             scheduleRepository.scheduleMap.collect { newScheduleMap ->
                 _state.value = _state.value.copy(scheduleMap = newScheduleMap)
                 Log.e("", "scheduleMap updated ")
+//                AlarmScheduler.logRegisteredAlarms(context = context, scheduleMap = newScheduleMap)
             }
         }
     }

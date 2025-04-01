@@ -129,6 +129,7 @@ fun ScheduleDetailScreen(
                 }
                 scheduleViewModel.processIntent(
                     ScheduleIntent.UpdateSchedule(
+                        schedule,
                         updatedRecurringData,
                         editType,
                         isOnlyContentChanged

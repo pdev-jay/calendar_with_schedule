@@ -1,10 +1,13 @@
 package com.pdevjay.calendar_with_schedule.data.repository
 
+import android.content.Context
 import android.util.Log
+import com.pdevjay.calendar_with_schedule.BuildConfig
 import com.pdevjay.calendar_with_schedule.data.database.RecurringScheduleDao
 import com.pdevjay.calendar_with_schedule.data.database.ScheduleDao
 import com.pdevjay.calendar_with_schedule.data.entity.toRecurringData
 import com.pdevjay.calendar_with_schedule.data.entity.toScheduleData
+import com.pdevjay.calendar_with_schedule.notification.AlarmScheduler
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.RecurringData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
@@ -24,6 +27,7 @@ import com.pdevjay.calendar_with_schedule.utils.RepeatScheduleGenerator.generate
 import com.pdevjay.calendar_with_schedule.utils.RepeatType
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.rangeTo
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.toScheduleData
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -43,7 +47,8 @@ import javax.inject.Singleton
 @Singleton
 class ScheduleRepositoryImpl @Inject constructor(
     private val scheduleDao: ScheduleDao,
-    private val recurringScheduleDao: RecurringScheduleDao // 🔥 추가
+    private val recurringScheduleDao: RecurringScheduleDao, // 🔥 추가
+    @ApplicationContext private val context: Context
 ) : ScheduleRepository {
 
     private val _scheduleMap = MutableStateFlow<Map<LocalDate, List<RecurringData>>>(emptyMap())
@@ -108,6 +113,8 @@ class ScheduleRepositoryImpl @Inject constructor(
 
             val allSchedules = mutableListOf<RecurringData>()
 
+            val allSchedulesForDebug = mutableListOf<RecurringData>()
+
             // 🔹 (1) ScheduleData → RecurringData 변환 후 반복 인스턴스 생성
             originalSchedules.forEach { schedule ->
                 val indicesToIgnore = recurringSchedules
@@ -127,6 +134,22 @@ class ScheduleRepositoryImpl @Inject constructor(
                     allSchedules.add(
                         generateRepeatedScheduleInstances(schedule, date, index)
                     )
+                }
+
+                // ✅ 디버그용: 삭제 인덱스 무시하고 전체 생성
+                if (BuildConfig.DEBUG) {
+                    val debugIndexedDates = generateRepeatedDatesWithIndex(
+                        repeatType = schedule.repeatType,
+                        startDate = schedule.start.date,
+                        monthList = months,
+                        indicesToIgnore = emptySet(), // 🔥 무시!
+                        repeatUntil = schedule.repeatUntil
+                    )
+
+                    debugIndexedDates.forEach { (index, date) ->
+                        val instance = generateRepeatedScheduleInstances(schedule, date, index)
+                        allSchedulesForDebug.add(instance)
+                    }
                 }
             }
 
@@ -154,6 +177,20 @@ class ScheduleRepositoryImpl @Inject constructor(
                     )
                 }
 
+                if (BuildConfig.DEBUG) {
+                    val debugIndexedDates = RepeatScheduleGenerator.generateRepeatedDatesWithIndex(
+                        branchRoot.repeatType,
+                        branchRoot.start.date,
+                        monthList = months,
+                        indicesToIgnore = emptySet(), // 🔥 무시!
+                        repeatUntil = branchRoot.repeatUntil
+                    )
+
+                    debugIndexedDates.forEach { (index, date) ->
+                        val instance = generateRepeatedScheduleInstances(branchRoot, date, index)
+                        allSchedulesForDebug.add(instance)
+                    }
+                }
             }
 
             // 🔹 (3) 단일 오버라이드 일정 (branch 없이 단독 저장된)
@@ -161,13 +198,20 @@ class ScheduleRepositoryImpl @Inject constructor(
                 recurringSchedules.filter {
                     it.repeatType == RepeatType.NONE &&
                             !it.isDeleted &&
-//                            !it.isFirstSchedule &&
+                            (it.repeatUntil == null || it.start.date <= it.repeatUntil)
+                }
+            )
+
+            allSchedulesForDebug.addAll(
+                recurringSchedules.filter {
+                    it.repeatType == RepeatType.NONE &&
                             (it.repeatUntil == null || it.start.date <= it.repeatUntil)
                 }
             )
 
             // 🔹 (4) resolveDisplayOnly() 로 반복 정보 덮어쓰기
             val branchRoots = allSchedules.filter { it.isFirstSchedule }.associateBy { it.branchId }
+            val branchRootsForDebug = allSchedulesForDebug.filter { it.isFirstSchedule }.associateBy { it.branchId }
 
             val resolvedSchedules = allSchedules.map { item ->
                 if (item.repeatType == RepeatType.NONE && !item.isFirstSchedule) {
@@ -175,7 +219,15 @@ class ScheduleRepositoryImpl @Inject constructor(
                     if (root != null) item.resolveDisplayOnly(root) else item
                 } else item
             }
-// 🔹 (5) 삭제 제외, 날짜 기준 정리 (여러 날짜에 걸친 일정 고려)
+
+            val resolvedSchedulesForDebug = allSchedulesForDebug.map { item ->
+                if (item.repeatType == RepeatType.NONE && !item.isFirstSchedule) {
+                    val root = branchRootsForDebug[item.branchId]
+                    if (root != null) item.resolveDisplayOnly(root) else item
+                } else item
+            }
+
+            // 🔹 (5) 삭제 제외, 날짜 기준 정리 (여러 날짜에 걸친 일정 고려)
             val expanded = resolvedSchedules
                 .filter { !it.isDeleted }
                 .flatMap { item ->
@@ -191,9 +243,27 @@ class ScheduleRepositoryImpl @Inject constructor(
                 .groupBy({ it.first }, { it.second })
                 .mapValues { it.value.sortedBy { item -> item.start.time } }
 
+            val expandedDebug = resolvedSchedulesForDebug
+                .flatMap { item ->
+                    val startDate = item.start.date
+                    val endDate = item.end.date
+                    if (startDate == endDate) listOf(startDate to item)
+                    else startDate.rangeTo(endDate).map { it to item }
+                }
+                .groupBy({ it.first }, { it.second })
+                .mapValues { it.value.sortedBy { it.start.time } }
+
+
 // 🔹 (6) 빈 날짜 처리
             val validDates = months.flatMap { month -> (1..month.lengthOfMonth()).map { month.atDay(it) } }
             val result = validDates.associateWith { date -> expanded[date].orEmpty() }
+
+            if (BuildConfig.DEBUG) {
+                val debugScheduleMap = validDates.associateWith { date -> expandedDebug[date].orEmpty() }
+
+                // 필요하다면 여기에 알람 로그 추가도 가능:
+                 AlarmScheduler.logRegisteredAlarms(context, debugScheduleMap)
+            }
 
             return@combine result.toSortedMap()
         }

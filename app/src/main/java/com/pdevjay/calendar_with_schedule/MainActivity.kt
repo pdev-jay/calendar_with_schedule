@@ -22,12 +22,16 @@ import com.pdevjay.calendar_with_schedule.notification.RequestNotificationPermis
 import com.pdevjay.calendar_with_schedule.ui.theme.AppTheme
 import com.pdevjay.calendar_with_schedule.screens.calendar.viewmodels.CalendarViewModel
 import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
+import com.pdevjay.calendar_with_schedule.utils.WorkUtils
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        AlarmScheduler.createNotificationChannel(this)
+        WorkUtils.scheduleDailyAlarmRefreshWork(this)
 
         enableEdgeToEdge()
         setContent {
@@ -45,26 +49,10 @@ fun AppRoot() {
     val calendarViewModel: CalendarViewModel = hiltViewModel()
     val scheduleViewModel: ScheduleViewModel = hiltViewModel()
     RequestNotificationPermission()
-    AlarmScheduler.createNotificationChannel(LocalContext.current)
+
     AppTheme{
         Scaffold(modifier = Modifier.fillMaxSize()) {
             AppNavGraph(navController, calendarViewModel, scheduleViewModel)
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    MaterialTheme {
-        Greeting("Android")
     }
 }
