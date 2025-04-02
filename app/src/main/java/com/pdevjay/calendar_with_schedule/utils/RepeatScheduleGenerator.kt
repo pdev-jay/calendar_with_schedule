@@ -9,7 +9,6 @@ import com.pdevjay.calendar_with_schedule.screens.schedule.data.toRecurringData
 import java.time.Duration
 import java.time.LocalDate
 import java.time.YearMonth
-import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 object RepeatScheduleGenerator {
@@ -103,6 +102,30 @@ object RepeatScheduleGenerator {
                 else -> break
             }
             index++
+        }
+
+        return result
+    }
+    fun generateRepeatedDatesForAlarm(
+        repeatType: RepeatType,
+        startDate: LocalDate,
+        repeatUntil: LocalDate? = null
+    ): List<LocalDate> {
+        val result = mutableListOf<LocalDate>()
+        var current = startDate
+
+        while (true) {
+            if (repeatUntil != null && current > repeatUntil) break
+            result.add(current) // ✅ 시작 날짜 포함
+
+            current = when (repeatType) {
+                RepeatType.DAILY -> current.plusDays(1)
+                RepeatType.WEEKLY -> current.plusWeeks(1)
+                RepeatType.BIWEEKLY -> current.plusWeeks(2)
+                RepeatType.MONTHLY -> current.plusMonths(1)
+                RepeatType.YEARLY -> current.plusYears(1)
+                else -> break
+            }
         }
 
         return result

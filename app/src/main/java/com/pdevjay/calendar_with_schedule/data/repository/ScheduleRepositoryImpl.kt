@@ -53,6 +53,8 @@ class ScheduleRepositoryImpl @Inject constructor(
 
     private val _scheduleMap = MutableStateFlow<Map<LocalDate, List<RecurringData>>>(emptyMap())
     override val scheduleMap: StateFlow<Map<LocalDate, List<RecurringData>>> = _scheduleMap
+    private val _scheduleMapForDebug = MutableStateFlow<Map<LocalDate, List<RecurringData>>>(emptyMap())
+    override val scheduleMapForDebug: StateFlow<Map<LocalDate, List<RecurringData>>> = _scheduleMapForDebug
 
     private val _currentMonths = MutableStateFlow<List<YearMonth>>(emptyList()) // 🔹 현재 조회 중인 월 리스트
     val currentMonths: StateFlow<List<YearMonth>> = _currentMonths.asStateFlow()
@@ -68,25 +70,25 @@ class ScheduleRepositoryImpl @Inject constructor(
                     _currentMonths.value.map { it.toString() },
                     _currentMonths.value.minOrNull()?.toString() ?: YearMonth.now().toString(),
                     _currentMonths.value.maxOrNull()?.toString() ?: YearMonth.now().toString()
-                ),
+                ).distinctUntilChanged(),
                 recurringScheduleDao.getRecurringSchedulesForMonths(
                     _currentMonths.value.map { it.toString() },
                     _currentMonths.value.minOrNull()?.toString() ?: YearMonth.now().toString(),
                     _currentMonths.value.maxOrNull()?.toString() ?: YearMonth.now().toString()
-                ),
+                ).distinctUntilChanged(),
                 _currentMonths
             ) { _, _, months ->
                 months
             }.distinctUntilChanged()
                 .collectLatest { months ->
-                    Log.e("ScheduleRepository", "📌 _currentMonths 변경 감지됨: ${months}")
+                    Log.e("viemodel", "📌 _currentMonths 변경 감지됨: ${months}")
 
                     if (months.isNotEmpty()) {
                         getSchedulesForMonths(months)
-//                            .distinctUntilChanged()
-                            .collect { newScheduleMap ->
+                            .distinctUntilChanged()
+                            .collectLatest { newScheduleMap ->
                                 _scheduleMap.value = newScheduleMap
-                                Log.e("ScheduleRepository", "✅ scheduleMap 자동 업데이트됨: ${newScheduleMap.keys}")
+                                Log.e("viemodel_repository", "✅ scheduleMap 자동 업데이트됨: ${newScheduleMap.keys}")
                             }
                     }
                 }
@@ -99,7 +101,8 @@ class ScheduleRepositoryImpl @Inject constructor(
     }
 
      override fun getSchedulesForMonths(months: List<YearMonth>): Flow<Map<LocalDate, List<RecurringData>>> {
-        val monthStrings = months.map { it.toString() }
+
+         val monthStrings = months.map { it.toString() }
         val maxMonth = months.maxOrNull()?.toString() ?: YearMonth.now().toString()
         val minMonth = months.minOrNull()?.toString() ?: YearMonth.now().toString()
 
@@ -107,6 +110,7 @@ class ScheduleRepositoryImpl @Inject constructor(
             scheduleDao.getSchedulesForMonths(monthStrings, minMonth, maxMonth),
             recurringScheduleDao.getRecurringSchedulesForMonths(monthStrings, minMonth, maxMonth)
         ) { scheduleEntities, recurringEntities ->
+         Log.e("viemodel_repository", "inside getSchedulesForMonths")
 
             val originalSchedules = scheduleEntities.map { it.toScheduleData() }
             val recurringSchedules = recurringEntities.map { it.toRecurringData() }
@@ -204,7 +208,7 @@ class ScheduleRepositoryImpl @Inject constructor(
 
             allSchedulesForDebug.addAll(
                 recurringSchedules.filter {
-                    it.repeatType == RepeatType.NONE &&
+//                    it.repeatType == RepeatType.NONE &&
                             (it.repeatUntil == null || it.start.date <= it.repeatUntil)
                 }
             )
@@ -219,7 +223,6 @@ class ScheduleRepositoryImpl @Inject constructor(
                     if (root != null) item.resolveDisplayOnly(root) else item
                 } else item
             }
-
             val resolvedSchedulesForDebug = allSchedulesForDebug.map { item ->
                 if (item.repeatType == RepeatType.NONE && !item.isFirstSchedule) {
                     val root = branchRootsForDebug[item.branchId]
@@ -260,9 +263,9 @@ class ScheduleRepositoryImpl @Inject constructor(
 
             if (BuildConfig.DEBUG) {
                 val debugScheduleMap = validDates.associateWith { date -> expandedDebug[date].orEmpty() }
-
+                _scheduleMapForDebug.value = debugScheduleMap
                 // 필요하다면 여기에 알람 로그 추가도 가능:
-                 AlarmScheduler.logRegisteredAlarms(context, debugScheduleMap)
+//                 AlarmScheduler.logRegisteredAlarms(context, debugScheduleMap)
             }
 
             return@combine result.toSortedMap()

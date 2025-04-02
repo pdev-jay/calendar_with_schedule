@@ -11,6 +11,7 @@ import androidx.lifecycle.viewModelScope
 import com.pdevjay.calendar_with_schedule.BuildConfig
 import com.pdevjay.calendar_with_schedule.data.repository.ScheduleRepository
 import com.pdevjay.calendar_with_schedule.notification.AlarmReceiver
+import com.pdevjay.calendar_with_schedule.notification.AlarmRegisterWorker
 import com.pdevjay.calendar_with_schedule.notification.AlarmScheduler
 import com.pdevjay.calendar_with_schedule.notification.AlarmScheduler.getAlarmRequestCode
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
@@ -25,8 +26,11 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -40,31 +44,53 @@ class ScheduleViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(ScheduleState())
     val state: StateFlow<ScheduleState> = _state
+    private val _scheduleMap = MutableStateFlow<Map<LocalDate, List<BaseSchedule>>>(emptyMap())
 
     init {
-        viewModelScope.launch {
-            scheduleRepository.scheduleMap
-                .filter { it.isNotEmpty() } // ✅ 빈 초기값 무시
-                .take(1)
-                .collect { scheduleMap ->
-//                    AlarmScheduler.cancelAlarmsFromScheduleMap(context, scheduleMap)
-                    AlarmScheduler.scheduleAlarmsFromScheduleMap(context, scheduleMap)
-                }
-        }
+        scheduleRepository.scheduleMap
+            .onEach { newScheduleMap ->
+                Log.e("viemodel", "✅ scheduleMap 자동 업데이트됨 from: ${Thread.currentThread().name}")
 
+                _scheduleMap.value = newScheduleMap
+                Log.e("viemodel", "newScheduleMap 갱싱 ${newScheduleMap.size}")
+            }
+            .launchIn(viewModelScope)
+
+        scheduleRepository.scheduleMapForDebug
+            .filter { it.isNotEmpty() }
+            .onEach { scheduleMap ->
+                AlarmScheduler.logRegisteredAlarms(context, scheduleMap)
+            }
+            .launchIn(viewModelScope)
     }
     fun processIntent(intent: ScheduleIntent) {
         viewModelScope.launch {
             when (intent) {
                 is ScheduleIntent.AddSchedule -> {
                     scheduleRepository.saveSchedule(intent.schedule)
-                    AlarmScheduler.scheduleAlarm(context, intent.schedule)  // 알람 예약
+//                    AlarmScheduler.scheduleAlarm(context, intent.schedule)  // 알람 예약
+                    AlarmScheduler.scheduleMultipleAlarms(context, intent.schedule)  // 알람 예약
+
                 }
 
                 is ScheduleIntent.UpdateSchedule -> {
                     scheduleRepository.updateSchedule(intent.newSchedule, intent.editType, intent.isOnlyContentChanged)
-                    AlarmScheduler.cancelAlarm(context, intent.oldSchedule)
-                    AlarmScheduler.scheduleMultipleAlarms(context, intent.newSchedule)  // 알람 예약
+                    when (intent.editType) {
+                        ScheduleEditType.ONLY_THIS_EVENT -> {
+                            AlarmScheduler.cancelAlarm(context, intent.oldSchedule)
+                            AlarmScheduler.scheduleAlarm(context, intent.newSchedule)  // 알람 예약
+                        }
+                        ScheduleEditType.THIS_AND_FUTURE -> {
+                            Log.e("viemodel", "ScheduleIntent.UpdateSchedule 호출")
+                            AlarmScheduler.cancelThisAndFutureAlarms(context, intent.oldSchedule, _scheduleMap.value)
+//                            AlarmScheduler.scheduleMultipleAlarms(context, intent.newSchedule)  // 알람 예약
+                            AlarmRegisterWorker.enqueue(context, intent.newSchedule)
+
+                        }
+
+                        ScheduleEditType.ALL_EVENTS -> TODO()
+                    }
+//                    AlarmScheduler.scheduleMultipleAlarms(context, intent.newSchedule)  // 알람 예약
                 }
 
                 is ScheduleIntent.DeleteSchedule -> {

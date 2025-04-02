@@ -44,6 +44,8 @@ class CalendarViewModel @Inject constructor(
 
         viewModelScope.launch {
             scheduleRepository.scheduleMap.collect { newScheduleMap ->
+                Log.e("viemodel_calendar", "✅ scheduleMap 자동 업데이트됨 from: ${Thread.currentThread().name}")
+
                 _state.value = _state.value.copy(scheduleMap = newScheduleMap)
                 Log.e("", "scheduleMap updated ")
 //                AlarmScheduler.logRegisteredAlarms(context = context, scheduleMap = newScheduleMap)

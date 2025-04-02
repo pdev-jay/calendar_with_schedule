@@ -1,5 +1,6 @@
 package com.pdevjay.calendar_with_schedule.screens.schedule
 
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -99,6 +100,7 @@ fun ScheduleDetailScreen(
 
     fun updateSchedule(schedule: RecurringData, editType: ScheduleEditType) {
         try {
+            Log.e("viemodel", "button clicked")
             val updatedRecurringData = schedule.copy(
                 title = title,
                 location = location,

@@ -58,7 +58,7 @@ interface RecurringScheduleDao {
         location = :location, 
         isAllDay = :isAllDay, 
         alarmOption = :alarmOption 
-    WHERE originalEventId = :originalEventId AND strftime('%Y-%m-%d', substr(startDate, 1, instr(startDate, '|') - 1)) >= :startDate
+    WHERE originalEventId = :originalEventId AND strftime('%Y-%m-%d', substr(startDate, 1, instr(startDate, '|') - 1)) >= :startDate AND isDeleted != 1
 """)
     suspend fun updateContentOnly(
         originalEventId: String,

@@ -21,7 +21,7 @@ object WorkUtils {
             ExistingPeriodicWorkPolicy.UPDATE,
             workRequest
         )
-        Log.e("alarm", "daily alarm refresh scheduled")
+        Log.e("AlarmLogger", "daily alarm refresh scheduled")
     }
 
     private fun calculateInitialDelay(): Long {
