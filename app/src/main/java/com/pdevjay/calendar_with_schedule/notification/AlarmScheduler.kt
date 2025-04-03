@@ -23,8 +23,16 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 
 object AlarmScheduler {
+    private val registeredAlarms = mutableMapOf<String, Boolean>()
 
-    fun scheduleAlarmsFromScheduleMap(context: Context, scheduleMap: Map<LocalDate, List<BaseSchedule>>, daysAhead: Long = 30) {
+    fun printAllRegisteredAlarms() {
+        Log.e("AlarmLogger", "📦 등록된 알람 현황 (registeredAlarms):")
+        registeredAlarms.forEach { (key, value) ->
+            Log.e("AlarmLogger", " - [$key] => ${if (value) "✅ 등록됨" else "❌ 취소됨"}")
+        }
+    }
+
+    fun scheduleAlarmsFromScheduleMap(context: Context, scheduleMap: Map<LocalDate, List<RecurringData>>, daysAhead: Long = 30) {
         val today = LocalDate.now()
         val until = today.plusDays(daysAhead)
 
@@ -39,6 +47,31 @@ object AlarmScheduler {
                             scheduleAlarm(context, recurring, triggerTime)
                         }
                     }
+            }
+    }
+
+    fun scheduleAlarmsForBranchId(
+        context: Context,
+        scheduleMap: Map<LocalDate, List<RecurringData>>,
+        targetBranchId: String,
+        daysAhead: Long = 30
+    ) {
+        val today = LocalDate.now()
+        val until = today.plusDays(daysAhead)
+
+        scheduleMap
+            .filterKeys { it in today..until }
+            .forEach { (_, schedules) ->
+                schedules.filter {
+                    it.branchId == targetBranchId &&
+                            it.alarmOption != AlarmOption.NONE &&
+                            !it.isDeleted
+                }.forEach { recurring ->
+                    val triggerTime = calculateTriggerTimeMillis(recurring)
+                    if (triggerTime > System.currentTimeMillis()) {
+                        scheduleAlarm(context, recurring, triggerTime)
+                    }
+                }
             }
     }
 
@@ -82,7 +115,7 @@ object AlarmScheduler {
             putExtra("scheduleId", schedule.id.hashCode())
             putExtra("title", schedule.title)
             putExtra("alarmOption", schedule.alarmOption.name)
-            putExtra("date", schedule.start.date.toString()) // 🔥 추가
+            putExtra("date", schedule.start.date.toString())
         }
         val requestCode = getAlarmRequestCode(schedule)
 
@@ -106,8 +139,12 @@ object AlarmScheduler {
                 triggerTimeMillis,
                 pendingIntent
             )
+
+            val key = schedule.id
+            registeredAlarms[key] = true // ✅ 등록됨 표시
+
 //            Log.e("AlarmLogger", "Alarm scheduled for ${schedule.title} / ${schedule.start.date} / ${schedule.alarmOption.name}")
-        } catch (e: SecurityException) {
+        } catch (e: Exception) {
             Log.e("AlarmLogger", "SecurityException when setting alarm", e)
         }
     }
@@ -136,7 +173,7 @@ object AlarmScheduler {
                         }
                         val pendingIntent = PendingIntent.getBroadcast(
                             context,
-                            requestCode,  // 또는 schedule.id.hashCode() + repeatIndex
+                            requestCode,
                             intent,
                             PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
                         )
@@ -166,21 +203,12 @@ object AlarmScheduler {
         pendingIntent?.let {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
             alarmManager.cancel(it)
-            Log.e("AlarmLogger", "❌ 알람 취소됨: ${schedule.title} ${schedule.start.date} $requestCode")
-        }
 
-        // 확인
-        val checkIntent = PendingIntent.getBroadcast(
-            context,
-            requestCode,
-            intent,
-            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        if (checkIntent == null) {
-            Log.e("AlarmLogger", "✅ 알람 성공적으로 취소됨.")
-        } else {
-            Log.e("AlarmLogger", "⚠️ 알람 취소 실패 또는 여전히 존재함.")
+            val key = schedule.id
+            registeredAlarms[key] = false // ✅ 취소됨 표시
+            Log.e("AlarmLogger", "❌ 알람 취소됨: ${schedule.title} ${schedule.start.date} ${schedule.start.time} $requestCode")
+        } ?: {
+            Log.e("AlarmLogger", "❌ 알람 취소 실패: ${schedule.title} ${schedule.start.date} ${schedule.start.time} $requestCode")
         }
 
     }
@@ -264,7 +292,7 @@ object AlarmScheduler {
         val baseId = when (schedule) {
             is RecurringData -> {
                 val key = listOfNotNull(
-                    schedule.originalEventId,       // 반복의 기준 ID
+                    schedule.branchId ?: schedule.originalEventId,       // 반복의 기준 ID
                     schedule.start.date.toString(), // 반복 인스턴스의 날짜
                     schedule.repeatIndex?.toString(), // 반복 인덱스 (있다면 넣기)
                     schedule.alarmOption.name       // 알람 옵션
@@ -272,10 +300,12 @@ object AlarmScheduler {
                 key
             }
 
+            // TODO: ScheduleData가 들어올 때가 있나? -> 일정 등록하면서 알람 등록 할 때
             is ScheduleData -> {
                 val key = listOfNotNull(
-                    schedule.id,                    // ScheduleData는 고정 ID
+                    schedule.branchId ?: schedule.id,                    // ScheduleData는 고정 ID
                     schedule.start.date.toString(),
+                    "1", // ScheduleData가 들어오는 경우는 첫 번 째 일정일 경우
                     schedule.alarmOption.name
                 ).joinToString("_")
                 key

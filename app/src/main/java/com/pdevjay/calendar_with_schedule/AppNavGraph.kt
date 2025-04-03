@@ -44,7 +44,7 @@ fun AppNavGraph(
 
         ) { backStackEntry ->
             val scheduleJson = backStackEntry.arguments?.getString("scheduleJson")!!
-            val schedule = JsonUtils.parseScheduleJson(scheduleJson)
+            val schedule = JsonUtils.parseRecurringScheduleJson(scheduleJson)
 
             ScheduleDetailScreen(
                 schedule = schedule,

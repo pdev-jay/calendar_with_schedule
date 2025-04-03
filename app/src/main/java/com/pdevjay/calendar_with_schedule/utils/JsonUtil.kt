@@ -1,6 +1,7 @@
 package com.pdevjay.calendar_with_schedule.utils
 
 import com.google.gson.*
+import com.google.gson.reflect.TypeToken
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.RecurringData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
@@ -13,14 +14,26 @@ import java.time.format.DateTimeFormatter
 
 object JsonUtils {
     val gson: Gson = GsonBuilder()
-        .registerTypeAdapter(BaseSchedule::class.java, BaseScheduleTypeAdapter()) // ✅ 커스텀 TypeAdapter 등록
+//        .registerTypeAdapter(ScheduleData::class.java, ScheduleDataAdapter())
+//        .registerTypeAdapter(RecurringData::class.java, RecurringDataAdapter())
         .registerTypeAdapter(LocalDate::class.java, LocalDateAdapter())
         .registerTypeAdapter(LocalTime::class.java, LocalTimeAdapter())
+        .registerTypeAdapter(object : TypeToken<Map<LocalDate, List<RecurringData>>>() {}.type, ScheduleMapAdapter())
         .create()
 
-    fun parseScheduleJson(scheduleJson: String): RecurringData {
+    fun parseRecurringScheduleJson(scheduleJson: String): RecurringData {
         return gson.fromJson(URLDecoder.decode(scheduleJson, "UTF-8"), RecurringData::class.java)
     }
+
+    fun parseScheduleDataJson(scheduleJson: String): ScheduleData {
+        return gson.fromJson(URLDecoder.decode(scheduleJson, "UTF-8"), ScheduleData::class.java)
+    }
+
+    fun parseScheduleMapJson(scheduleMapJson: String): Map<LocalDate, List<RecurringData>> {
+        val type = object : TypeToken<Map<LocalDate, List<RecurringData>>>() {}.type
+        return gson.fromJson(URLDecoder.decode(scheduleMapJson, "UTF-8"), type)
+    }
+
 }
 
 // 🔹 LocalDate Adapter
@@ -62,5 +75,63 @@ class BaseScheduleTypeAdapter : JsonDeserializer<BaseSchedule>, JsonSerializer<B
 
     override fun serialize(src: BaseSchedule, typeOfSrc: Type, context: JsonSerializationContext): JsonElement {
         return context.serialize(src)
+    }
+}
+
+class RecurringDataAdapter : JsonSerializer<RecurringData>, JsonDeserializer<RecurringData> {
+    override fun serialize(src: RecurringData, typeOfSrc: Type, context: JsonSerializationContext): JsonElement {
+        return context.serialize(src)
+    }
+
+    override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): RecurringData {
+        return context.deserialize(json, RecurringData::class.java)
+    }
+}
+
+class ScheduleDataAdapter : JsonSerializer<ScheduleData>, JsonDeserializer<ScheduleData> {
+    override fun serialize(src: ScheduleData, typeOfSrc: Type, context: JsonSerializationContext): JsonElement {
+        return context.serialize(src)
+    }
+
+    override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): ScheduleData {
+        return context.deserialize(json, ScheduleData::class.java)
+    }
+}
+
+
+class ScheduleMapAdapter : JsonSerializer<Map<LocalDate, List<RecurringData>>>,
+    JsonDeserializer<Map<LocalDate, List<RecurringData>>> {
+
+    private val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE
+
+    override fun serialize(
+        src: Map<LocalDate, List<RecurringData>>?,
+        typeOfSrc: Type?,
+        context: JsonSerializationContext
+    ): JsonElement {
+        val jsonObject = JsonObject()
+        src?.forEach { (key, value) ->
+            val keyString = key.format(dateFormatter)
+            jsonObject.add(keyString, context.serialize(value))
+        }
+        return jsonObject
+    }
+
+    override fun deserialize(
+        json: JsonElement?,
+        typeOfT: Type?,
+        context: JsonDeserializationContext
+    ): Map<LocalDate, List<RecurringData>> {
+        val result = mutableMapOf<LocalDate, List<RecurringData>>()
+        val jsonObject = json?.asJsonObject ?: return result
+
+        for ((key, value) in jsonObject.entrySet()) {
+            val date = LocalDate.parse(key, dateFormatter)
+            val listType = object : TypeToken<List<RecurringData>>() {}.type
+            val schedules: List<RecurringData> = context.deserialize(value, listType)
+            result[date] = schedules
+        }
+
+        return result
     }
 }
