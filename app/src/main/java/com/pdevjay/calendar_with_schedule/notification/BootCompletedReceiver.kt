@@ -7,7 +7,6 @@ import android.util.Log
 
 class BootCompletedReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
-            Log.e("BootReceiver", "📦 기기 재부팅 감지됨 → 알람 재등록 시작")
         if (intent?.action == Intent.ACTION_BOOT_COMPLETED) {
             Log.e("BootReceiver", "📦 기기 재부팅 감지됨 → 알람 재등록 시작")
 

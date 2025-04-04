@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pdevjay.calendar_with_schedule.data.repository.ScheduleRepository
 import com.pdevjay.calendar_with_schedule.notification.AlarmRegisterWorker
+import com.pdevjay.calendar_with_schedule.notification.AlarmScheduler
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.RecurringData
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.ScheduleEditType
 import com.pdevjay.calendar_with_schedule.screens.schedule.intents.ScheduleIntent
@@ -13,6 +14,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
@@ -37,12 +41,12 @@ class ScheduleViewModel @Inject constructor(
 //            }
 //            .launchIn(viewModelScope)
 //
-//        scheduleRepository.scheduleMapForDebug
-//            .filter { it.isNotEmpty() }
-//            .onEach { scheduleMap ->
-//                AlarmScheduler.logRegisteredAlarms(context, scheduleMap)
-//            }
-//            .launchIn(viewModelScope)
+        scheduleRepository.scheduleMapForDebug
+            .filter { it.isNotEmpty() }
+            .onEach { scheduleMap ->
+                AlarmScheduler.logRegisteredAlarms(context, scheduleMap)
+            }
+            .launchIn(viewModelScope)
     }
     fun processIntent(intent: ScheduleIntent) {
         viewModelScope.launch {

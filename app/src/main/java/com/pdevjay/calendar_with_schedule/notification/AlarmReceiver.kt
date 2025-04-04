@@ -22,7 +22,6 @@ import java.time.ZoneId
 
 class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
-        val scheduleId = intent?.getIntExtra("scheduleId", -1) ?: -1
         val title = intent?.getStringExtra("title") ?: "알림"
         val alarmOption = intent?.getStringExtra("alarmOption")?.let {
             AlarmOption.valueOf(it)
