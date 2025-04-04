@@ -71,4 +71,19 @@ interface RecurringScheduleDao {
 
     @Query("DELETE FROM recurring_schedules WHERE originalEventId = :originalEventId AND strftime('%Y-%m-%d', substr(startDate, 1, instr(startDate, '|') - 1)) >= :selectedDate")
     suspend fun deleteThisAndFutureRecurringData(originalEventId: String, selectedDate: LocalDate)
+
+    @Query("SELECT COUNT(*) FROM recurring_schedules WHERE id = :id")
+    suspend fun countById(id: String): Int
+
+    @Update
+    suspend fun update(schedule: RecurringScheduleEntity)
+
+    suspend fun insertOrUpdate(schedule: RecurringScheduleEntity) {
+        val exists = countById(schedule.id) > 0
+        if (exists) {
+            update(schedule)
+        } else {
+            insertRecurringSchedule(schedule)
+        }
+    }
 }

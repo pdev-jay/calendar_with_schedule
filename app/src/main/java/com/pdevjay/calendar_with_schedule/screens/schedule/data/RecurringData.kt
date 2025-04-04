@@ -67,9 +67,9 @@ fun RecurringData.toScheduleData(): ScheduleData {
     )
 }
 
-fun RecurringData.toSingleChangeData(): RecurringData{
+fun RecurringData.toSingleChangeData(needNewId: Boolean): RecurringData{
     return this.copy(
-//        id = UUID.randomUUID().toString(),
+        id = if (needNewId) UUID.randomUUID().toString() else this.id,
         repeatType = RepeatType.NONE,
         repeatUntil = null,
         repeatRule = null,

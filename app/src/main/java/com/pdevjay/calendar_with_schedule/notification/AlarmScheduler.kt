@@ -293,9 +293,9 @@ object AlarmScheduler {
             is RecurringData -> {
                 val key = listOfNotNull(
                     schedule.branchId ?: schedule.originalEventId,       // 반복의 기준 ID
-                    schedule.start.date.toString(), // 반복 인스턴스의 날짜
+//                    schedule.start.date.toString(), // 반복 인스턴스의 날짜
                     schedule.repeatIndex?.toString(), // 반복 인덱스 (있다면 넣기)
-                    schedule.alarmOption.name       // 알람 옵션
+//                    schedule.alarmOption.name       // 알람 옵션
                 ).joinToString("_")
                 key
             }
@@ -304,9 +304,9 @@ object AlarmScheduler {
             is ScheduleData -> {
                 val key = listOfNotNull(
                     schedule.branchId ?: schedule.id,                    // ScheduleData는 고정 ID
-                    schedule.start.date.toString(),
+//                    schedule.start.date.toString(),
                     "1", // ScheduleData가 들어오는 경우는 첫 번 째 일정일 경우
-                    schedule.alarmOption.name
+//                    schedule.alarmOption.name
                 ).joinToString("_")
                 key
             }

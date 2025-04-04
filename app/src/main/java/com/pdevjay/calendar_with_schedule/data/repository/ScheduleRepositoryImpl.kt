@@ -277,20 +277,25 @@ class ScheduleRepositoryImpl @Inject constructor(
 
         when (scheduleEditType){
             ScheduleEditType.ONLY_THIS_EVENT -> {
-                // update 시도
-//                val row = recurringScheduleDao.markRecurringScheduleAsDeleted(schedule.id)
-//                // update 실패 시 isDeleted = true로 insert
-//                if (row == 0){
-//                    val deleted = schedule.toMarkAsDeletedData(schedule.originalRecurringDate)
-//                    recurringScheduleDao.insertRecurringSchedule(deleted.toRecurringScheduleEntity())
-//                }
-
                 // 반복 일정이 아닌 경우
                 if (schedule.branchId == null){
                     scheduleDao.insertSchedule(schedule.toScheduleData().toScheduleEntity())
-                } else {
-                    val overridden = schedule.toSingleChangeData()
-                    recurringScheduleDao.insertRecurringSchedule(overridden.toRecurringScheduleEntity())
+                }  else {
+                    // 반복 일정의 첫번째 일정이 업데이트 되는 경우
+                    if (schedule.isFirstSchedule){
+                        val alreadyExists = recurringScheduleDao.countById(schedule.id) > 0
+
+                        if (alreadyExists){
+                            recurringScheduleDao.update(schedule.toRecurringScheduleEntity())
+                        } else {
+                            val overridden = schedule.toSingleChangeData(needNewId = true)
+                            recurringScheduleDao.insertRecurringSchedule(overridden.toRecurringScheduleEntity())
+                        }
+                    } else {
+                        // 반복 일정의 중간 일정이 업데이트 되는 경우
+                        val overridden = schedule.toSingleChangeData(needNewId = false)
+                        recurringScheduleDao.insertRecurringSchedule(overridden.toRecurringScheduleEntity())
+                    }
                 }
             }
             ScheduleEditType.THIS_AND_FUTURE -> {

@@ -8,24 +8,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
 import com.pdevjay.calendar_with_schedule.screens.calendar.CalendarScreen
 import com.pdevjay.calendar_with_schedule.screens.calendar.viewmodels.CalendarViewModel
 import com.pdevjay.calendar_with_schedule.screens.schedule.ScheduleAddScreen
 import com.pdevjay.calendar_with_schedule.screens.schedule.ScheduleDetailScreen
-import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
-import com.pdevjay.calendar_with_schedule.screens.schedule.data.RecurringData
-import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
-import com.pdevjay.calendar_with_schedule.screens.schedule.intents.ScheduleIntent
 import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
-import com.pdevjay.calendar_with_schedule.utils.BaseScheduleTypeAdapter
 import com.pdevjay.calendar_with_schedule.utils.JsonUtils
-import com.pdevjay.calendar_with_schedule.utils.LocalDateAdapter
-import com.pdevjay.calendar_with_schedule.utils.LocalTimeAdapter
-import java.net.URLDecoder
 import java.time.LocalDate
-import java.time.LocalTime
 
 @Composable
 fun AppNavGraph(
