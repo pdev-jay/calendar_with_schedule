@@ -1,6 +1,5 @@
 package com.pdevjay.calendar_with_schedule.screens.schedule
 
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
@@ -51,15 +50,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.pdevjay.calendar_with_schedule.ui.theme.AppTheme
 import com.pdevjay.calendar_with_schedule.R
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.DateTimePeriod
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
-import com.pdevjay.calendar_with_schedule.screens.schedule.data.generateRepeatRule
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
 import com.pdevjay.calendar_with_schedule.screens.schedule.intents.ScheduleIntent
 import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
@@ -152,9 +148,9 @@ fun ScheduleAddScreen(
                 ){
                     // All-day Toggle
                     SwitchSelector(label = stringResource(R.string.all_day), option = allDay, onSwitch = { allDay = it })
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 2.dp, color = Color.LightGray)
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.primary)
                     DateTimeSelector(stringResource(R.string.starts), start.date, start.time, onDateClick = {showDatePickerForStart = true}, onTimeClick = {showTimePickerForStart = true})
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 2.dp, color = Color.LightGray)
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.primary)
                     DateTimeSelector(stringResource(R.string.ends), end.date, end.time, onDateClick = {showDatePickerForEnd = true}, onTimeClick = {showTimePickerForEnd = true})
 
                 }
@@ -172,10 +168,10 @@ fun ScheduleAddScreen(
 
                     // 반복 옵션을 선택하면 나타나는 반복 마지막 날 선택 옵션
                     if (repeatType != RepeatType.NONE) {
-                        HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 2.dp, color = Color.LightGray)
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.primary)
                         SwitchSelector(label = stringResource(R.string.set_repeat_until), option = isRepeatUntilEnabled, onSwitch = {isRepeatUntilEnabled = it})
-                        HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 2.dp, color = Color.LightGray)
                         if (isRepeatUntilEnabled){
+                            HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.primary)
                             DateTimeSelector(stringResource(R.string.repeat_until), date = repeatUntil, onDateClick = {showDatePickerForRepeatUntil = true})
                         }
                     }
@@ -368,14 +364,15 @@ fun StyledTextField(value: String, label: String, onValueChange: (String) -> Uni
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(Color.LightGray.copy(alpha = 0.5f))
+//            .background(Color.LightGray.copy(alpha = 0.5f))
+            .background(MaterialTheme.colorScheme.secondaryContainer)
             .padding(12.dp)
     ) {
         BasicTextField(
             modifier = Modifier.fillMaxWidth(),
             value = value,
             onValueChange = onValueChange,
-            textStyle = TextStyle(fontSize = 16.sp),
+            textStyle = TextStyle(fontSize = 16.sp, color = MaterialTheme.colorScheme.onSecondaryContainer),
             decorationBox = { innerTextField ->
                 if (value.isEmpty()) {
                     Text(label, color = Color.Gray, fontSize = 16.sp)
@@ -481,7 +478,7 @@ fun DropdownMenuSelector(
                     .background(MaterialTheme.colorScheme.primary)
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
-                Text(text = "${selectedOption}", color = Color.White, fontSize = 16.sp)
+                Text(text = "${selectedOption}", color = MaterialTheme.colorScheme.onPrimary)
                 ExposedDropdownMenu(
                     modifier = Modifier.wrapContentSize(),
                     expanded = expanded,
@@ -508,7 +505,7 @@ fun DropdownMenuSelector(
 fun GroupContainer(content: @Composable () -> Unit){
     Column(
         modifier = Modifier
-            .background(Color.LightGray.copy(alpha = 0.5f), shape = RoundedCornerShape(10.dp))
+            .background(MaterialTheme.colorScheme.secondaryContainer, shape = RoundedCornerShape(10.dp))
             .animateContentSize()
     ){
         content()

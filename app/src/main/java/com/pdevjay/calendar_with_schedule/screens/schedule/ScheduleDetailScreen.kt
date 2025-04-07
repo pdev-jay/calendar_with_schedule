@@ -182,9 +182,9 @@ fun ScheduleDetailScreen(
                 GroupContainer(
                 ) {
                     SwitchSelector(label = stringResource(R.string.all_day), option = allDay, onSwitch = { allDay = it })
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 2.dp, color = Color.LightGray)
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.primary)
                     DateTimeSelector(stringResource(R.string.starts), start.date, start.time, onDateClick = {showDatePickerForStart = true}, onTimeClick = {showTimePickerForStart = true})
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 2.dp, color = Color.LightGray)
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.primary)
                     DateTimeSelector(stringResource(R.string.ends), end.date, end.time, onDateClick = {showDatePickerForEnd = true}, onTimeClick = {showTimePickerForEnd = true})
                 }
 
@@ -201,7 +201,7 @@ fun ScheduleDetailScreen(
 
                     // 반복 옵션을 선택하면 나타나는 반복 마지막 날 선택 옵션
                     if (repeatType != RepeatType.NONE) {
-                        HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 2.dp, color = Color.LightGray)
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.primary)
                         SwitchSelector(label = stringResource(R.string.set_repeat_until), option = isRepeatUntilEnabled,
                             onSwitch = {
                                 // FIXME:
@@ -209,7 +209,7 @@ fun ScheduleDetailScreen(
                                 isRepeatUntilEnabled = it
                             }
                         )
-                        HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 2.dp, color = Color.LightGray)
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.primary)
                         if (isRepeatUntilEnabled){
                             DateTimeSelector(stringResource(R.string.repeat_until), date = repeatUntil ?: LocalDate.now(), onDateClick = {showDatePickerForRepeatUntil = true})
                         }
@@ -319,52 +319,84 @@ fun ScheduleDetailScreen(
             )
         }
 
-        ConfirmBottomSheet(
-            title = stringResource(R.string.update_schedule),
-            description = stringResource(R.string.update_description),
-            single = stringResource(R.string.update_single),
-            future = stringResource(R.string.update_future),
-            isSingleAvailable = (schedule.repeatUntil == repeatUntil && schedule.repeatType == repeatType),
-            isFutureAvailable = (schedule.branchId != null),
-            isVisible = showUpdateBottomSheet,
-            onDismiss = { showUpdateBottomSheet = false },
-            onSingle = {
-                updateSchedule(schedule, ScheduleEditType.ONLY_THIS_EVENT)
-            },
-            onFuture = {
-                updateSchedule(schedule, ScheduleEditType.THIS_AND_FUTURE)
-            },
-        )
+        if (schedule.branchId == null){
+            ConfirmBottomSheet(
+                title = stringResource(R.string.update_schedule),
+                description = stringResource(R.string.update_description_for_single_occurrence),
+                single = stringResource(R.string.update_single_occurrence),
+                isVisible = showUpdateBottomSheet,
+                onDismiss = { showUpdateBottomSheet = false },
+                onSingle = {
+                    updateSchedule(schedule, ScheduleEditType.ONLY_THIS_EVENT)
+                },
+            )
 
-        ConfirmBottomSheet(
-            title = stringResource(R.string.delete_schedule),
-            description = stringResource(R.string.delete_description),
-            single = stringResource(R.string.delete_single),
-            future = stringResource(R.string.delete_future),
-            isVisible = showDeleteBottomSheet,
-            onDismiss = { showDeleteBottomSheet = false },
-            onSingle = {
+            ConfirmBottomSheet(
+                title = stringResource(R.string.delete_schedule),
+                description = stringResource(R.string.delete_description_for_single_occurrence),
+                single = stringResource(R.string.delete_single_occurrence),
+                isVisible = showDeleteBottomSheet,
+                onDismiss = { showDeleteBottomSheet = false },
+                onSingle = {
+                    try {
+                        scheduleViewModel.processIntent(ScheduleIntent.DeleteSchedule(schedule, ScheduleEditType.ONLY_THIS_EVENT))
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    } finally {
+                        isVisible = false
+                        navController.popBackStack()
+                    }
+                },
+            )
 
-                try {
-                    scheduleViewModel.processIntent(ScheduleIntent.DeleteSchedule(schedule, ScheduleEditType.ONLY_THIS_EVENT))
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                } finally {
-                    isVisible = false
-                    navController.popBackStack()
-                }
-            },
-            onFuture = {
-                try {
-                    scheduleViewModel.processIntent(ScheduleIntent.DeleteSchedule(schedule, ScheduleEditType.THIS_AND_FUTURE))
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                } finally {
-                    isVisible = false
-                    navController.popBackStack()
-                }
-            },
-        )
+        } else {
+            ConfirmBottomSheet(
+                title = stringResource(R.string.update_schedule),
+                description = stringResource(R.string.update_description),
+                single = stringResource(R.string.update_single),
+                future = stringResource(R.string.update_future),
+                isSingleAvailable = (schedule.repeatUntil == repeatUntil && schedule.repeatType == repeatType),
+                isFutureAvailable = (schedule.branchId != null),
+                isVisible = showUpdateBottomSheet,
+                onDismiss = { showUpdateBottomSheet = false },
+                onSingle = {
+                    updateSchedule(schedule, ScheduleEditType.ONLY_THIS_EVENT)
+                },
+                onFuture = {
+                    updateSchedule(schedule, ScheduleEditType.THIS_AND_FUTURE)
+                },
+            )
+
+            ConfirmBottomSheet(
+                title = stringResource(R.string.delete_schedule),
+                description = stringResource(R.string.delete_description),
+                single = stringResource(R.string.delete_single),
+                future = stringResource(R.string.delete_future),
+                isVisible = showDeleteBottomSheet,
+                onDismiss = { showDeleteBottomSheet = false },
+                onSingle = {
+
+                    try {
+                        scheduleViewModel.processIntent(ScheduleIntent.DeleteSchedule(schedule, ScheduleEditType.ONLY_THIS_EVENT))
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    } finally {
+                        isVisible = false
+                        navController.popBackStack()
+                    }
+                },
+                onFuture = {
+                    try {
+                        scheduleViewModel.processIntent(ScheduleIntent.DeleteSchedule(schedule, ScheduleEditType.THIS_AND_FUTURE))
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    } finally {
+                        isVisible = false
+                        navController.popBackStack()
+                    }
+                },
+            )
+        }
 
     }
 }

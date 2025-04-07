@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -185,7 +186,7 @@ fun WeekRow(
                     .clip(CircleShape)
                     .background(
                         when {
-                            isSelected -> Color.Red.copy(alpha = 0.7f)
+                            isSelected -> MaterialTheme.colorScheme.error
                             else -> Color.Transparent
                         }
                     )
@@ -198,7 +199,7 @@ fun WeekRow(
                     color = when {
                         isSelected -> Color.White
                         isToday -> Color.Red
-                        else -> Color.Black
+                        else -> MaterialTheme.colorScheme.onSurface
                     },
 
                     )

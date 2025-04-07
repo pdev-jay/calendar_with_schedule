@@ -62,9 +62,7 @@ fun ScheduleData.toRecurringData(originalStartDate: LocalDate? = null, selectedD
         repeatUntil = this.repeatUntil,
         repeatRule = this.repeatRule,
         alarmOption = this.alarmOption,
-//        isOriginalSchedule = false,
         isDeleted = false, // 기본적으로 삭제되지 않음
-//        originalRepeatUntil = this.originalRepeatUntil,
         isFirstSchedule = repeatIndex == 1,
         branchId = this.branchId,
         repeatIndex = repeatIndex

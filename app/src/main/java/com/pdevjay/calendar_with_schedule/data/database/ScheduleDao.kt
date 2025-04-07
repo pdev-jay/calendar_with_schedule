@@ -48,6 +48,10 @@ interface ScheduleDao {
         DELETE FROM schedules WHERE id = :scheduleId
     """)
     suspend fun deleteScheduleById(scheduleId: String)
+    @Query("""
+        DELETE FROM schedules WHERE branchId = :branchId
+    """)
+    suspend fun deleteScheduleByBranchId(branchId: String)
     /**
      * 특정 원본 이벤트 ID를 기반으로 반복 일정의 `repeatUntil`을 업데이트합니다.
      */
@@ -79,4 +83,8 @@ interface ScheduleDao {
         isAllDay: Boolean,
         alarmOption: AlarmOption
     )
+
+    @Query("SELECT COUNT(*) FROM schedules WHERE branchId = :branchId")
+    suspend fun countByBranchId(branchId: String): Int
+
 }

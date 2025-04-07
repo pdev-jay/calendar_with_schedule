@@ -300,7 +300,7 @@ object AlarmScheduler {
                 key
             }
 
-            // TODO: ScheduleData가 들어올 때가 있나? -> 일정 등록하면서 알람 등록 할 때
+            // TODO: ScheduleData가 들어올 때가 있나? -> 처음 일정 등록하면서 알람 등록 할 때
             is ScheduleData -> {
                 val key = listOfNotNull(
                     schedule.branchId ?: schedule.id,                    // ScheduleData는 고정 ID

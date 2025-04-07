@@ -86,4 +86,7 @@ interface RecurringScheduleDao {
             insertRecurringSchedule(schedule)
         }
     }
+
+    @Delete
+    suspend fun deleteRecurringSchedule(schedule: RecurringScheduleEntity)
 }

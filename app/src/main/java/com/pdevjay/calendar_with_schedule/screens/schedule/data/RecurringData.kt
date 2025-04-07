@@ -76,9 +76,8 @@ fun RecurringData.toSingleChangeData(needNewId: Boolean): RecurringData{
     )
 }
 
-fun RecurringData.toMarkAsDeletedData(originalRecurringDate: LocalDate): RecurringData{
+fun RecurringData.toMarkAsDeletedData(): RecurringData{
     return this.copy(
-        originalRecurringDate = originalRecurringDate,
         isDeleted = true
     )
 }

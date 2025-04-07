@@ -283,14 +283,22 @@ class ScheduleRepositoryImpl @Inject constructor(
                 }  else {
                     // 반복 일정의 첫번째 일정이 업데이트 되는 경우
                     if (schedule.isFirstSchedule){
-                        val alreadyExists = recurringScheduleDao.countById(schedule.id) > 0
-
-                        if (alreadyExists){
+                        // 첫번째 일정이 수정될 때
+                        if (schedule.repeatType == RepeatType.NONE){
+//                            val alreadyExists = recurringScheduleDao.countById(schedule.id) > 0
                             recurringScheduleDao.update(schedule.toRecurringScheduleEntity())
                         } else {
+//                            recurringScheduleDao.markRecurringScheduleAsDeleted(schedule.id)
                             val overridden = schedule.toSingleChangeData(needNewId = true)
                             recurringScheduleDao.insertRecurringSchedule(overridden.toRecurringScheduleEntity())
                         }
+
+//                        if (alreadyExists){
+//                        } else {
+//                            recurringScheduleDao.markRecurringScheduleAsDeleted(schedule.id)
+//                            val overridden = schedule.toSingleChangeData(needNewId = true)
+//                            recurringScheduleDao.insertRecurringSchedule(overridden.toRecurringScheduleEntity())
+//                        }
                     } else {
                         // 반복 일정의 중간 일정이 업데이트 되는 경우
                         val overridden = schedule.toSingleChangeData(needNewId = false)
@@ -347,39 +355,54 @@ class ScheduleRepositoryImpl @Inject constructor(
                 if (schedule.branchId == null){
                     scheduleDao.deleteScheduleById(schedule.originatedFrom)
                 } else {
-                    // update 시도
-                    val row = recurringScheduleDao.markRecurringScheduleAsDeleted(schedule.id)
-                    // update 실패 시 isDeleted = true로 insert
-                    if (row == 0) {
-                        val deleted = schedule.toMarkAsDeletedData(schedule.originalRecurringDate)
+                    if (schedule.repeatType == RepeatType.NONE){
+                        recurringScheduleDao.markRecurringScheduleAsDeleted(schedule.id)
+                    } else {
+                        val overridden = schedule.toSingleChangeData(needNewId = true)
+                        val deleted = overridden.toMarkAsDeletedData()
                         recurringScheduleDao.insertRecurringSchedule(deleted.toRecurringScheduleEntity())
                     }
+//                    val alreadyExists = recurringScheduleDao.countById(schedule.id) > 0
+//
+//                    if (alreadyExists){
+//                        recurringScheduleDao.markRecurringScheduleAsDeleted(schedule.id)
+//                    } else {
+//                    }
                 }
             }
             ScheduleEditType.THIS_AND_FUTURE -> {
-                val previousRepeatDate = findPreviousRepeatDateFromScheduleMapByIndex(
-                    scheduleMap = scheduleMap.value,
-                    currentIndex = schedule.repeatIndex ?: 0,
-                    branchId = schedule.branchId ?: return
-                )
-                val newRepeatUntil = previousRepeatDate ?: schedule.start.date.minusDays(1)
+                if (schedule.isFirstSchedule){
+                    val alreadyExists = scheduleDao.countByBranchId(schedule.branchId.toString()) > 0
+                    if (alreadyExists){
+                        scheduleDao.deleteScheduleByBranchId(schedule.branchId.toString())
+                    }
+                    // 해당 recurring data의 original event id를 가진 모든 recurring data를 기준 날짜 이후로 삭제
+                    recurringScheduleDao.deleteThisAndFutureRecurringData(schedule.originalEventId, schedule.start.date)
+                } else {
+                    val previousRepeatDate = findPreviousRepeatDateFromScheduleMapByIndex(
+                        scheduleMap = scheduleMap.value,
+                        currentIndex = schedule.repeatIndex ?: 0,
+                        branchId = schedule.branchId ?: return
+                    )
+                    val newRepeatUntil = previousRepeatDate ?: schedule.start.date.minusDays(1)
 
-                // ScheduleData에서 파생된 반복일정이면 schedules 테이블도 자름
-                if (schedule.originatedFrom == schedule.originalEventId) {
-                    scheduleDao.updateRepeatUntil(
+                    // ScheduleData에서 파생된 반복일정이면 schedules 테이블도 자름
+                    if (schedule.originatedFrom == schedule.originalEventId) {
+                        scheduleDao.updateRepeatUntil(
+                            branchId = schedule.branchId ?: return,
+                            repeatUntil = newRepeatUntil.toString()
+                        )
+                    }
+
+                    // RecurringData 루트인 경우 recurring 테이블도 자름
+                    recurringScheduleDao.updateRepeatUntil(
                         branchId = schedule.branchId ?: return,
                         repeatUntil = newRepeatUntil.toString()
                     )
+
+                    // 해당 recurring data의 original event id를 가진 모든 recurring data를 기준 날짜 이후로 삭제
+                    recurringScheduleDao.deleteThisAndFutureRecurringData(schedule.originalEventId, schedule.start.date)
                 }
-
-                // RecurringData 루트인 경우 recurring 테이블도 자름
-                recurringScheduleDao.updateRepeatUntil(
-                    branchId = schedule.branchId ?: return,
-                    repeatUntil = newRepeatUntil.toString()
-                )
-
-                // 해당 recurring data의 original event id를 가진 모든 recurring data를 기준 날짜 이후로 삭제
-                recurringScheduleDao.deleteThisAndFutureRecurringData(schedule.originalEventId, schedule.start.date)
             }
             ScheduleEditType.ALL_EVENTS -> TODO()
         }

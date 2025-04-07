@@ -67,7 +67,7 @@ fun DayCell(
             ){
                 Text(
                     text = day.date.dayOfMonth.toString(),
-                    style = TextStyle(fontStyle = MaterialTheme.typography.bodyLarge.fontStyle, color = if (day.isToday) Color.Red else Color.Black),
+                    style = TextStyle(fontStyle = MaterialTheme.typography.bodyLarge.fontStyle, color = if (day.isToday) Color.Red else MaterialTheme.colorScheme.onSurface),
                     textAlign = TextAlign.Center
                 )
 
@@ -119,8 +119,10 @@ private fun ScheduleListPreview(
     }
 }
 
+@Composable
 fun calculateScheduleColor(index: Int, totalCount: Int): Color {
-    val baseColor = Color(0xFF03A9F4) // 기본 파랑색
+//    val baseColor = Color(0xFF03A9F4) // 기본 파랑색
+    val baseColor = MaterialTheme.colorScheme.primary
     val colorFactor = (index.toFloat() / totalCount.toFloat()) // 인덱스 비율
 
     return baseColor.copy(

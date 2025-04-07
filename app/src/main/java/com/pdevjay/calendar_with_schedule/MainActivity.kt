@@ -1,12 +1,7 @@
 package com.pdevjay.calendar_with_schedule
 
 import android.annotation.SuppressLint
-import android.app.AlarmManager
-import android.app.PendingIntent
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -17,7 +12,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.rememberNavController
-import com.pdevjay.calendar_with_schedule.notification.AlarmReceiver
 import com.pdevjay.calendar_with_schedule.notification.AlarmScheduler
 import com.pdevjay.calendar_with_schedule.notification.RequestNotificationPermission
 import com.pdevjay.calendar_with_schedule.screens.calendar.intents.CalendarIntent

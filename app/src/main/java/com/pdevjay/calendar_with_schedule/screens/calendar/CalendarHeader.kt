@@ -28,9 +28,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.pdevjay.calendar_with_schedule.R
 import com.pdevjay.calendar_with_schedule.screens.calendar.states.CalendarState
 import com.pdevjay.calendar_with_schedule.utils.SlideInHorizontallyContainer
 import com.pdevjay.calendar_with_schedule.utils.SlideInHorizontallyContainerFromStart
@@ -59,11 +61,20 @@ fun CalendarHeader(state: CalendarState,
             }
         },
         navigationIcon = {
-                IconButton(onClick = onClick) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back"
-                    )
+                IconButton(
+                    onClick = onClick
+                ) {
+                    if (state.selectedDate == null) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_logo_schedulia),
+                            contentDescription = "Logo"
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
                 }
         },
         actions = {

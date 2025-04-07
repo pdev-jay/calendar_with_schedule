@@ -119,3 +119,77 @@ fun ConfirmBottomSheet(
         }
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ConfirmBottomSheet(
+    title: String,
+    description: String,
+    single: String,
+    isVisible: Boolean,
+    onDismiss: () -> Unit,
+    onSingle: () -> Unit,
+) {
+    val bottomSheetState = rememberModalBottomSheetState()
+    val scope = rememberCoroutineScope()
+
+    if (isVisible) {
+        ModalBottomSheet(
+            sheetState = bottomSheetState,
+            onDismissRequest = onDismiss
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                Button(
+                    onClick = {
+                        scope.launch {
+                            try {
+                                bottomSheetState.hide()
+                                onSingle()
+                                onDismiss()
+                            } catch (e: Exception) {
+                                e.printStackTrace() // 예외 로깅
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(single)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                TextButton(
+                    onClick = {
+                        scope.launch {
+                            try {
+                                bottomSheetState.hide()
+                                onDismiss()
+                            } catch (e: Exception) {
+                                e.printStackTrace() // 예외 로깅
+                            }
+                        }
+                              },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(R.string.cancel), color = Color.Gray)
+                }
+            }
+        }
+    }
+}

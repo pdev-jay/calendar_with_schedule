@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -167,7 +168,8 @@ fun EventBlock(event: RecurringData, index: Int, totalCount: Int, maxWidth: Dp, 
     val xOffset = index * blockWidth
 
     // 색상 진하기 조절 (index가 클수록 진한 색상)
-    val baseColor = Color(0xFF03A9F4)
+//    val baseColor = Color(0xFF03A9F4)
+    val baseColor = MaterialTheme.colorScheme.primary
     val colorFactor = (index + 1).toFloat() / totalCount.toFloat()
     val darkerColor = baseColor.copy(
         red = (baseColor.red * (1 - 0.3f * colorFactor)),
