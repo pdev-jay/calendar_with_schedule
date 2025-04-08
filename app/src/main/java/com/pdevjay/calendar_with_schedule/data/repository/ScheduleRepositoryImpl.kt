@@ -53,8 +53,6 @@ class ScheduleRepositoryImpl @Inject constructor(
 
     private val _scheduleMap = MutableStateFlow<Map<LocalDate, List<RecurringData>>>(emptyMap())
     override val scheduleMap: StateFlow<Map<LocalDate, List<RecurringData>>> = _scheduleMap
-    private val _scheduleMapForDebug = MutableStateFlow<Map<LocalDate, List<RecurringData>>>(emptyMap())
-    override val scheduleMapForDebug: StateFlow<Map<LocalDate, List<RecurringData>>> = _scheduleMapForDebug
 
     private val _currentMonths = MutableStateFlow<List<YearMonth>>(emptyList()) // 🔹 현재 조회 중인 월 리스트
     val currentMonths: StateFlow<List<YearMonth>> = _currentMonths.asStateFlow()
@@ -116,118 +114,18 @@ class ScheduleRepositoryImpl @Inject constructor(
             val recurringSchedules = recurringEntities.map { it.toRecurringData() }
 
             val allSchedules = mutableListOf<RecurringData>()
+            val branchRoots: MutableMap<String?, RecurringData> = mutableMapOf()
 
-            val allSchedulesForDebug = mutableListOf<RecurringData>()
-
-            // 🔹 (1) ScheduleData → RecurringData 변환 후 반복 인스턴스 생성
-            originalSchedules.forEach { schedule ->
-                val indicesToIgnore = recurringSchedules
-                    .filter { it.branchId == schedule.branchId && (it.isDeleted || it.repeatType == RepeatType.NONE) }
-                    .mapNotNull { it.repeatIndex }
-                    .toSet()
-
-                val indexedDates = generateRepeatedDatesWithIndex(
-                    repeatType = schedule.repeatType,
-                    startDate = schedule.start.date,
-                    monthList = months,
-                    indicesToIgnore = indicesToIgnore,
-                    repeatUntil = schedule.repeatUntil
-                )
-
-                indexedDates.forEach { (index, date) ->
-                    allSchedules.add(
-                        generateRepeatedScheduleInstances(schedule, date, index)
-                    )
-                }
-
-                // ✅ 디버그용: 삭제 인덱스 무시하고 전체 생성
-                if (BuildConfig.DEBUG) {
-                    val debugIndexedDates = generateRepeatedDatesWithIndex(
-                        repeatType = schedule.repeatType,
-                        startDate = schedule.start.date,
-                        monthList = months,
-                        indicesToIgnore = emptySet(), // 🔥 무시!
-                        repeatUntil = schedule.repeatUntil
-                    )
-
-                    debugIndexedDates.forEach { (index, date) ->
-                        val instance = generateRepeatedScheduleInstances(schedule, date, index)
-                        allSchedulesForDebug.add(instance)
-                    }
-                }
-            }
-
-            // 🔹 (2) 기존 RecurringData에서 파생된 반복들 처리 (분기 루트 기준)
-            recurringSchedules.filter { it.isFirstSchedule }.forEach { branchRoot ->
-                val children = recurringSchedules.filter { it.branchId == branchRoot.branchId }
-
-                val indicesToIgnore = children
-                    .filter { it.isDeleted || it.repeatType == RepeatType.NONE }
-                    .mapNotNull { it.repeatIndex }
-                    .toSet()
-
-
-                val indexedDates = RepeatScheduleGenerator.generateRepeatedDatesWithIndex(
-                    branchRoot.repeatType,
-                    branchRoot.start.date,
-                    monthList = months,
-                    indicesToIgnore = indicesToIgnore,
-                    repeatUntil = branchRoot.repeatUntil
-                )
-
-                indexedDates.forEach { (index, date) ->
-                    allSchedules.add(
-                        generateRepeatedScheduleInstances(branchRoot, date, index)
-                    )
-                }
-
-                if (BuildConfig.DEBUG) {
-                    val debugIndexedDates = RepeatScheduleGenerator.generateRepeatedDatesWithIndex(
-                        branchRoot.repeatType,
-                        branchRoot.start.date,
-                        monthList = months,
-                        indicesToIgnore = emptySet(), // 🔥 무시!
-                        repeatUntil = branchRoot.repeatUntil
-                    )
-
-                    debugIndexedDates.forEach { (index, date) ->
-                        val instance = generateRepeatedScheduleInstances(branchRoot, date, index)
-                        allSchedulesForDebug.add(instance)
-                    }
-                }
-            }
-
-            // 🔹 (3) 단일 오버라이드 일정 (branch 없이 단독 저장된)
-            allSchedules.addAll(
-                recurringSchedules.filter {
-                    it.repeatType == RepeatType.NONE &&
-                            !it.isDeleted &&
-                            (it.repeatUntil == null || it.start.date <= it.repeatUntil)
-                }
-            )
-
-            allSchedulesForDebug.addAll(
-                recurringSchedules.filter {
-//                    it.repeatType == RepeatType.NONE &&
-                            (it.repeatUntil == null || it.start.date <= it.repeatUntil)
-                }
-            )
-
-            // 🔹 (4) resolveDisplayOnly() 로 반복 정보 덮어쓰기
-            val branchRoots = allSchedules.filter { it.isFirstSchedule }.associateBy { it.branchId }
-            val branchRootsForDebug = allSchedulesForDebug.filter { it.isFirstSchedule }.associateBy { it.branchId }
+            inflateRecurringData(ScheduleTarget.Original(originalSchedules), recurringSchedules, months, allSchedules, branchRoots)
+            inflateRecurringData(ScheduleTarget.Branch(recurringSchedules), recurringSchedules, months, allSchedules, branchRoots, true)
 
             val resolvedSchedules = allSchedules.map { item ->
                 if (item.repeatType == RepeatType.NONE && !item.isFirstSchedule) {
                     val root = branchRoots[item.branchId]
                     if (root != null) item.resolveDisplayOnly(root) else item
-                } else item
-            }
-            val resolvedSchedulesForDebug = allSchedulesForDebug.map { item ->
-                if (item.repeatType == RepeatType.NONE && !item.isFirstSchedule) {
-                    val root = branchRootsForDebug[item.branchId]
-                    if (root != null) item.resolveDisplayOnly(root) else item
-                } else item
+                } else {
+                    item
+                }
             }
 
             // 🔹 (5) 삭제 제외, 날짜 기준 정리 (여러 날짜에 걸친 일정 고려)
@@ -246,32 +144,14 @@ class ScheduleRepositoryImpl @Inject constructor(
                 .groupBy({ it.first }, { it.second })
                 .mapValues { it.value.sortedBy { item -> item.start.time } }
 
-            val expandedDebug = resolvedSchedulesForDebug
-                .flatMap { item ->
-                    val startDate = item.start.date
-                    val endDate = item.end.date
-                    if (startDate == endDate) listOf(startDate to item)
-                    else startDate.rangeTo(endDate).map { it to item }
-                }
-                .groupBy({ it.first }, { it.second })
-                .mapValues { it.value.sortedBy { it.start.time } }
-
 
 // 🔹 (6) 빈 날짜 처리
             val validDates = months.flatMap { month -> (1..month.lengthOfMonth()).map { month.atDay(it) } }
             val result = validDates.associateWith { date -> expanded[date].orEmpty() }
 
-            if (BuildConfig.DEBUG) {
-                val debugScheduleMap = validDates.associateWith { date -> expandedDebug[date].orEmpty() }
-                _scheduleMapForDebug.value = debugScheduleMap
-                // 필요하다면 여기에 알람 로그 추가도 가능:
-//                 AlarmScheduler.logRegisteredAlarms(context, debugScheduleMap)
-            }
-
             return@combine result.toSortedMap()
         }
     }
-
 
     override suspend fun updateSchedule(schedule: RecurringData, scheduleEditType: ScheduleEditType, isOnlyContentChanged: Boolean) {
 
@@ -285,20 +165,12 @@ class ScheduleRepositoryImpl @Inject constructor(
                     if (schedule.isFirstSchedule){
                         // 첫번째 일정이 수정될 때
                         if (schedule.repeatType == RepeatType.NONE){
-//                            val alreadyExists = recurringScheduleDao.countById(schedule.id) > 0
                             recurringScheduleDao.update(schedule.toRecurringScheduleEntity())
                         } else {
-//                            recurringScheduleDao.markRecurringScheduleAsDeleted(schedule.id)
-                            val overridden = schedule.toSingleChangeData(needNewId = true)
+                            val overridden = schedule.toSingleChangeData(needNewId = true).copy(isFirstSchedule = false)
                             recurringScheduleDao.insertRecurringSchedule(overridden.toRecurringScheduleEntity())
                         }
 
-//                        if (alreadyExists){
-//                        } else {
-//                            recurringScheduleDao.markRecurringScheduleAsDeleted(schedule.id)
-//                            val overridden = schedule.toSingleChangeData(needNewId = true)
-//                            recurringScheduleDao.insertRecurringSchedule(overridden.toRecurringScheduleEntity())
-//                        }
                     } else {
                         // 반복 일정의 중간 일정이 업데이트 되는 경우
                         val overridden = schedule.toSingleChangeData(needNewId = false)
@@ -362,12 +234,6 @@ class ScheduleRepositoryImpl @Inject constructor(
                         val deleted = overridden.toMarkAsDeletedData()
                         recurringScheduleDao.insertRecurringSchedule(deleted.toRecurringScheduleEntity())
                     }
-//                    val alreadyExists = recurringScheduleDao.countById(schedule.id) > 0
-//
-//                    if (alreadyExists){
-//                        recurringScheduleDao.markRecurringScheduleAsDeleted(schedule.id)
-//                    } else {
-//                    }
                 }
             }
             ScheduleEditType.THIS_AND_FUTURE -> {
@@ -415,24 +281,6 @@ class ScheduleRepositoryImpl @Inject constructor(
         scheduleDao.insertSchedule(schedule.toScheduleEntity())
     }
 
-    private fun findPreviousRepeatDateFromScheduleMap(
-        scheduleMap: Map<LocalDate, List<BaseSchedule>>,
-        currentDate: LocalDate,
-        eventId: String
-    ): LocalDate? {
-        return scheduleMap
-            .filterKeys { it.isBefore(currentDate) }
-            .toSortedMap()
-            .entries
-            .reversed()
-            .firstOrNull { (_, schedules) ->
-                schedules.any { schedule ->
-                    (schedule is RecurringData && schedule.originalEventId == eventId) ||
-                            (schedule is ScheduleData && schedule.id == eventId)
-                }
-            }
-            ?.key
-    }
     private fun findPreviousRepeatDateFromScheduleMapByIndex(
         scheduleMap: Map<LocalDate, List<BaseSchedule>>,
         currentIndex: Int,
@@ -459,4 +307,61 @@ class ScheduleRepositoryImpl @Inject constructor(
         return sameIndexDate?.minusDays(1)
     }
 
+    sealed class ScheduleTarget {
+        class Original(val list: List<ScheduleData>) : ScheduleTarget()
+        class Branch(val list: List<RecurringData>) : ScheduleTarget()
+    }
+
+    private fun inflateRecurringData(target: ScheduleTarget, recurringSchedules: List<RecurringData>, months: List<YearMonth>, allSchedules: MutableList<RecurringData>, branchRoots: MutableMap<String?, RecurringData>, addSingleRecurringEvents: Boolean = false) {
+        val filtered = when (target){
+            is ScheduleTarget.Original -> target.list
+            is ScheduleTarget.Branch -> target.list.filter { it.isFirstSchedule }
+        }
+
+        filtered.forEach{ schedule ->
+            when (schedule){
+                is ScheduleData -> {
+                    if (schedule.branchId != null) {
+                        branchRoots[schedule.branchId] = schedule.toRecurringData(selectedDate = schedule.start.date, repeatIndex = 1)
+//                        branchRoots.add(schedule.toRecurringData(selectedDate = schedule.start.date, repeatIndex = 1))
+                    }
+                }
+                is RecurringData -> {
+                    if (schedule.isFirstSchedule){
+                        branchRoots[schedule.branchId] = schedule
+//                        branchRoots.add(schedule)
+                    }
+                }
+            }
+            val indicesToIgnore = recurringSchedules
+                .filter { it.branchId == schedule.branchId && (it.isDeleted || it.repeatType == RepeatType.NONE) }
+                .mapNotNull { it.repeatIndex }
+                .toSet()
+
+            val indexedDates = generateRepeatedDatesWithIndex(
+                repeatType = schedule.repeatType,
+                startDate = schedule.start.date,
+                monthList = months,
+                indicesToIgnore = indicesToIgnore,
+                repeatUntil = schedule.repeatUntil
+            )
+
+            indexedDates.forEach { (index, date) ->
+                allSchedules.add(
+                    generateRepeatedScheduleInstances(schedule, date, index)
+                )
+            }
+        }
+
+        if (addSingleRecurringEvents) {
+            allSchedules.addAll(
+                recurringSchedules.filter {
+                    it.repeatType == RepeatType.NONE &&
+                            !it.isDeleted &&
+                            (it.repeatUntil == null || it.start.date <= it.repeatUntil)
+                }
+            )
+        }
+    }
 }
+

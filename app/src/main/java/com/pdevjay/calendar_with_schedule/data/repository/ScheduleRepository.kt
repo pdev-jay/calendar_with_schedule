@@ -11,7 +11,6 @@ import java.time.YearMonth
 
 interface ScheduleRepository {
     val scheduleMap: StateFlow<Map<LocalDate, List<RecurringData>>>
-    val scheduleMapForDebug: StateFlow<Map<LocalDate, List<RecurringData>>>
     suspend fun loadSchedulesForMonths(months: List<YearMonth>)
 
     /**
