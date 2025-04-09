@@ -15,11 +15,11 @@ fun RequestNotificationPermission() {
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
-        if (isGranted) {
-            Toast.makeText(context, "알림 권한 허용됨", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(context, "알림 권한 거부됨", Toast.LENGTH_SHORT).show()
-        }
+//        if (isGranted) {
+//            Toast.makeText(context, "알림 권한 허용됨", Toast.LENGTH_SHORT).show()
+//        } else {
+//            Toast.makeText(context, "알림 권한 거부됨", Toast.LENGTH_SHORT).show()
+//        }
     }
 
     LaunchedEffect(Unit) {

@@ -35,7 +35,7 @@ import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.RecurringData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.overlapsWith
 import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
-import com.pdevjay.calendar_with_schedule.utils.RepeatType
+import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatType
 import java.time.LocalDate
 import java.time.LocalTime
 

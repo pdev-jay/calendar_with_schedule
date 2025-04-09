@@ -16,7 +16,7 @@ import com.pdevjay.calendar_with_schedule.screens.schedule.data.toDateTime
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.toRecurringData
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
 import com.pdevjay.calendar_with_schedule.utils.RepeatScheduleGenerator
-import com.pdevjay.calendar_with_schedule.utils.RepeatType
+import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatType
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId

@@ -62,7 +62,7 @@ import com.pdevjay.calendar_with_schedule.screens.schedule.enums.ScheduleColor
 import com.pdevjay.calendar_with_schedule.screens.schedule.intents.ScheduleIntent
 import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
 import com.pdevjay.calendar_with_schedule.utils.RRuleHelper.generateRRule
-import com.pdevjay.calendar_with_schedule.utils.RepeatType
+import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatType
 import com.pdevjay.calendar_with_schedule.utils.SlideInHorizontallyContainer
 import java.time.LocalDate
 import java.time.LocalTime
@@ -151,9 +151,9 @@ fun ScheduleAddScreen(
                 ){
                     // All-day Toggle
                     SwitchSelector(label = stringResource(R.string.all_day), option = allDay, onSwitch = { allDay = it })
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.primary)
+                    CustomHorizontalDivider()
                     DateTimeSelector(stringResource(R.string.starts), start.date, start.time, onDateClick = {showDatePickerForStart = true}, onTimeClick = {showTimePickerForStart = true})
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.primary)
+                    CustomHorizontalDivider()
                     DateTimeSelector(stringResource(R.string.ends), end.date, end.time, onDateClick = {showDatePickerForEnd = true}, onTimeClick = {showTimePickerForEnd = true})
 
                 }
@@ -171,10 +171,10 @@ fun ScheduleAddScreen(
 
                     // 반복 옵션을 선택하면 나타나는 반복 마지막 날 선택 옵션
                     if (repeatType != RepeatType.NONE) {
-                        HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.primary)
+                        CustomHorizontalDivider()
                         SwitchSelector(label = stringResource(R.string.set_repeat_until), option = isRepeatUntilEnabled, onSwitch = {isRepeatUntilEnabled = it})
                         if (isRepeatUntilEnabled){
-                            HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.primary)
+                            CustomHorizontalDivider()
                             DateTimeSelector(stringResource(R.string.repeat_until), date = repeatUntil, onDateClick = {showDatePickerForRepeatUntil = true})
                         }
                     }
@@ -378,14 +378,14 @@ fun StyledTextField(value: String, label: String, onValueChange: (String) -> Uni
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
 //            .background(Color.LightGray.copy(alpha = 0.5f))
-            .background(MaterialTheme.colorScheme.secondaryContainer)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
             .padding(12.dp)
     ) {
         BasicTextField(
             modifier = Modifier.fillMaxWidth(),
             value = value,
             onValueChange = onValueChange,
-            textStyle = TextStyle(fontSize = 16.sp, color = MaterialTheme.colorScheme.onSecondaryContainer),
+            textStyle = TextStyle(fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
             decorationBox = { innerTextField ->
                 if (value.isEmpty()) {
                     Text(label, color = Color.Gray, fontSize = 16.sp)
@@ -518,17 +518,14 @@ fun DropdownMenuSelector(
 fun GroupContainer(content: @Composable () -> Unit){
     Column(
         modifier = Modifier
-            .background(MaterialTheme.colorScheme.secondaryContainer, shape = RoundedCornerShape(10.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant, shape = RoundedCornerShape(10.dp))
             .animateContentSize()
     ){
         content()
     }
 }
 
-//@Preview(showBackground = true)
-//@Composable
-//fun PreviewScheduleAddScreen(){
-//    AppTheme {
-//        ScheduleAddScreen(LocalDate.now(), {}, {})
-//    }
-//}
+@Composable
+fun CustomHorizontalDivider(){
+    HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+}

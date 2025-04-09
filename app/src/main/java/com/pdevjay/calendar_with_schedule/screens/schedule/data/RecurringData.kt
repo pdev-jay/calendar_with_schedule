@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName
 import com.pdevjay.calendar_with_schedule.data.entity.RecurringScheduleEntity
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
 import com.pdevjay.calendar_with_schedule.utils.RRuleHelper
-import com.pdevjay.calendar_with_schedule.utils.RepeatType
+import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatType
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import java.util.UUID

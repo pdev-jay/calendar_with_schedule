@@ -3,11 +3,9 @@ package com.pdevjay.calendar_with_schedule.screens.schedule.data
 import com.google.gson.annotations.SerializedName
 import com.pdevjay.calendar_with_schedule.data.entity.ScheduleEntity
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
+import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatType
 import com.pdevjay.calendar_with_schedule.utils.RRuleHelper
-import com.pdevjay.calendar_with_schedule.utils.RepeatType
 import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
 import java.util.UUID
 
 

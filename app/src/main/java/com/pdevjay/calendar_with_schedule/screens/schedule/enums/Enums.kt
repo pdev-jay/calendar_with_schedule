@@ -1,7 +1,7 @@
 package com.pdevjay.calendar_with_schedule.screens.schedule.enums
 
 // 🔹 일정 반복 옵션 Enum
-enum class RepeatOption(val label: String) {
+enum class RepeatType(val label: String) {
     NONE("반복 안 함"),
     DAILY("매일"),
     WEEKLY("매주"),
@@ -10,11 +10,12 @@ enum class RepeatOption(val label: String) {
     YEARLY("매년");
 
     companion object {
-        fun fromLabel(label: String): RepeatOption {
-            return entries.find { it.label == label } ?: NONE
+        fun fromLabel(label: String): RepeatType {
+            return RepeatType.entries.find { it.label == label } ?: NONE
         }
     }
 }
+
 
 // 🔹 일정 알림 옵션 Enum
 enum class AlarmOption(val label: String) {

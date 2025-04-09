@@ -6,8 +6,7 @@ import androidx.room.PrimaryKey
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.DateTimePeriod
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
-import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatOption
-import com.pdevjay.calendar_with_schedule.utils.RepeatType
+import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatType
 import java.time.LocalDate
 
 @Entity(tableName = "schedules")

@@ -24,7 +24,7 @@ import com.pdevjay.calendar_with_schedule.utils.RepeatScheduleGenerator
 import com.pdevjay.calendar_with_schedule.utils.RepeatScheduleGenerator.generateRepeatedDates
 import com.pdevjay.calendar_with_schedule.utils.RepeatScheduleGenerator.generateRepeatedDatesWithIndex
 import com.pdevjay.calendar_with_schedule.utils.RepeatScheduleGenerator.generateRepeatedScheduleInstances
-import com.pdevjay.calendar_with_schedule.utils.RepeatType
+import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatType
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.rangeTo
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.toScheduleData
 import dagger.hilt.android.qualifiers.ApplicationContext

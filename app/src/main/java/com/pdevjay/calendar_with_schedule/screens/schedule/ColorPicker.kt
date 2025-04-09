@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,7 +39,7 @@ fun ColorPicker(
                     .background(Color(color.colorInt))
                     .border(
                         width = if (isSelected) 3.dp else 1.dp,
-                        color = if (isSelected) Color.Black else Color.Gray,
+                        color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Gray,
                         shape = CircleShape
                     )
                     .clickable { onColorSelected(color.colorInt) }

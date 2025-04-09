@@ -15,7 +15,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.pdevjay.calendar_with_schedule.MainActivity
 import com.pdevjay.calendar_with_schedule.R
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
-import com.pdevjay.calendar_with_schedule.utils.RepeatType
+import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatType
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId

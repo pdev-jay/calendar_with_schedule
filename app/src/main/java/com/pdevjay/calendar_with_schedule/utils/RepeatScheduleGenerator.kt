@@ -6,6 +6,7 @@ import com.pdevjay.calendar_with_schedule.screens.schedule.data.RecurringData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.toDateTime
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.toRecurringData
+import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatType
 import java.time.Duration
 import java.time.LocalDate
 import java.time.YearMonth
@@ -245,20 +246,5 @@ object RepeatScheduleGenerator {
 //    }
 //
 //
-}
-
-enum class RepeatType(val label: String) {
-    NONE("반복 안 함"),
-    DAILY("매일"),
-    WEEKLY("매주"),
-    BIWEEKLY("격주(2주마다)"),
-    MONTHLY("매월"),
-    YEARLY("매년");
-
-    companion object {
-        fun fromLabel(label: String): RepeatType {
-            return RepeatType.entries.find { it.label == label } ?: NONE
-        }
-    }
 }
 

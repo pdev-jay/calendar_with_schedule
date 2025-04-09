@@ -2,7 +2,7 @@ package com.pdevjay.calendar_with_schedule.screens.schedule.data
 
 import com.google.gson.annotations.SerializedName
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
-import com.pdevjay.calendar_with_schedule.utils.RepeatType
+import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatType
 import java.time.LocalDate
 
 // Json 직렬화시 부모의 필드명과 자식의 필드명이 중복처리되며 에러 -> Transient 추가하여 무시하도록 유도

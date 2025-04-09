@@ -48,7 +48,7 @@ import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.ScheduleEditType
 import com.pdevjay.calendar_with_schedule.screens.schedule.intents.ScheduleIntent
 import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
-import com.pdevjay.calendar_with_schedule.utils.RepeatType
+import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatType
 import com.pdevjay.calendar_with_schedule.utils.SlideInHorizontallyContainer
 import java.time.LocalDate
 import java.time.LocalTime
@@ -184,9 +184,9 @@ fun ScheduleDetailScreen(
                 GroupContainer(
                 ) {
                     SwitchSelector(label = stringResource(R.string.all_day), option = allDay, onSwitch = { allDay = it })
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.primary)
+                    CustomHorizontalDivider()
                     DateTimeSelector(stringResource(R.string.starts), start.date, start.time, onDateClick = {showDatePickerForStart = true}, onTimeClick = {showTimePickerForStart = true})
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.primary)
+                    CustomHorizontalDivider()
                     DateTimeSelector(stringResource(R.string.ends), end.date, end.time, onDateClick = {showDatePickerForEnd = true}, onTimeClick = {showTimePickerForEnd = true})
                 }
 
@@ -203,7 +203,7 @@ fun ScheduleDetailScreen(
 
                     // 반복 옵션을 선택하면 나타나는 반복 마지막 날 선택 옵션
                     if (repeatType != RepeatType.NONE) {
-                        HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.primary)
+                        CustomHorizontalDivider()
                         SwitchSelector(label = stringResource(R.string.set_repeat_until), option = isRepeatUntilEnabled,
                             onSwitch = {
                                 // FIXME:
@@ -211,8 +211,8 @@ fun ScheduleDetailScreen(
                                 isRepeatUntilEnabled = it
                             }
                         )
-                        HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.primary)
                         if (isRepeatUntilEnabled){
+                            CustomHorizontalDivider()
                             DateTimeSelector(stringResource(R.string.repeat_until), date = repeatUntil ?: LocalDate.now(), onDateClick = {showDatePickerForRepeatUntil = true})
                         }
                     }
