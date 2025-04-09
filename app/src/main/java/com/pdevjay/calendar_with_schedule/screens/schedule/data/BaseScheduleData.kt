@@ -17,7 +17,8 @@ abstract class BaseSchedule(
     @Transient open val repeatUntil: LocalDate?,
     @Transient open val repeatRule: String?,
     @Transient open val alarmOption: AlarmOption,
-    @Transient open val branchId: String?
+    @Transient open val branchId: String?,
+    @Transient open val color: Int? = null
 )
 
 // 겹침 여부 확인 함수
@@ -53,6 +54,6 @@ fun BaseSchedule.getDiffsComparedTo(other: BaseSchedule): List<ScheduleDiff> {
     if (repeatType != other.repeatType) diffs.add(ScheduleDiff("repeatType", other.repeatType, repeatType))
     if (repeatUntil != other.repeatUntil) diffs.add(ScheduleDiff("repeatUntil", other.repeatUntil, repeatUntil))
     if (alarmOption != other.alarmOption) diffs.add(ScheduleDiff("alarmOption", other.alarmOption, alarmOption))
-
+    if (color != other.color) diffs.add(ScheduleDiff("color", other.color, color))
     return diffs
 }

@@ -27,7 +27,8 @@ data class RecurringScheduleEntity(
     @ColumnInfo(name = "isDeleted") val isDeleted: Boolean, // 해당 날짜의 일정이 삭제되었는지 여부
     @ColumnInfo(name = "isFirstSchedule") val isFirstSchedule: Boolean = false,
     @ColumnInfo(name = "branchId") val branchId: String? = null,
-    @ColumnInfo(name = "repeatIndex") val repeatIndex: Int
+    @ColumnInfo(name = "repeatIndex") val repeatIndex: Int,
+    @ColumnInfo(name = "color") val color: Int? = null
 )
 
 fun RecurringScheduleEntity.toRecurringData(): RecurringData {
@@ -48,6 +49,7 @@ fun RecurringScheduleEntity.toRecurringData(): RecurringData {
         isDeleted = this.isDeleted,
         isFirstSchedule = this.isFirstSchedule,
         branchId = this.branchId,
-        repeatIndex = this.repeatIndex
+        repeatIndex = this.repeatIndex,
+        color = this.color
     )
 }

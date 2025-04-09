@@ -80,7 +80,8 @@ fun DayCell(
                     verticalArrangement = Arrangement.spacedBy(2.dp),
                 ){
                     sortedSchedules.take(3).forEachIndexed { index, schedule ->
-                        val backgroundColor = calculateScheduleColor(index, totalCount)
+//                        val backgroundColor = calculateScheduleColor(index, totalCount)
+                        val backgroundColor = calculateScheduleColor(index, totalCount, schedule.color)
 
                         ScheduleListPreview(backgroundColor, Color.White, Alignment.CenterStart, schedule.title)
                     }
@@ -120,9 +121,10 @@ private fun ScheduleListPreview(
 }
 
 @Composable
-fun calculateScheduleColor(index: Int, totalCount: Int): Color {
+fun calculateScheduleColor(index: Int, totalCount: Int, color: Int?): Color {
 //    val baseColor = Color(0xFF03A9F4) // 기본 파랑색
-    val baseColor = MaterialTheme.colorScheme.primary
+//    val baseColor = MaterialTheme.colorScheme.primary
+    val baseColor = color?.let { Color(it) } ?: MaterialTheme.colorScheme.primary
     val colorFactor = (index.toFloat() / totalCount.toFloat()) // 인덱스 비율
 
     return baseColor.copy(

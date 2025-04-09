@@ -19,6 +19,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
@@ -36,6 +37,9 @@ class CalendarViewModel @Inject constructor(
     private val _weeks = MutableStateFlow<List<CalendarWeek>>(emptyList())
     val weeks: StateFlow<List<CalendarWeek>> = _weeks.asStateFlow()
 
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
     var selectedDate = MutableStateFlow(LocalDate.now()) // 사용자가 선택한 날짜
 
 
@@ -43,11 +47,15 @@ class CalendarViewModel @Inject constructor(
         initializeMonths()
 
         viewModelScope.launch {
-            scheduleRepository.scheduleMap.collect { newScheduleMap ->
+            scheduleRepository.scheduleMap
+                .filter { it.isNotEmpty() }
+                .collect { newScheduleMap ->
+                Log.e("viemodel_calendar", "✅ scheduleMap in CalendarViewModel ${newScheduleMap.size}")
                 Log.e("viemodel_calendar", "✅ scheduleMap 자동 업데이트됨 from: ${Thread.currentThread().name}")
 
                 _state.value = _state.value.copy(scheduleMap = newScheduleMap)
                 Log.e("", "scheduleMap updated ")
+                _isLoading.value = false
 //                AlarmScheduler.logRegisteredAlarms(context = context, scheduleMap = newScheduleMap)
             }
         }

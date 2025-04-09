@@ -22,7 +22,8 @@ data class ScheduleEntity(
     @ColumnInfo(name = "repeatUntil") val repeatUntil: LocalDate? = null,
     @ColumnInfo(name = "repeatRule") val repeatRule: String? = null,
     @ColumnInfo(name = "alarmOption") val alarmOption: AlarmOption,
-    @ColumnInfo(name = "branchId") val branchId: String? = null
+    @ColumnInfo(name = "branchId") val branchId: String? = null,
+    @ColumnInfo(name = "color") val color: Int? = null
 )
 
 fun ScheduleEntity.toScheduleData(): ScheduleData {
@@ -37,6 +38,7 @@ fun ScheduleEntity.toScheduleData(): ScheduleData {
         repeatUntil = this.repeatUntil,
         repeatRule = this.repeatRule,
         alarmOption = this.alarmOption,
-        branchId = this.branchId
+        branchId = this.branchId,
+        color = this.color
     )
 }

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
@@ -57,6 +58,7 @@ import com.pdevjay.calendar_with_schedule.R
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.DateTimePeriod
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
+import com.pdevjay.calendar_with_schedule.screens.schedule.enums.ScheduleColor
 import com.pdevjay.calendar_with_schedule.screens.schedule.intents.ScheduleIntent
 import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
 import com.pdevjay.calendar_with_schedule.utils.RRuleHelper.generateRRule
@@ -87,6 +89,7 @@ fun ScheduleAddScreen(
     var isRepeatUntilEnabled by remember { mutableStateOf(false) }
     var repeatUntil by remember { mutableStateOf(end.date.plusWeeks(1)) }
     var alarmOption by remember { mutableStateOf(AlarmOption.NONE) }
+    var selectedColor by remember { mutableStateOf<Int?>(ScheduleColor.CYAN.colorInt) }
 
     var showDatePickerForStart by remember { mutableStateOf(false) }
     var showTimePickerForStart by remember { mutableStateOf(false) }
@@ -189,6 +192,15 @@ fun ScheduleAddScreen(
                         onOptionSelected = { label -> alarmOption = AlarmOption.fromLabel(label) }
                     )
                 }
+                Spacer(modifier = Modifier.height(16.dp))
+
+                GroupContainer {
+                    ColorPicker(
+                        selectedColor = selectedColor,
+                        onColorSelected = { selectedColor = it },
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -208,6 +220,7 @@ fun ScheduleAddScreen(
                                 repeatUntil = if (isRepeatUntilEnabled) repeatUntil else null
                             ), // RRule 자동 생성
                             alarmOption = alarmOption,
+                            color = selectedColor
                         )
                         scheduleViewModel.processIntent(ScheduleIntent.AddSchedule(newSchedule))
                         isVisible = false

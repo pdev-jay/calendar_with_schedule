@@ -84,15 +84,16 @@ fun ScheduleDetailScreen(
         }
     }
 
-    var title by remember { mutableStateOf(schedule?.title ?: "New Event") }
-    var location by remember { mutableStateOf(schedule?.location ?: "") }
-    var start by remember { mutableStateOf(schedule?.start ?: DateTimePeriod(LocalDate.now(), LocalTime.of(9, 0))) }
-    var end by remember { mutableStateOf(schedule?.end ?: DateTimePeriod(LocalDate.now(), LocalTime.of(10, 0))) }
+    var title by remember { mutableStateOf(schedule.title ?: "New Event") }
+    var location by remember { mutableStateOf(schedule.location ?: "") }
+    var start by remember { mutableStateOf(schedule.start ?: DateTimePeriod(LocalDate.now(), LocalTime.of(9, 0))) }
+    var end by remember { mutableStateOf(schedule.end ?: DateTimePeriod(LocalDate.now(), LocalTime.of(10, 0))) }
     var allDay by remember { mutableStateOf(false) }
-    var repeatType by remember { mutableStateOf(schedule?.repeatType ?: RepeatType.NONE) }
+    var repeatType by remember { mutableStateOf(schedule.repeatType ?: RepeatType.NONE) }
     var isRepeatUntilEnabled by remember { mutableStateOf(if (schedule.repeatUntil == null) false else true) }
     var repeatUntil by remember { mutableStateOf(schedule.repeatUntil) }
-    var alarmOption by remember { mutableStateOf(schedule?.alarmOption ?: AlarmOption.NONE) }
+    var alarmOption by remember { mutableStateOf(schedule.alarmOption ?: AlarmOption.NONE) }
+    var selectedColor by remember { mutableStateOf<Int?>(schedule.color ?: 0xFF5AC8FA.toInt()) }
 
 
     LaunchedEffect(Unit) { isVisible = true }
@@ -108,7 +109,8 @@ fun ScheduleDetailScreen(
                 end = end,
                 repeatType = repeatType,
                 repeatUntil = if (isRepeatUntilEnabled) repeatUntil else null,
-                alarmOption = alarmOption
+                alarmOption = alarmOption,
+                color = selectedColor
             )
             if (schedule == updatedRecurringData) return
             if (
@@ -227,6 +229,18 @@ fun ScheduleDetailScreen(
                         onOptionSelected = { label -> alarmOption = AlarmOption.fromLabel(label) }
                     )
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                GroupContainer {
+                    ColorPicker(
+                        selectedColor = selectedColor,
+                        onColorSelected = { selectedColor = it },
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(

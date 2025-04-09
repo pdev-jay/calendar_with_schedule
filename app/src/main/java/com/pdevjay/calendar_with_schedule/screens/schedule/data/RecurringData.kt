@@ -26,8 +26,9 @@ data class RecurringData(
     @SerializedName("isDeleted") val isDeleted: Boolean,
     @SerializedName("isFirstSchedule") val isFirstSchedule: Boolean = false,
     @SerializedName("branchId") override val branchId: String? = null,
-    @SerializedName("repeatIndex") val repeatIndex: Int
-) : BaseSchedule(id, title, location, isAllDay, start, end, repeatType, repeatUntil, repeatRule, alarmOption, branchId)
+    @SerializedName("repeatIndex") val repeatIndex: Int,
+    @SerializedName("color") override val color: Int? = null
+) : BaseSchedule(id, title, location, isAllDay, start, end, repeatType, repeatUntil, repeatRule, alarmOption, branchId, color)
 
 
 fun RecurringData.toRecurringScheduleEntity(): RecurringScheduleEntity {
@@ -48,7 +49,8 @@ fun RecurringData.toRecurringScheduleEntity(): RecurringScheduleEntity {
         isDeleted = this.isDeleted,
         isFirstSchedule = this.isFirstSchedule,
         branchId = this.branchId,
-        repeatIndex = this.repeatIndex
+        repeatIndex = this.repeatIndex,
+        color = this.color
     )
 }
 
@@ -63,7 +65,8 @@ fun RecurringData.toScheduleData(): ScheduleData {
         repeatUntil = this.repeatUntil,
         repeatRule = this.repeatRule,
         alarmOption = this.alarmOption,
-        isAllDay = this.isAllDay
+        isAllDay = this.isAllDay,
+        color = this.color
     )
 }
 

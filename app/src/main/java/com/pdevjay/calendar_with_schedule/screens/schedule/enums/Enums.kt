@@ -42,3 +42,20 @@ enum class ScheduleEditType {
     THIS_AND_FUTURE,
     ALL_EVENTS
 }
+
+enum class ScheduleColor(val colorInt: Int, val displayName: String) {
+    RED(0xFFFF3B30.toInt(), "Red"),
+    GREEN(0xFF34C759.toInt(), "Green"),
+    BLUE(0xFF007AFF.toInt(), "Blue"),
+    ORANGE(0xFFFF9500.toInt(), "Orange"),
+    PURPLE(0xFF5856D6.toInt(), "Purple"),
+    CYAN(0xFF5AC8FA.toInt(), "Cyan"),
+    YELLOW(0xFFFFCC00.toInt(), "Yellow"),
+    GRAY(0xFF8E8E93.toInt(), "Gray");
+
+    companion object {
+        fun fromColorInt(colorInt: Int?): ScheduleColor? {
+            return entries.find { it.colorInt == colorInt }
+        }
+    }
+}

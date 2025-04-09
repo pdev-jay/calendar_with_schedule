@@ -1,5 +1,6 @@
 package com.pdevjay.calendar_with_schedule.screens.schedule
 
+import android.util.Half.toFloat
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -64,10 +65,11 @@ fun ScheduleView(
             Column(modifier = Modifier.fillMaxWidth()) {
                 if (selectedDay != null) {
                     allDayEvents.forEach { event ->
+                        val eventColor = event.color?.let { Color(it) } ?: MaterialTheme.colorScheme.primary
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(Color(0xFF03A9F4), shape = RoundedCornerShape(8.dp)),
+                                .background(eventColor, shape = RoundedCornerShape(8.dp)),
                             contentAlignment = Alignment.Center,
 
                         ) {
@@ -169,7 +171,7 @@ fun EventBlock(event: RecurringData, index: Int, totalCount: Int, maxWidth: Dp, 
 
     // 색상 진하기 조절 (index가 클수록 진한 색상)
 //    val baseColor = Color(0xFF03A9F4)
-    val baseColor = MaterialTheme.colorScheme.primary
+    val baseColor = event.color?.let { Color(it) } ?: MaterialTheme.colorScheme.primary
     val colorFactor = (index + 1).toFloat() / totalCount.toFloat()
     val darkerColor = baseColor.copy(
         red = (baseColor.red * (1 - 0.3f * colorFactor)),
