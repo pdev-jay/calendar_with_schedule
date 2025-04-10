@@ -45,7 +45,7 @@ fun DaysGrid(
 
     val cellHeight = 120.dp // 👈 셀 높이 설정
     val monthLabelHeight = 36.dp
-    val dividerHeight = 2.dp
+    val dividerHeight = 1.dp
     val gridHeight = (cellHeight + dividerHeight) * weeks.size + monthLabelHeight
 
     LazyVerticalGrid(
@@ -71,7 +71,7 @@ fun DaysGrid(
                         Spacer(Modifier.size(monthLabelHeight))
                     }
 
-                    HorizontalDivider(thickness = dividerHeight, color = Color.LightGray)
+                    HorizontalDivider(thickness = dividerHeight, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     DayCell(dayOrNull, cellHeight, schedules, onDayClick)
                 }
             }

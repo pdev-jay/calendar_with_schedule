@@ -34,7 +34,6 @@ fun ColorPicker(
             Box(
                 modifier = Modifier
                     .size(36.dp)
-//                    .weight(1f)
                     .clip(CircleShape)
                     .background(Color(color.colorInt))
                     .border(

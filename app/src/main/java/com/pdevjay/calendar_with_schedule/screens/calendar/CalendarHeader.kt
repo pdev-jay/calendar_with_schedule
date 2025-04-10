@@ -10,6 +10,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
@@ -62,11 +63,18 @@ fun CalendarHeader(state: CalendarState,
         },
         navigationIcon = {
                 IconButton(
-                    onClick = onClick
+                    onClick = {
+                        if (state.selectedDate == null) {
+                            onTodayClick()
+                        } else {
+                            onClick()
+                        }
+                    }
                 ) {
                     if (state.selectedDate == null) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_logo_schedulia),
+                            painter = painterResource(id = R.drawable.ic_today),
+                            tint = MaterialTheme.colorScheme.onSurface,
                             contentDescription = "Logo"
                         )
                     } else {
@@ -77,24 +85,5 @@ fun CalendarHeader(state: CalendarState,
                     }
                 }
         },
-        actions = {
-            Text(modifier = Modifier.clickable(
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() },
-                onClick = onTodayClick
-            ),
-                text = "Today",
-            )
-            IconButton(onClick = {
-                val destination = "add_schedule/${state.selectedDate ?: LocalDate.now()}"
-
-                navController.navigate(destination)
-            }) {
-                Icon(
-                    imageVector = Icons.Filled.Add,
-                    contentDescription = "Add"
-                )
-            }
-        }
     )
 }

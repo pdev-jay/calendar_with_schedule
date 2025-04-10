@@ -63,7 +63,6 @@ fun DayCell(
 
             Column(
                 modifier = Modifier.padding(vertical = 4.dp),
-//                verticalArrangement = Arrangement.Top
             ){
                 Text(
                     text = day.date.dayOfMonth.toString(),
@@ -80,7 +79,6 @@ fun DayCell(
                     verticalArrangement = Arrangement.spacedBy(2.dp),
                 ){
                     sortedSchedules.take(3).forEachIndexed { index, schedule ->
-//                        val backgroundColor = calculateScheduleColor(index, totalCount)
                         val backgroundColor = calculateScheduleColor(index, totalCount, schedule.color)
 
                         ScheduleListPreview(backgroundColor, Color.White, Alignment.CenterStart, schedule.title)
@@ -122,8 +120,6 @@ private fun ScheduleListPreview(
 
 @Composable
 fun calculateScheduleColor(index: Int, totalCount: Int, color: Int?): Color {
-//    val baseColor = Color(0xFF03A9F4) // 기본 파랑색
-//    val baseColor = MaterialTheme.colorScheme.primary
     val baseColor = color?.let { Color(it) } ?: MaterialTheme.colorScheme.primary
     val colorFactor = (index.toFloat() / totalCount.toFloat()) // 인덱스 비율
 
@@ -133,47 +129,3 @@ fun calculateScheduleColor(index: Int, totalCount: Int, color: Int?): Color {
         blue = (baseColor.blue * (1 - 0.3f * colorFactor))
     )
 }
-
-//@Preview(showBackground = true)
-//@Composable
-//fun PreviewDayCell() {
-//    val sampleDay = CalendarDay(
-//        date = LocalDate.now(),
-//        dayOfWeek = LocalDate.now().dayOfWeek,
-//        isToday = true
-//    )
-//
-//    val sampleSchedules = listOf(
-//        ScheduleData(
-//            title = "Morning Standup",
-//            location = "Office",
-//            start = DateTimePeriod(LocalDate.now(), LocalTime.of(9, 0)),
-//            end = DateTimePeriod(LocalDate.now(), LocalTime.of(9, 30))
-//        ),
-//        ScheduleData(
-//            title = "Client Meeting",
-//            location = "Zoom",
-//            start = DateTimePeriod(LocalDate.now(), LocalTime.of(11, 0)),
-//            end = DateTimePeriod(LocalDate.now(), LocalTime.of(12, 0))
-//        ),
-//        ScheduleData(
-//            title = "Lunch Break",
-//            location = "Cafe",
-//            start = DateTimePeriod(LocalDate.now(), LocalTime.of(2, 30)),
-//            end = DateTimePeriod(LocalDate.now(), LocalTime.of(13, 30))
-//        ),
-//        ScheduleData(
-//            title = "Project Review",
-//            location = "Conference Room",
-//            start = DateTimePeriod(LocalDate.now(), LocalTime.of(15, 0)),
-//            end = DateTimePeriod(LocalDate.now(), LocalTime.of(16, 0))
-//        )
-//    )
-//
-//    DayCell(
-//        day = sampleDay,
-//        height = 120.dp,
-//        schedules = sampleSchedules,
-//        onClick = { /* 클릭 이벤트 처리 */ }
-//    )
-//}
