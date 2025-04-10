@@ -56,7 +56,7 @@ class AlarmReceiver : BroadcastReceiver() {
         }
 
         val notification = NotificationCompat.Builder(context, "default_channel")
-            .setSmallIcon(R.drawable.ic_notification)
+            .setSmallIcon(R.drawable.ic_notification_schedy)
             .setContentTitle(title)
             .setContentText(contentText)
             .setPriority(NotificationCompat.PRIORITY_HIGH)

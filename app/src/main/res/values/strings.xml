@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Schedulia</string>
+    <string name="app_name">Schedy</string>
 
     <string name="add_schedule">일정 추가</string>
     <string name="close">닫기</string>

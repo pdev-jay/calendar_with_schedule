@@ -213,6 +213,9 @@ class ScheduleRepositoryImpl @Inject constructor(
                 if (isOnlyContentChanged){
                     recurringScheduleDao.updateContentOnly(schedule.toRecurringScheduleEntity())
                 }
+
+                recurringScheduleDao.deleteThisAndFutureRecurringData(schedule.originalEventId, schedule.start.date)
+
             }
             ScheduleEditType.ALL_EVENTS -> TODO()
         }

@@ -1,24 +1,27 @@
 package com.pdevjay.calendar_with_schedule.screens.schedule
 
-import android.util.Half.toFloat
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,15 +30,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.times
-import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
+import com.pdevjay.calendar_with_schedule.R
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.RecurringData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.overlapsWith
-import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatType
+import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
+import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -62,18 +67,22 @@ fun ScheduleView(
     Box(modifier = modifier.fillMaxSize()) {
         Column {
 
-            Column(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
                 if (selectedDay != null) {
                     allDayEvents.forEach { event ->
                         val eventColor = event.color?.let { Color(it) } ?: MaterialTheme.colorScheme.primary
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .border(1.dp, Color.White, shape = RoundedCornerShape(8.dp))
                                 .background(eventColor, shape = RoundedCornerShape(8.dp)),
                             contentAlignment = Alignment.Center,
 
                         ) {
-                            Text(event.title, fontSize = 12.sp, color = Color.White, modifier = Modifier.padding(4.dp))
+                            Text(event.title, fontSize = 12.sp, color = Color.White, modifier = Modifier.padding(2.dp))
                         }
                     }
                 }
@@ -181,26 +190,58 @@ fun EventBlock(event: RecurringData, index: Int, totalCount: Int, maxWidth: Dp, 
 
 
 
-    Box(
+    BoxWithConstraints(
         modifier = Modifier
             .offset(x = xOffset, y = startMinutes.dp)
             .width(blockWidth)
+            .defaultMinSize(minHeight = 30.dp)
             .height(durationMinutes.dp)
             .clickable { onEventClick(event) }
             .border(1.dp, Color.White, shape = RoundedCornerShape(8.dp))
-            .background(darkerColor, shape = RoundedCornerShape(8.dp))
-            .padding(4.dp)
+            .background(darkerColor, shape = RoundedCornerShape(8.dp)),
+        contentAlignment = Alignment.TopStart
+
     ) {
-        Column {
-            Text(event.title, color = Color.White, fontSize = 12.sp)
-            event.location?.let { loc ->
-                Text(loc, color = Color.White, fontSize = 10.sp)
-            }
-            if(event.repeatType != RepeatType.NONE){
-                Text(event.repeatType.toString(), color = Color.White, fontSize = 10.sp)
+        val boxHeight = maxHeight
+
+        val adjustedFontSize = when {
+            boxHeight < 20.dp -> 6.sp
+            boxHeight < 40.dp -> 8.sp
+            boxHeight < 60.dp -> 10.sp
+            boxHeight < 80.dp -> 11.sp
+            boxHeight < 100.dp -> 12.sp
+            boxHeight < 120.dp -> 13.sp
+            else -> 14.sp
+        }
+
+        val adjustedIconSize = when {
+            boxHeight < 20.dp -> 6.dp
+            boxHeight < 40.dp -> 8.dp
+            boxHeight < 60.dp -> 10.dp
+            boxHeight < 80.dp -> 11.dp
+            boxHeight < 100.dp -> 12.dp
+            boxHeight < 120.dp -> 13.dp
+            else -> 14.dp
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+
+        ){
+            Text(event.title, color = Color.White, fontSize = adjustedFontSize)
+            if (event.repeatType != RepeatType.NONE){
+                Icon(
+                    modifier = Modifier.size(adjustedIconSize),
+                    painter = painterResource(id = R.drawable.ic_repeat),
+                    tint = Color.White,
+                    contentDescription = "repeat"
+                )
             }
         }
     }
+
 }
 
 @Composable

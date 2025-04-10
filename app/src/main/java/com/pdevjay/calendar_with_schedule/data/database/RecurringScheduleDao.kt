@@ -69,7 +69,7 @@ interface RecurringScheduleDao {
         startDate: LocalDate
     )
 
-    @Query("DELETE FROM recurring_schedules WHERE originalEventId = :originalEventId AND strftime('%Y-%m-%d', substr(startDate, 1, instr(startDate, '|') - 1)) >= :selectedDate")
+    @Query("DELETE FROM recurring_schedules WHERE originalEventId = :originalEventId AND strftime('%Y-%m-%d', substr(startDate, 1, instr(startDate, '|') - 1)) > :selectedDate")
     suspend fun deleteThisAndFutureRecurringData(originalEventId: String, selectedDate: LocalDate)
 
     @Query("SELECT COUNT(*) FROM recurring_schedules WHERE id = :id")
