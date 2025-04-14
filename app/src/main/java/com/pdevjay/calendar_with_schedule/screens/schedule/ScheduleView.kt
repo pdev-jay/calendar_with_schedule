@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -180,7 +181,7 @@ fun EventBlock(event: RecurringData, index: Int, totalCount: Int, maxWidth: Dp, 
 
     // 색상 진하기 조절 (index가 클수록 진한 색상)
 //    val baseColor = Color(0xFF03A9F4)
-    val baseColor = event.color?.let { Color(it) } ?: MaterialTheme.colorScheme.primary
+    val baseColor = event.color?.let { Color(it).copy(alpha = 0.7f) } ?: MaterialTheme.colorScheme.primary
     val colorFactor = (index + 1).toFloat() / totalCount.toFloat()
     val darkerColor = baseColor.copy(
         red = (baseColor.red * (1 - 0.3f * colorFactor)),
@@ -230,7 +231,7 @@ fun EventBlock(event: RecurringData, index: Int, totalCount: Int, maxWidth: Dp, 
             horizontalArrangement = Arrangement.SpaceBetween
 
         ){
-            Text(event.title, color = Color.White, fontSize = adjustedFontSize)
+            Text(event.title, color = Color.White, fontSize = adjustedFontSize, maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (event.repeatType != RepeatType.NONE){
                 Icon(
                     modifier = Modifier.size(adjustedIconSize),

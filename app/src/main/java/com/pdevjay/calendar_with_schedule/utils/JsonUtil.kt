@@ -13,13 +13,27 @@ import java.time.format.DateTimeFormatter
 
 
 object JsonUtils {
-    val gson: Gson = GsonBuilder()
-//        .registerTypeAdapter(ScheduleData::class.java, ScheduleDataAdapter())
-//        .registerTypeAdapter(RecurringData::class.java, RecurringDataAdapter())
-        .registerTypeAdapter(LocalDate::class.java, LocalDateAdapter())
-        .registerTypeAdapter(LocalTime::class.java, LocalTimeAdapter())
-        .registerTypeAdapter(object : TypeToken<Map<LocalDate, List<RecurringData>>>() {}.type, ScheduleMapAdapter())
-        .create()
+//    val gson: Gson = GsonBuilder()
+////        .registerTypeAdapter(ScheduleData::class.java, ScheduleDataAdapter())
+////        .registerTypeAdapter(RecurringData::class.java, RecurringDataAdapter())
+//        .registerTypeAdapter(LocalDate::class.java, LocalDateAdapter())
+//        .registerTypeAdapter(LocalTime::class.java, LocalTimeAdapter())
+//        .registerTypeAdapter(object : TypeToken<Map<LocalDate, List<RecurringData>>>() {}.type, ScheduleMapAdapter())
+//        .create()
+
+    // 지연 초기화된 Gson 인스턴스
+    val gson: Gson by lazy {
+        GsonBuilder()
+            .registerTypeAdapter(LocalDate::class.java, LocalDateAdapter())
+            .registerTypeAdapter(LocalTime::class.java, LocalTimeAdapter())
+            .create()
+    }
+
+    // 지연 초기화된 타입 토큰 (ProGuard-safe)
+    private val scheduleMapType by lazy {
+        object : TypeToken<Map<LocalDate, List<RecurringData>>>() {}.type
+    }
+
 
     fun parseRecurringScheduleJson(scheduleJson: String): RecurringData {
         return gson.fromJson(URLDecoder.decode(scheduleJson, "UTF-8"), RecurringData::class.java)
@@ -29,11 +43,25 @@ object JsonUtils {
         return gson.fromJson(URLDecoder.decode(scheduleJson, "UTF-8"), ScheduleData::class.java)
     }
 
-    fun parseScheduleMapJson(scheduleMapJson: String): Map<LocalDate, List<RecurringData>> {
-        val type = object : TypeToken<Map<LocalDate, List<RecurringData>>>() {}.type
-        return gson.fromJson(URLDecoder.decode(scheduleMapJson, "UTF-8"), type)
+//    fun parseScheduleMapJson(scheduleMapJson: String): Map<LocalDate, List<RecurringData>> {
+//        val type = object : TypeToken<Map<LocalDate, List<RecurringData>>>() {}.type
+//        return gson.fromJson(URLDecoder.decode(scheduleMapJson, "UTF-8"), type)
+//    }
+
+    fun parseScheduleMapJson(json: String): Map<LocalDate, List<RecurringData>> {
+        return gson.fromJson(json, scheduleMapType)
     }
 
+    // 혹시라도 추후 다른 타입도 처리하고 싶다면 reified 확장도 준비
+    inline fun <reified T> fromJson(json: String): T {
+        val type = object : TypeToken<T>() {}.type
+        return gson.fromJson(json, type)
+    }
+
+    inline fun <reified T> toJson(data: T): String {
+        val type = object : TypeToken<T>() {}.type
+        return gson.toJson(data, type)
+    }
 }
 
 // 🔹 LocalDate Adapter

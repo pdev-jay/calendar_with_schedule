@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.pdevjay.calendar_with_schedule.data.repository.ScheduleRepository
 import com.pdevjay.calendar_with_schedule.notification.AlarmRegisterWorker
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.RecurringData
+import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
+import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatType
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.ScheduleEditType
 import com.pdevjay.calendar_with_schedule.screens.schedule.intents.ScheduleIntent
 import com.pdevjay.calendar_with_schedule.screens.schedule.states.ScheduleState
@@ -34,22 +36,29 @@ class ScheduleViewModel @Inject constructor(
 
                     scheduleRepository.saveSchedule(intent.schedule)
 
-                    AlarmRegisterWorker.enqueueRegisterAlarmForSchedule(context, intent.schedule)
+                    if (intent.schedule.alarmOption != AlarmOption.NONE) {
+                        AlarmRegisterWorker.enqueueRegisterAlarmForSchedule(
+                            context,
+                            intent.schedule
+                        )
+                    }
                 }
 
                 is ScheduleIntent.UpdateSchedule -> {
 
                     scheduleRepository.updateSchedule(intent.newSchedule, intent.editType, intent.isOnlyContentChanged)
 
-                    when (intent.editType) {
-                        ScheduleEditType.ONLY_THIS_EVENT -> {
-                            AlarmRegisterWorker.enqueueRegisterUpdatedAlarmForSchedule(context, intent.newSchedule)
-                        }
-                        ScheduleEditType.THIS_AND_FUTURE -> {
-                            AlarmRegisterWorker.enqueueRegisterAlarmForScheduleMapByBranch(context, intent.oldSchedule, intent.newSchedule)
-                        }
+                    if (intent.newSchedule.alarmOption != AlarmOption.NONE) {
+                        when (intent.editType) {
+                            ScheduleEditType.ONLY_THIS_EVENT -> {
+                                AlarmRegisterWorker.enqueueRegisterUpdatedAlarmForSchedule(context, intent.newSchedule)
+                            }
+                            ScheduleEditType.THIS_AND_FUTURE -> {
+                                AlarmRegisterWorker.enqueueRegisterAlarmForScheduleMapByBranch(context, intent.oldSchedule, intent.newSchedule)
+                            }
 
-                        ScheduleEditType.ALL_EVENTS -> TODO()
+                            ScheduleEditType.ALL_EVENTS -> TODO()
+                        }
                     }
                 }
 
