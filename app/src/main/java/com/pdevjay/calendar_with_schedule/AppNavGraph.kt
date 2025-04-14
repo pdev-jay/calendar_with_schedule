@@ -24,9 +24,11 @@ fun AppNavGraph(
 ) {
 
     NavHost(navController = navController, startDestination = "calendar") {
+
         composable("calendar") {
             CalendarScreen(navController = navController, calendarViewModel = calendarViewModel, scheduleViewModel = scheduleViewModel)
         }
+
         composable(
             route = "scheduleDetail/{scheduleJson}",
             arguments = listOf(navArgument("scheduleJson") { type = NavType.StringType }),
@@ -41,6 +43,7 @@ fun AppNavGraph(
                 scheduleViewModel = scheduleViewModel
             )
         }
+
         composable(
             route = "add_schedule/{selectedDate}",
             arguments = listOf(navArgument("selectedDate") { type = NavType.StringType }),

@@ -70,8 +70,6 @@ fun ScheduleDetailScreen(
     var showDeleteBottomSheet by remember{ mutableStateOf(false) }
     var showUpdateBottomSheet by remember{ mutableStateOf(false) }
 
-    var showWarning by remember { mutableStateOf(false) }
-
     BackHandler {
         isVisible = false
         navController.popBackStack()
@@ -101,7 +99,6 @@ fun ScheduleDetailScreen(
 
     fun updateSchedule(schedule: RecurringData, editType: ScheduleEditType) {
         try {
-            Log.e("viemodel", "button clicked")
             val updatedRecurringData = schedule.copy(
                 title = title,
                 location = location,
@@ -113,40 +110,29 @@ fun ScheduleDetailScreen(
                 color = selectedColor
             )
             if (schedule == updatedRecurringData) return
-            if (
-                editType == ScheduleEditType.ONLY_THIS_EVENT &&
-                (schedule.repeatUntil != updatedRecurringData.repeatUntil ||
-                        schedule.repeatType != updatedRecurringData.repeatType ||
-                        schedule.repeatRule != updatedRecurringData.repeatRule)
-            ) {
-                showWarning = true
-            } else {
 
-                val diffs = updatedRecurringData.getDiffsComparedTo(schedule)
-                val isOnlyContentChanged = diffs.all {
-                    it.field in listOf(
-                        "title",
-                        "location",
-                        "alarmOption",
-                        "isAllDay"
-                    )
-                }
-                scheduleViewModel.processIntent(
-                    ScheduleIntent.UpdateSchedule(
-                        schedule,
-                        updatedRecurringData,
-                        editType,
-                        isOnlyContentChanged
-                    )
+            val diffs = updatedRecurringData.getDiffsComparedTo(schedule)
+            val isOnlyContentChanged = diffs.all {
+                it.field in listOf(
+                    "title",
+                    "location",
+                    "alarmOption",
+                    "isAllDay"
                 )
             }
+            scheduleViewModel.processIntent(
+                ScheduleIntent.UpdateSchedule(
+                    schedule,
+                    updatedRecurringData,
+                    editType,
+                    isOnlyContentChanged
+                )
+            )
         } catch (e: Exception) {
             e.printStackTrace()
         } finally {
-            if (!showWarning) {
-                isVisible = false
-                navController.popBackStack()
-            }
+            isVisible = false
+            navController.popBackStack()
         }
     }
 
@@ -322,17 +308,6 @@ fun ScheduleDetailScreen(
             )
         }
 
-        if (showWarning) {
-            RepeatSettingsIgnoredDialog(
-                onDismissRequest = { showWarning = false },
-                onConfirm = {
-                    showWarning = false
-                    // 계속 진행
-
-                }
-            )
-        }
-
         if (schedule.branchId == null){
             ConfirmBottomSheet(
                 title = stringResource(R.string.update_schedule),
@@ -412,47 +387,5 @@ fun ScheduleDetailScreen(
             )
         }
 
-    }
-}
-
-@Composable
-fun RepeatSettingsIgnoredDialog(
-    onDismissRequest: () -> Unit,
-    onConfirm: () -> Unit
-) {
-    Dialog(onDismissRequest = onDismissRequest) {
-        Surface(
-            shape = MaterialTheme.shapes.medium,
-            tonalElevation = 6.dp
-        ) {
-            Column(modifier = Modifier.padding(24.dp)) {
-                Text(
-                    text = "반복 설정 변경은 적용되지 않습니다",
-                    style = MaterialTheme.typography.titleMedium
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text(
-                    text = "이 일정만 변경하는 경우, 반복 종료일이나 반복 주기 설정은 무시됩니다.\n\n반복 설정을 변경하려면 '이후 일정부터 변경' 또는 '전체 일정 변경'을 선택해 주세요.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Row(
-                    horizontalArrangement = Arrangement.End,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    TextButton(onClick = onDismissRequest) {
-                        Text("취소")
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    TextButton(onClick = onConfirm) {
-                        Text("계속")
-                    }
-                }
-            }
-        }
     }
 }

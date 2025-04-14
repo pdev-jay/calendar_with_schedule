@@ -56,7 +56,6 @@ class CalendarViewModel @Inject constructor(
                 _state.value = _state.value.copy(scheduleMap = newScheduleMap)
                 Log.e("", "scheduleMap updated ")
                 _isLoading.value = false
-//                AlarmScheduler.logRegisteredAlarms(context = context, scheduleMap = newScheduleMap)
             }
         }
     }

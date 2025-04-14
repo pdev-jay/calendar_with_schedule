@@ -27,28 +27,20 @@ class ScheduleViewModel @Inject constructor(
     val state: StateFlow<ScheduleState> = _state
     private val _scheduleMap = MutableStateFlow<Map<LocalDate, List<RecurringData>>>(emptyMap())
 
-    init {
-//        scheduleRepository.scheduleMap
-//            .onEach { newScheduleMap ->
-//                Log.e("viemodel", "✅ scheduleMap 자동 업데이트됨 from: ${Thread.currentThread().name}")
-//
-//                _scheduleMap.value = newScheduleMap
-//                Log.e("viemodel", "newScheduleMap 갱싱 ${newScheduleMap.size}")
-//            }
-//            .launchIn(viewModelScope)
-//
-    }
     fun processIntent(intent: ScheduleIntent) {
         viewModelScope.launch {
             when (intent) {
                 is ScheduleIntent.AddSchedule -> {
-                    scheduleRepository.saveSchedule(intent.schedule)
-                    AlarmRegisterWorker.enqueueRegisterAlarmForSchedule(context, intent.schedule)
 
+                    scheduleRepository.saveSchedule(intent.schedule)
+
+                    AlarmRegisterWorker.enqueueRegisterAlarmForSchedule(context, intent.schedule)
                 }
 
                 is ScheduleIntent.UpdateSchedule -> {
+
                     scheduleRepository.updateSchedule(intent.newSchedule, intent.editType, intent.isOnlyContentChanged)
+
                     when (intent.editType) {
                         ScheduleEditType.ONLY_THIS_EVENT -> {
                             AlarmRegisterWorker.enqueueRegisterUpdatedAlarmForSchedule(context, intent.newSchedule)
@@ -62,6 +54,7 @@ class ScheduleViewModel @Inject constructor(
                 }
 
                 is ScheduleIntent.DeleteSchedule -> {
+
                     scheduleRepository.deleteSchedule(intent.schedule, intent.editType)
 
                     when (intent.editType) {

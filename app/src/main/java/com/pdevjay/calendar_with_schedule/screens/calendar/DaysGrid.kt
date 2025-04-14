@@ -70,7 +70,6 @@ fun DaysGrid(
                     } else if (isInFirstWeek){
                         Spacer(Modifier.size(monthLabelHeight))
                     }
-
                     HorizontalDivider(thickness = dividerHeight, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     DayCell(dayOrNull, cellHeight, schedules, onDayClick)
                 }
@@ -89,36 +88,3 @@ fun calculateWeeks(days: List<CalendarDay>): List<List<CalendarDay?>> {
 }
 
 
-// 샘플 CalendarDay 생성 함수
-fun generateSampleDays(month: YearMonth): List<CalendarDay> {
-    val firstDay = month.atDay(1)
-    val daysInMonth = month.lengthOfMonth()
-
-    return (1..daysInMonth).map { day ->
-        val date = firstDay.plusDays((day - 1).toLong())
-        CalendarDay(
-            date = date,
-            dayOfWeek = date.dayOfWeek,
-            isToday = date == LocalDate.now()
-        )
-    }
-}
-
-//@Preview(showBackground = true)
-//@Composable
-//fun PreviewDaysGrid() {
-//    val sampleDays = generateSampleDays(YearMonth.now())
-//    val sampleScheduleMap = mapOf(
-//        LocalDate.now() to listOf(
-//            ScheduleData("1", "회의", "회의실A", DateTimePeriod(LocalDate.now(), LocalTime.of(10, 0)), DateTimePeriod(LocalDate.now(), LocalTime.of(11, 0))),
-//            ScheduleData("2", "점심 약속", "식당", DateTimePeriod(LocalDate.now(), LocalTime.of(12, 0)), DateTimePeriod(LocalDate.now(), LocalTime.of(13, 0))),
-//            ScheduleData("3", "점심 약속", "식당", DateTimePeriod(LocalDate.now(), LocalTime.of(12, 0)), DateTimePeriod(LocalDate.now(), LocalTime.of(13, 0)))
-//        )
-//    )
-//
-//    DaysGrid(
-//        days = sampleDays,
-//        scheduleMap = sampleScheduleMap,
-//        onDayClick = { /* 클릭 테스트용 로그 */ }
-//    )
-//}
