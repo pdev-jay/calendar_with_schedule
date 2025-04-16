@@ -1,5 +1,7 @@
 package com.pdevjay.calendar_with_schedule.screens.schedule.enums
 
+import java.io.Serializable
+
 // 🔹 일정 반복 옵션 Enum
 enum class RepeatType(val label: String) {
     NONE("반복 안 함"),
@@ -30,6 +32,10 @@ enum class AlarmOption(val label: String) {
     DAY_1("1일 전"),
     DAY_2("2일 전"),
     WEEK_1("1주일 전");
+
+    fun requiresPermission(): Boolean {
+        return this != NONE
+    }
 
     companion object {
         fun fromLabel(label: String): AlarmOption {

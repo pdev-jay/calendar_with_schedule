@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
@@ -49,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
@@ -58,11 +58,13 @@ import com.pdevjay.calendar_with_schedule.R
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.DateTimePeriod
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
+import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatType
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.ScheduleColor
 import com.pdevjay.calendar_with_schedule.screens.schedule.intents.ScheduleIntent
 import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
+import com.pdevjay.calendar_with_schedule.utils.NotificationPermissionDeniedDialog
+import com.pdevjay.calendar_with_schedule.utils.PermissionUtils
 import com.pdevjay.calendar_with_schedule.utils.RRuleHelper.generateRRule
-import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatType
 import com.pdevjay.calendar_with_schedule.utils.SlideInHorizontallyContainer
 import java.time.LocalDate
 import java.time.LocalTime
@@ -76,6 +78,7 @@ fun ScheduleAddScreen(
 ) {
     val now = remember { LocalTime.now() }
     val initialDate = remember { selectedDate ?: LocalDate.now() }
+    val context = LocalContext.current
 
     var isVisible by remember { mutableStateOf(false) }
 
@@ -96,13 +99,16 @@ fun ScheduleAddScreen(
     var showDatePickerForEnd by remember { mutableStateOf(false) }
     var showTimePickerForEnd by remember { mutableStateOf(false) }
     var showDatePickerForRepeatUntil by remember { mutableStateOf(false) }
+    var showPermissionDialog by remember { mutableStateOf(false) }
 
     BackHandler {
         isVisible = false
         navController.popBackStack()
     }
 
-    LaunchedEffect(Unit) { isVisible = true }
+    LaunchedEffect(Unit) {
+        isVisible = true
+    }
 
     LaunchedEffect(repeatType){
             repeatUntil = when (repeatType) {
@@ -189,7 +195,19 @@ fun ScheduleAddScreen(
                         title = stringResource(R.string.notification),
                         options = AlarmOption.entries.map { it.label },
                         selectedOption = alarmOption.label,
-                        onOptionSelected = { label -> alarmOption = AlarmOption.fromLabel(label) }
+                        onOptionSelected = { label ->
+                            val selected = AlarmOption.fromLabel(label)
+                            if (selected.requiresPermission()) {
+                                if (PermissionUtils.hasNotificationPermission(context)) {
+                                    alarmOption = selected
+                                } else {
+                                    showPermissionDialog = true
+                                    alarmOption = AlarmOption.NONE
+                                }
+                            } else {
+                                alarmOption = selected
+                            }
+                        }
                     )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
@@ -288,6 +306,10 @@ fun ScheduleAddScreen(
                 onDateSelected = { repeatUntil = it },
                 onDismiss = { showDatePickerForRepeatUntil = false }
             )
+        }
+
+        if (showPermissionDialog) {
+            NotificationPermissionDeniedDialog(onDismiss = { showPermissionDialog = false })
         }
     }
 }

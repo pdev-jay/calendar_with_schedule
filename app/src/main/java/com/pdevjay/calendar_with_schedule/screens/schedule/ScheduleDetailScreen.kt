@@ -34,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -49,6 +50,8 @@ import com.pdevjay.calendar_with_schedule.screens.schedule.enums.ScheduleEditTyp
 import com.pdevjay.calendar_with_schedule.screens.schedule.intents.ScheduleIntent
 import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatType
+import com.pdevjay.calendar_with_schedule.utils.NotificationPermissionDeniedDialog
+import com.pdevjay.calendar_with_schedule.utils.PermissionUtils
 import com.pdevjay.calendar_with_schedule.utils.SlideInHorizontallyContainer
 import java.time.LocalDate
 import java.time.LocalTime
@@ -61,6 +64,7 @@ fun ScheduleDetailScreen(
     scheduleViewModel: ScheduleViewModel
 ) {
     var isVisible by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     var showDatePickerForStart by remember { mutableStateOf(false) }
     var showTimePickerForStart by remember { mutableStateOf(false) }
@@ -69,6 +73,7 @@ fun ScheduleDetailScreen(
     var showDatePickerForRepeatUntil by remember { mutableStateOf(false) }
     var showDeleteBottomSheet by remember{ mutableStateOf(false) }
     var showUpdateBottomSheet by remember{ mutableStateOf(false) }
+    var showPermissionDialog by remember { mutableStateOf(false) }
 
     BackHandler {
         isVisible = false
@@ -184,7 +189,19 @@ fun ScheduleDetailScreen(
                         title = stringResource(R.string.repeat),
                         options = RepeatType.entries.map { it.label },
                         selectedOption = repeatType.label,
-                        onOptionSelected = { label -> repeatType = RepeatType.fromLabel(label) }
+                        onOptionSelected = { label ->
+                            val selected = AlarmOption.fromLabel(label)
+                            if (selected.requiresPermission()) {
+                                if (PermissionUtils.hasNotificationPermission(context)) {
+                                    alarmOption = selected
+                                } else {
+                                    showPermissionDialog = true
+                                    alarmOption = AlarmOption.NONE
+                                }
+                            } else {
+                                alarmOption = selected
+                            }
+                        }
                     )
 
                     // 반복 옵션을 선택하면 나타나는 반복 마지막 날 선택 옵션
@@ -306,6 +323,10 @@ fun ScheduleDetailScreen(
                 onDateSelected = { repeatUntil = it },
                 onDismiss = { showDatePickerForRepeatUntil = false }
             )
+        }
+
+        if (showPermissionDialog) {
+            NotificationPermissionDeniedDialog(onDismiss = { showPermissionDialog = false })
         }
 
         if (schedule.branchId == null){

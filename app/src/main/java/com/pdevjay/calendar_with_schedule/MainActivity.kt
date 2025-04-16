@@ -13,11 +13,11 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.rememberNavController
 import com.pdevjay.calendar_with_schedule.notification.AlarmScheduler
-import com.pdevjay.calendar_with_schedule.notification.RequestNotificationPermission
 import com.pdevjay.calendar_with_schedule.screens.calendar.intents.CalendarIntent
 import com.pdevjay.calendar_with_schedule.screens.calendar.viewmodels.CalendarViewModel
 import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
 import com.pdevjay.calendar_with_schedule.ui.theme.AppTheme
+import com.pdevjay.calendar_with_schedule.utils.PermissionUtils
 import com.pdevjay.calendar_with_schedule.utils.WorkUtils
 import dagger.hilt.android.AndroidEntryPoint
 import java.time.LocalDate
@@ -48,7 +48,7 @@ fun AppRoot(
     val navController = rememberNavController()
     val calendarViewModel: CalendarViewModel = hiltViewModel()
     val scheduleViewModel: ScheduleViewModel = hiltViewModel()
-    RequestNotificationPermission()
+    PermissionUtils.EnsureNotificationPermission()
 
     LaunchedEffect(navigateDateString) {
         navigateDateString?.let {
