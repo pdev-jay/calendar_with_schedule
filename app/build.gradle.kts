@@ -6,9 +6,10 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     id("kotlin-kapt")
     id("com.google.dagger.hilt.android")
-
-
+    id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
 }
+
 val localProps = Properties()
 val localPropsFile = rootProject.file("local.properties")
 
@@ -116,5 +117,9 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.10.0")
 
     implementation("androidx.core:core-splashscreen:1.0.1")
+
+    implementation(platform("com.google.firebase:firebase-bom:33.12.0"))
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-crashlytics")
 }
 

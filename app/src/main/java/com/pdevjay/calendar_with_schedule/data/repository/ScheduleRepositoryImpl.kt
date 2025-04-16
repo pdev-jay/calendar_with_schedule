@@ -38,6 +38,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
@@ -54,7 +55,15 @@ class ScheduleRepositoryImpl @Inject constructor(
     private val _scheduleMap = MutableStateFlow<Map<LocalDate, List<RecurringData>>>(emptyMap())
     override val scheduleMap: StateFlow<Map<LocalDate, List<RecurringData>>> = _scheduleMap
 
-    private val _currentMonths = MutableStateFlow<List<YearMonth>>(emptyList()) // 🔹 현재 조회 중인 월 리스트
+    val monthsToLoad = (-6..6).map{
+        YearMonth.now().plusMonths(it.toLong())
+    }
+
+    override val scheduleMapFlowForWorker: Flow<Map<LocalDate, List<RecurringData>>> = getSchedulesForMonths(monthsToLoad)
+        .filter { it.isNotEmpty() }
+
+
+    private val _currentMonths = MutableStateFlow<List<YearMonth>>(monthsToLoad) // 🔹 현재 조회 중인 월 리스트
     val currentMonths: StateFlow<List<YearMonth>> = _currentMonths.asStateFlow()
 
     private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -84,6 +93,7 @@ class ScheduleRepositoryImpl @Inject constructor(
                     if (months.isNotEmpty()) {
                         getSchedulesForMonths(months)
                             .distinctUntilChanged()
+                            .filter { it.isNotEmpty() }
                             .collectLatest { newScheduleMap ->
                                 _scheduleMap.value = newScheduleMap
                                 Log.e("viemodel_repository", "✅ scheduleMap 자동 업데이트됨: ${newScheduleMap.keys}")

@@ -316,48 +316,4 @@ object AlarmScheduler {
 
         return baseId.hashCode()
     }
-
-    fun logRegisteredAlarms(context: Context, scheduleMap: Map<LocalDate, List<RecurringData>>) {
-        if (!BuildConfig.DEBUG) return  // ✅ release 빌드에서는 아예 실행 안 함
-
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val today = LocalDate.now()
-        val until = today.plusDays(30)
-
-        var total = 0
-        var found = 0
-
-        scheduleMap
-            .filterKeys { it in today..until }  // ✅ 30일 범위 내로 제한
-            .forEach { (_, schedules) ->
-                for (schedule in schedules) {
-                    total++
-                    val intent = Intent(context, AlarmReceiver::class.java)
-                    val requestCode = getAlarmRequestCode(schedule)
-
-                    val pendingIntent = PendingIntent.getBroadcast(
-                        context,
-                        requestCode,
-                        intent,
-                        PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
-                    )
-
-                    if (pendingIntent != null) {
-                        found++
-                        Log.e(
-                            "AlarmLogger",
-                            "✅ 등록됨: ${schedule.title} | ${schedule.start.date} ${schedule.start.time} | isDeleted : ${schedule.isDeleted} | ${schedule.alarmOption.name} | requestCode=$requestCode"
-                        )
-                    } else {
-                        Log.e(
-                            "AlarmLogger",
-                            "❌ 미등록: ${schedule.title} | ${schedule.start.date} ${schedule.start.time} | isDeleted : ${schedule.isDeleted} | ${schedule.alarmOption.name} | requestCode=$requestCode"
-                        )
-                    }
-                }
-            }
-
-        Log.e("AlarmLogger", "총 $total 개 중 $found 개 알람이 등록되어 있음.")
-    }
-
 }

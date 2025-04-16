@@ -102,7 +102,6 @@ class AlarmRegisterWorker @AssistedInject constructor(
 
         Log.e("AlarmLogger", "✅ WorkManager 통해 알람 등록 완료 ")
         AlarmScheduler.printAllRegisteredAlarms()
-        AlarmPersistenceUtils.persistScheduleMap(applicationContext, repository.scheduleMap.value)
         return Result.success()
     }
 

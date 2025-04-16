@@ -64,3 +64,5 @@
 # Hilt의 AssistedInject 관련 보존
 -keep class dagger.assisted.AssistedInject { *; }
 -keep class **_AssistedFactory { *; }
+
+-keep class com.pdevjay.calendar_with_schedule.utils.ScheduleMapAdapter { *; }

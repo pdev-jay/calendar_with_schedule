@@ -73,7 +73,7 @@ class CalendarViewModel @Inject constructor(
 //                    generateMonth(yearMonth.year, yearMonth.monthValue)
 //                }
                 _state.value = _state.value.copy(months = months.toMutableList())
-                loadScheduleMap(now)
+//                loadScheduleMap(now)
             }
     }
 

@@ -3,6 +3,7 @@ package com.pdevjay.calendar_with_schedule.utils
 import android.content.Context
 import android.util.Log
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.pdevjay.calendar_with_schedule.notification.AlarmRefreshWorker
@@ -22,6 +23,12 @@ object WorkUtils {
             workRequest
         )
         Log.e("AlarmLogger", "daily alarm refresh scheduled")
+    }
+
+    fun enqueueAlarmRefreshNow(context: Context) {
+        val request = OneTimeWorkRequestBuilder<AlarmRefreshWorker>().build()
+        WorkManager.getInstance(context).enqueue(request)
+        Log.e("AlarmLogger", "alarm refresh now")
     }
 
     private fun calculateInitialDelay(): Long {

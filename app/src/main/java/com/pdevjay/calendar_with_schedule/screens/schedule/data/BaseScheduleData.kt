@@ -34,7 +34,7 @@ fun BaseSchedule.overlapsWith(other: BaseSchedule): Boolean {
     // 시간이 겹치는 경우의 조건:
     //    1. 현재 일정의 시작 시간이 다른 일정의 종료 시간보다 앞이어야 함 (thisStart < otherEnd)
     //    2. 현재 일정의 종료 시간이 다른 일정의 시작 시간보다 뒤이어야 함 (thisEnd > otherStart)
-    return thisStart < otherEnd && thisEnd > otherStart
+    return thisStart < otherEnd && thisEnd + 30 > otherStart
 }
 
 data class ScheduleDiff(
