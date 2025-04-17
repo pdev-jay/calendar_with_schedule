@@ -68,7 +68,7 @@ fun CalendarTopBar(
     val infiniteStartPage = remember { Int.MAX_VALUE / 2 }
     val weekDates = state.selectedDate?.let { getWeekDatesForDate(it) }
 
-    // ✅ `selectedDate`를 기반으로 초기 페이지 설정
+    //  `selectedDate`를 기반으로 초기 페이지 설정
     val initialPage = remember {
         infiniteStartPage
     }
@@ -78,7 +78,7 @@ fun CalendarTopBar(
         pageCount = { Int.MAX_VALUE }
     )
 
-    // ✅ 사용자가 스와이프할 때 `selectedDate` 업데이트
+    //  사용자가 스와이프할 때 `selectedDate` 업데이트
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.settledPage }
             .distinctUntilChanged()
@@ -101,7 +101,7 @@ fun CalendarTopBar(
                 if (state.selectedDate == null) {
                     viewModel.initializeMonths()
                     coroutineScope.launch {
-                        viewModel.state.collect { newState -> // ✅ state 변경을 감지한 후 실행
+                        viewModel.state.collect { newState -> //  state 변경을 감지한 후 실행
                             val now = YearMonth.now()
                             val currentMonthIndex = newState.months.indexOfFirst { month ->
                                 month.yearMonth == now
@@ -109,19 +109,19 @@ fun CalendarTopBar(
                             if (currentMonthIndex != -1) {
                                 listState.animateScrollToItem(currentMonthIndex)
                             }
-                            cancel() // ✅ 한 번 실행한 후 collect 종료
+                            cancel() //  한 번 실행한 후 collect 종료
                         }
                     }
                 } else {
                     viewModel.initializeMonths()
                     coroutineScope.launch {
-                        viewModel.state.collect { newState -> // ✅ state 변경을 감지한 후 실행
+                        viewModel.state.collect { newState -> //  state 변경을 감지한 후 실행
                             Log.e("CalendarIntent.DateSelected", "pagerState3 : new state")
 
                             viewModel.processIntent(CalendarIntent.MonthChanged(YearMonth.now()))
                             viewModel.processIntent(CalendarIntent.DateSelected(LocalDate.now()))
                             Log.e("CalendarIntent.DateSelected", "pagerState3 : date selected ${newState.selectedDate}}")
-                            cancel() // ✅ 한 번 실행한 후 collect 종료
+                            cancel() //  한 번 실행한 후 collect 종료
                         }
                     }
                 }
@@ -148,7 +148,7 @@ fun CalendarTopBar(
                             viewModel.processIntent(CalendarIntent.DateUnselected)
                         }
 
-                        // 🔹 선택된 날짜가 포함된 페이지로 이동
+                        //  선택된 날짜가 포함된 페이지로 이동
                         val newPageIndex =
                             infiniteStartPage + ChronoUnit.WEEKS.between(baseDate, date).toInt()
                         coroutineScope.launch {
@@ -224,14 +224,14 @@ fun getWeekDatesForDate(selectedDate: LocalDate): List<LocalDate> {
 fun getWeeksFromMonth(monthDays: List<CalendarDay>): List<List<LocalDate>> {
     if (monthDays.isEmpty()) return emptyList()
 
-    val localDates = monthDays.map { it.date } // 🔹 `CalendarDay` → `LocalDate` 변환
+    val localDates = monthDays.map { it.date } //  `CalendarDay` → `LocalDate` 변환
     val weeks = mutableListOf<List<LocalDate>>()
     var currentWeekStart = getWeekDatesForDate(localDates.first()).first()
 
     while (currentWeekStart.isBefore(localDates.last().plusDays(1))) {
         val weekDates = getWeekDatesForDate(currentWeekStart)
         weeks.add(weekDates)
-        currentWeekStart = currentWeekStart.plusWeeks(1) // 🔹 다음 주 시작일로 이동
+        currentWeekStart = currentWeekStart.plusWeeks(1) //  다음 주 시작일로 이동
     }
 
     return weeks

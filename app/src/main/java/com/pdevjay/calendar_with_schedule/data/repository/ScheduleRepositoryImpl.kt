@@ -48,12 +48,15 @@ import javax.inject.Singleton
 @Singleton
 class ScheduleRepositoryImpl @Inject constructor(
     private val scheduleDao: ScheduleDao,
-    private val recurringScheduleDao: RecurringScheduleDao, // 🔥 추가
+    private val recurringScheduleDao: RecurringScheduleDao, //  추가
     @ApplicationContext private val context: Context
 ) : ScheduleRepository {
 
     private val _scheduleMap = MutableStateFlow<Map<LocalDate, List<RecurringData>>>(emptyMap())
     override val scheduleMap: StateFlow<Map<LocalDate, List<RecurringData>>> = _scheduleMap
+
+    private val _isScheduleMapReady = MutableStateFlow(false)
+    override val isScheduleMapReady: StateFlow<Boolean> = _isScheduleMapReady
 
     val monthsToLoad = (-6..6).map{
         YearMonth.now().plusMonths(it.toLong())
@@ -63,13 +66,13 @@ class ScheduleRepositoryImpl @Inject constructor(
         .filter { it.isNotEmpty() }
 
 
-    private val _currentMonths = MutableStateFlow<List<YearMonth>>(monthsToLoad) // 🔹 현재 조회 중인 월 리스트
+    private val _currentMonths = MutableStateFlow<List<YearMonth>>(monthsToLoad) //  현재 조회 중인 월 리스트
     val currentMonths: StateFlow<List<YearMonth>> = _currentMonths.asStateFlow()
 
     private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     init {
-        Log.e("ScheduleRepository", "🔥 Created! hash=${this.hashCode()}")
+        Log.e("ScheduleRepository", " Created! hash=${this.hashCode()}")
 
         repositoryScope.launch {
             combine(
@@ -96,7 +99,8 @@ class ScheduleRepositoryImpl @Inject constructor(
                             .filter { it.isNotEmpty() }
                             .collectLatest { newScheduleMap ->
                                 _scheduleMap.value = newScheduleMap
-                                Log.e("viemodel_repository", "✅ scheduleMap 자동 업데이트됨: ${newScheduleMap.keys}")
+                                _isScheduleMapReady.value = true
+                                Log.e("viemodel_repository", " scheduleMap 자동 업데이트됨: ${newScheduleMap.keys}")
                             }
                     }
                 }
@@ -105,7 +109,7 @@ class ScheduleRepositoryImpl @Inject constructor(
     }
 
     override suspend fun loadSchedulesForMonths(months: List<YearMonth>) {
-        _currentMonths.value = months // 🔥 `currentMonths` 를 갱신하면 자동으로 `scheduleMap` 업데이트됨
+        _currentMonths.value = months //  `currentMonths` 를 갱신하면 자동으로 `scheduleMap` 업데이트됨
     }
 
      override fun getSchedulesForMonths(months: List<YearMonth>): Flow<Map<LocalDate, List<RecurringData>>> {
@@ -138,7 +142,7 @@ class ScheduleRepositoryImpl @Inject constructor(
                 }
             }
 
-            // 🔹 (5) 삭제 제외, 날짜 기준 정리 (여러 날짜에 걸친 일정 고려)
+            //  (5) 삭제 제외, 날짜 기준 정리 (여러 날짜에 걸친 일정 고려)
             val expanded = resolvedSchedules
                 .filter { !it.isDeleted }
                 .flatMap { item ->
@@ -148,14 +152,14 @@ class ScheduleRepositoryImpl @Inject constructor(
                     if (startDate == endDate) {
                         listOf(startDate to item)
                     } else {
-                        startDate.rangeTo(endDate).map { it to item } // 🔥 날짜 범위 전체에 매핑
+                        startDate.rangeTo(endDate).map { it to item } //  날짜 범위 전체에 매핑
                     }
                 }
                 .groupBy({ it.first }, { it.second })
                 .mapValues { it.value.sortedBy { item -> item.start.time } }
 
 
-// 🔹 (6) 빈 날짜 처리
+//  (6) 빈 날짜 처리
             val validDates = months.flatMap { month -> (1..month.lengthOfMonth()).map { month.atDay(it) } }
             val result = validDates.associateWith { date -> expanded[date].orEmpty() }
 

@@ -97,7 +97,7 @@ fun CalendarScreen(
                 month.yearMonth == YearMonth.from(selectedDate)
             }
 
-            if (currentMonthIndex != listState.firstVisibleItemIndex) { // ✅ 중복 실행 방지
+            if (currentMonthIndex != listState.firstVisibleItemIndex) { //  중복 실행 방지
                 listState.scrollToItem(currentMonthIndex)
             }
         }
@@ -188,12 +188,12 @@ fun CalendarScreen(
     }
 
     LaunchedEffect(listState) {
-        // ✅ 첫 번째 아이템 감지 → 이전 달 데이터 로드
+        //  첫 번째 아이템 감지 → 이전 달 데이터 로드
         snapshotFlow { listState.firstVisibleItemIndex }
             .distinctUntilChanged()
             .debounce(50)
             .collectLatest { firstVisibleIndex ->
-                Log.e("LazyRow", "🔼 현재 첫 번째 아이템 인덱스: $firstVisibleIndex") // ✅ 디버깅 로그 추가
+                Log.e("LazyRow", " 현재 첫 번째 아이템 인덱스: $firstVisibleIndex") //  디버깅 로그 추가
 
                 if (firstVisibleIndex <= 0 && !isLoading.value) {
                     loadPreviousMonths(calendarState.months, isLoading, listState, calendarViewModel)
@@ -202,16 +202,16 @@ fun CalendarScreen(
     }
 
     LaunchedEffect(listState) {
-        // ✅ 마지막 아이템 감지 → 다음 달 데이터 로드
+        //  마지막 아이템 감지 → 다음 달 데이터 로드
         snapshotFlow {
             listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
         }
-            .filterNotNull() // ✅ Null 방지
+            .filterNotNull() //  Null 방지
             .distinctUntilChanged()
             .debounce(50)
             .collectLatest { lastVisibleIndex ->
                 if (lastVisibleIndex == calendarState.months.lastIndex && !isLoading.value) {
-                    Log.e("LazyRow", "🔽 현재 마지막 아이템 인덱스: $lastVisibleIndex") // ✅ 디버깅 로그 추가
+                    Log.e("LazyRow", " 현재 마지막 아이템 인덱스: $lastVisibleIndex") //  디버깅 로그 추가
                     loadNextMonths(calendarState.months, isLoading, calendarViewModel)
                 }
             }
@@ -244,16 +244,16 @@ suspend fun loadPreviousMonths(
     if (isLoading.value) return
 
     isLoading.value = true
-    // ✅ 현재 첫 번째 보이는 아이템의 인덱스 저장
+    //  현재 첫 번째 보이는 아이템의 인덱스 저장
     val firstVisibleItemIndex = listState.firstVisibleItemIndex
     val firstVisibleItemOffset = listState.firstVisibleItemScrollOffset // 현재 스크롤 오프셋 저장
 
-    // ✅ 이전 달 데이터 불러오기
+    //  이전 달 데이터 불러오기
 //    val newMonths = viewModel.loadPreviousMonth() // 예: 6개월 추가됨
     viewModel.processIntent(CalendarIntent.LoadPreviousMonths)
     isLoading.value = false
 
-    // ✅ 추가된 개월 수 만큼 첫 번째 아이템 인덱스 조정하여 원래 보던 위치 유지
+    //  추가된 개월 수 만큼 첫 번째 아이템 인덱스 조정하여 원래 보던 위치 유지
 //    listState.scrollToItem(firstVisibleItemIndex + newMonths.size, firstVisibleItemOffset)
 }
 
@@ -270,7 +270,7 @@ fun rememberCurrentVisibleMonth(
         snapshotFlow { listState.firstVisibleItemScrollOffset }
             .combine(snapshotFlow { listState.layoutInfo.visibleItemsInfo }) { viewportHeight, visibleItems ->
 
-//                 🛑 viewportHeight == 0 또는 visibleItems가 없으면 lastValidMiddleItem을 변경하지 않음
+//                  viewportHeight == 0 또는 visibleItems가 없으면 lastValidMiddleItem을 변경하지 않음
                 if (viewportHeight == 0 || visibleItems.isEmpty()) {
                     return@combine lastValidMiddleItem ?: listState.firstVisibleItemIndex
                 }

@@ -41,9 +41,9 @@ fun DaysGrid(
     onDayClick: (CalendarDay) -> Unit
 ) {
     val weeks = calculateWeeks(days)
-    val firstWeek = weeks.firstOrNull() ?: emptyList() // 🔹 첫 번째 주 가져오기
+    val firstWeek = weeks.firstOrNull() ?: emptyList() //  첫 번째 주 가져오기
 
-    val cellHeight = 120.dp // 👈 셀 높이 설정
+    val cellHeight = 120.dp //  셀 높이 설정
     val monthLabelHeight = 36.dp
     val dividerHeight = 1.dp
     val gridHeight = (cellHeight + dividerHeight) * weeks.size + monthLabelHeight
@@ -60,7 +60,7 @@ fun DaysGrid(
                 Spacer(Modifier.size(cellHeight))
             } else {
                 val schedules = scheduleMap[dayOrNull.date] ?: emptyList()
-                val isInFirstWeek = firstWeek.contains(dayOrNull) // 🔹 첫 번째 주에 속하는지 확인
+                val isInFirstWeek = firstWeek.contains(dayOrNull) //  첫 번째 주에 속하는지 확인
 
                 Column(){
 

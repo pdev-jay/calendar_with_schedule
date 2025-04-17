@@ -2,7 +2,7 @@ package com.pdevjay.calendar_with_schedule.screens.schedule.enums
 
 import java.io.Serializable
 
-// 🔹 일정 반복 옵션 Enum
+//  일정 반복 옵션 Enum
 enum class RepeatType(val label: String) {
     NONE("반복 안 함"),
     DAILY("매일"),
@@ -19,7 +19,7 @@ enum class RepeatType(val label: String) {
 }
 
 
-// 🔹 일정 알림 옵션 Enum
+//  일정 알림 옵션 Enum
 enum class AlarmOption(val label: String) {
     NONE("알림 없음"),
     AT_TIME("정시에 알림"),

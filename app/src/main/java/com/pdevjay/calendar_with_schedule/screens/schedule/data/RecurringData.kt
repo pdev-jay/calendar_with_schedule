@@ -108,14 +108,14 @@ fun RecurringData.resolveDisplayOnly(branchRoot: RecurringData): RecurringData {
 fun RecurringData.resolveDisplayFieldsFromBranch(branchRoots: List<RecurringData>): RecurringData {
     val branchRoot = branchRoots.find { it.branchId == this.branchId && it.isFirstSchedule } ?: return this
 
-    // ✅ 수정된 인스턴스에 대해서는 branch 정보를 덮어씌움
+    //  수정된 인스턴스에 대해서는 branch 정보를 덮어씌움
     val resolved = this.copy(
         repeatType = branchRoot.repeatType,
         repeatUntil = branchRoot.repeatUntil,
         repeatRule = branchRoot.repeatRule,
     )
 
-    // ✅ 반복 주기 안에 있는 경우 날짜도 보정
+    //  반복 주기 안에 있는 경우 날짜도 보정
     return if (isInRepeatPattern(this.start.date, branchRoot.start.date, branchRoot.repeatType)) {
         val newDate = calculateRepeatDateFromIndex(
             startDate = branchRoot.start.date,

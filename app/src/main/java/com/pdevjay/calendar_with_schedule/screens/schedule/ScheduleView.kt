@@ -50,8 +50,8 @@ fun ScheduleView(
     modifier: Modifier = Modifier,
     scheduleViewModel: ScheduleViewModel,
     selectedDay: LocalDate?,
-    schedules: List<RecurringData>, // ✅ BaseSchedule 사용 (ScheduleData + RecurringData 모두 처리 가능)
-    onEventClick: (RecurringData) -> Unit, // ✅ BaseSchedule로 변경
+    schedules: List<RecurringData>, //  BaseSchedule 사용 (ScheduleData + RecurringData 모두 처리 가능)
+    onEventClick: (RecurringData) -> Unit, //  BaseSchedule로 변경
     onBackButtonClicked: () -> Unit
 ){
 

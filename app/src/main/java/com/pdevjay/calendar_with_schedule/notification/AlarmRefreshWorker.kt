@@ -19,7 +19,7 @@ class AlarmRefreshWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
 //        val scheduleMap = scheduleRepository.scheduleMap.value
-        val scheduleMap = scheduleRepository.scheduleMapFlowForWorker.first() // ✅ Flow의 첫 값을 안전하게 가져옴
+        val scheduleMap = scheduleRepository.scheduleMapFlowForWorker.first() //  Flow의 첫 값을 안전하게 가져옴
 
         AlarmScheduler.scheduleAlarmsFromScheduleMap(applicationContext, scheduleMap)
         Log.e("AlarmLogger", "alarm refresh done : ${scheduleMap.size}")

@@ -15,7 +15,7 @@ data class CalendarMonth(
         scheduleMap: Map<LocalDate, List<BaseSchedule>>
     ): Map<LocalDate, List<BaseSchedule>> {
         return days.associateBy({ it.date }, { day ->
-            scheduleMap[day.date] ?: emptyList() // ✅ 해당 날짜에 일정이 있으면 가져오고, 없으면 빈 리스트 반환
+            scheduleMap[day.date] ?: emptyList() //  해당 날짜에 일정이 있으면 가져오고, 없으면 빈 리스트 반환
         })
     }
 }
@@ -42,7 +42,7 @@ data class CalendarWeek(
 ) {
     companion object {
         fun from(date: LocalDate, allDays: List<CalendarDay>): CalendarWeek {
-            val startOfWeek = date.with(DayOfWeek.SUNDAY) // ✅ 정확한 일요일 찾기
+            val startOfWeek = date.with(DayOfWeek.SUNDAY) //  정확한 일요일 찾기
             val daysInWeek = (0..6).map { startOfWeek.plusDays(it.toLong()) }
                 .mapNotNull { targetDate -> allDays.find { it.date == targetDate } }
             val sortedDaysInWeek = daysInWeek.sortedBy { it.date }

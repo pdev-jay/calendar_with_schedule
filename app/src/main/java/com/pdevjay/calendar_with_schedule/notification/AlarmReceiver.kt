@@ -60,7 +60,7 @@ class AlarmReceiver : BroadcastReceiver() {
             .setContentTitle(title)
             .setContentText(contentText)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setContentIntent(pendingIntent) // 🔥 여기서 클릭 시 동작 연결
+            .setContentIntent(pendingIntent) //  여기서 클릭 시 동작 연결
             .build()
 
         with(NotificationManagerCompat.from(context)) {

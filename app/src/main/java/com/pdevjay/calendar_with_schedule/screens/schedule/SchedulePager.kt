@@ -85,7 +85,7 @@ fun SchedulePager(
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize(),
-            key = { index -> allDays[index].date.toString() } // 🔥 페이지 키를 CalendarDay.date 기준으로 설정
+            key = { index -> allDays[index].date.toString() } //  페이지 키를 CalendarDay.date 기준으로 설정
         ) { page ->
             val selectedDay = allDays[page]
             val schedules by remember { derivedStateOf { calendarState.scheduleMap[selectedDay.date] ?: emptyList() } }

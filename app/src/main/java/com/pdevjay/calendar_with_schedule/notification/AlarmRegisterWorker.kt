@@ -80,7 +80,7 @@ class AlarmRegisterWorker @AssistedInject constructor(
                 val newSchedule = JsonUtils.parseRecurringScheduleJson(newScheduleJson)
                 newSchedule.branchId?.let {
                     AlarmScheduler.cancelThisAndFutureAlarms(applicationContext, oldSchedule, scheduleMap)
-                    Log.e("AlarmLogger", "✅ WorkManager 통해 알람 취소 완료 ")
+                    Log.e("AlarmLogger", " WorkManager 통해 알람 취소 완료 ")
                     AlarmScheduler.scheduleAlarmsForBranchId(applicationContext, scheduleMap,
                         it
                     )
@@ -100,7 +100,7 @@ class AlarmRegisterWorker @AssistedInject constructor(
             }
         }
 
-        Log.e("AlarmLogger", "✅ WorkManager 통해 알람 등록 완료 ")
+        Log.e("AlarmLogger", " WorkManager 통해 알람 등록 완료 ")
         AlarmScheduler.printAllRegisteredAlarms()
         return Result.success()
     }

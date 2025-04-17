@@ -94,7 +94,7 @@ fun AddScheduleScreen(
         if (showDatePickerForEnd) {
             DatePickerView(
                 initialDate = end.date,
-                minDate = start.date,  // ✅ startDate 이후만 선택 가능
+                minDate = start.date,  //  startDate 이후만 선택 가능
                 onDateSelected = { end = end.copy(date = it) },
                 onDismiss = { showDatePickerForEnd = false }
             )

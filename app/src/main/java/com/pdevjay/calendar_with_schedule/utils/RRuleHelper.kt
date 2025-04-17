@@ -9,7 +9,7 @@ import java.util.Locale
 object RRuleHelper {
 
     /**
-     * 🔹 RRule 생성 (반복 유형, 시작 날짜, 종료 날짜 기반)
+     *  RRule 생성 (반복 유형, 시작 날짜, 종료 날짜 기반)
      */
     fun generateRRule(
         repeatType: RepeatType,
@@ -27,14 +27,14 @@ object RRuleHelper {
     }
 
     /**
-     * 🔹 UNTIL (반복 종료일) 구문 추가
+     *  UNTIL (반복 종료일) 구문 추가
      */
     private fun getUntilClause(repeatUntil: LocalDate?): String {
         return repeatUntil?.let { ";UNTIL=${it.format(DateTimeFormatter.BASIC_ISO_DATE)}" } ?: ""
     }
 
     /**
-     * 🔹 DayOfWeek → RRule 형식 변환
+     *  DayOfWeek → RRule 형식 변환
      */
     private fun DayOfWeek.toRRule(): String {
         return name.take(2).uppercase(Locale.US)

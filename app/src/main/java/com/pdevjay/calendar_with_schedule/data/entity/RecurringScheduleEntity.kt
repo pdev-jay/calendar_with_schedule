@@ -18,12 +18,12 @@ data class RecurringScheduleEntity(
     @ColumnInfo(name = "startDate") val start: DateTimePeriod,
     @ColumnInfo(name = "endDate") val end: DateTimePeriod,
     @ColumnInfo(name = "title") val title: String?,
-    @ColumnInfo(name = "location") val location: String?, // ✅ 추가
-    @ColumnInfo(name = "isAllDay") val isAllDay: Boolean, // ✅ 추가
-    @ColumnInfo(name = "repeatType") val repeatType: RepeatType, // ✅ 추가
-    @ColumnInfo(name = "repeatUntil") val repeatUntil: LocalDate?, // ✅ 추가
-    @ColumnInfo(name = "repeatRule") val repeatRule: String?, // ✅ 추가
-    @ColumnInfo(name = "alarmOption") val alarmOption: AlarmOption, // ✅ 추가
+    @ColumnInfo(name = "location") val location: String?, //  추가
+    @ColumnInfo(name = "isAllDay") val isAllDay: Boolean, //  추가
+    @ColumnInfo(name = "repeatType") val repeatType: RepeatType, //  추가
+    @ColumnInfo(name = "repeatUntil") val repeatUntil: LocalDate?, //  추가
+    @ColumnInfo(name = "repeatRule") val repeatRule: String?, //  추가
+    @ColumnInfo(name = "alarmOption") val alarmOption: AlarmOption, //  추가
     @ColumnInfo(name = "isDeleted") val isDeleted: Boolean, // 해당 날짜의 일정이 삭제되었는지 여부
     @ColumnInfo(name = "isFirstSchedule") val isFirstSchedule: Boolean = false,
     @ColumnInfo(name = "branchId") val branchId: String? = null,

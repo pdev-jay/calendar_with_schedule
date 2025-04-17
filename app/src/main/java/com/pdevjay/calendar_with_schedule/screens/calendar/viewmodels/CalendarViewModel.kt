@@ -50,8 +50,8 @@ class CalendarViewModel @Inject constructor(
             scheduleRepository.scheduleMap
                 .filter { it.isNotEmpty() }
                 .collect { newScheduleMap ->
-                Log.e("viemodel_calendar", "✅ scheduleMap in CalendarViewModel ${newScheduleMap.size}")
-                Log.e("viemodel_calendar", "✅ scheduleMap 자동 업데이트됨 from: ${Thread.currentThread().name}")
+                Log.e("viemodel_calendar", " scheduleMap in CalendarViewModel ${newScheduleMap.size}")
+                Log.e("viemodel_calendar", " scheduleMap 자동 업데이트됨 from: ${Thread.currentThread().name}")
 
                 _state.value = _state.value.copy(scheduleMap = newScheduleMap)
                 Log.e("", "scheduleMap updated ")
@@ -171,7 +171,7 @@ class CalendarViewModel @Inject constructor(
     }
 
     fun getMappedSchedulesForMonth(month: CalendarMonth): Map<LocalDate, List<BaseSchedule>> {
-        val scheduleMap = _state.value.scheduleMap // ✅ 최신 일정 데이터 가져오기
+        val scheduleMap = _state.value.scheduleMap //  최신 일정 데이터 가져오기
         return month.mapSchedulesToDays(scheduleMap)
     }
 }

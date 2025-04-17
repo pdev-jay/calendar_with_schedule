@@ -27,14 +27,14 @@ class DateTimePeriodConverter {
         @JvmStatic
         fun fromLocalDate(date: LocalDate?): String? {
             if (date == null) return null
-            return date.toString() // 🔹 "YYYY-MM-DD" 형식으로 변환
+            return date.toString() //  "YYYY-MM-DD" 형식으로 변환
         }
 
         @TypeConverter
         @JvmStatic
         fun toLocalDate(data: String?): LocalDate? {
             if (data == null) return null
-            return LocalDate.parse(data) // 🔹 "YYYY-MM-DD"를 LocalDate로 변환
+            return LocalDate.parse(data) //  "YYYY-MM-DD"를 LocalDate로 변환
         }
 
     }

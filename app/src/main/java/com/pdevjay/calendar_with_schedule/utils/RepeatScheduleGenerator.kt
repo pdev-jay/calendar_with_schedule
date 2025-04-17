@@ -28,8 +28,8 @@ object RepeatScheduleGenerator {
         startDate: LocalDate,
         monthList: List<YearMonth>? = null,
         selectedDate: LocalDate? = null,
-        dateToIgnore: Set<LocalDate> = emptySet(), // 🔹 List -> Set으로 변경 (중복 제거 및 성능 향상)
-        repeatUntil: LocalDate? = null // 🔹 repeatUntil 추가
+        dateToIgnore: Set<LocalDate> = emptySet(), //  List -> Set으로 변경 (중복 제거 및 성능 향상)
+        repeatUntil: LocalDate? = null //  repeatUntil 추가
     ): List<LocalDate> {
         if (monthList == null) {
             return selectedDate?.let {
@@ -43,7 +43,7 @@ object RepeatScheduleGenerator {
                         else -> null
                     }
                 }
-                    .takeWhile { it <= selectedDate && (repeatUntil == null || it <= repeatUntil) } // 🔹 repeatUntil 반영
+                    .takeWhile { it <= selectedDate && (repeatUntil == null || it <= repeatUntil) } //  repeatUntil 반영
                     .filterNot { it in dateToIgnore }
                     .find { it == selectedDate }
                     ?.let { listOf(it) }
@@ -65,8 +65,8 @@ object RepeatScheduleGenerator {
                 else -> null
             }
         }
-            .takeWhile { date -> YearMonth.from(date) <= maxMonth && (repeatUntil == null || date <= repeatUntil) } // 🔹 repeatUntil 반영
-            .filterNot { it in dateToIgnore } // 🔹 contains() 대신 `in` 사용 (Set으로 최적화)
+            .takeWhile { date -> YearMonth.from(date) <= maxMonth && (repeatUntil == null || date <= repeatUntil) } //  repeatUntil 반영
+            .filterNot { it in dateToIgnore } //  contains() 대신 `in` 사용 (Set으로 최적화)
             .filter { date ->
                 selectedDate?.let { it == date }
                     ?: monthList.contains(YearMonth.from(date))
@@ -79,7 +79,7 @@ object RepeatScheduleGenerator {
         repeatType: RepeatType,
         startDate: LocalDate,
         monthList: List<YearMonth>? = null,
-        indicesToIgnore: Set<Int> = emptySet(), // 🔹 인덱스 기반 필터링
+        indicesToIgnore: Set<Int> = emptySet(), //  인덱스 기반 필터링
         repeatUntil: LocalDate? = null
     ): List<Pair<Int, LocalDate>> {
         val result = mutableListOf<Pair<Int, LocalDate>>()
@@ -117,7 +117,7 @@ object RepeatScheduleGenerator {
 
         while (true) {
             if (repeatUntil != null && current > repeatUntil) break
-            result.add(current) // ✅ 시작 날짜 포함
+            result.add(current) //  시작 날짜 포함
 
             current = when (repeatType) {
                 RepeatType.DAILY -> current.plusDays(1)

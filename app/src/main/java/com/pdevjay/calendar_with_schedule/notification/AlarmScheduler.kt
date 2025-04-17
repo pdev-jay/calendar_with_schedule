@@ -28,7 +28,7 @@ object AlarmScheduler {
     fun printAllRegisteredAlarms() {
         Log.e("AlarmLogger", "📦 등록된 알람 현황 (registeredAlarms):")
         registeredAlarms.forEach { (key, value) ->
-            Log.e("AlarmLogger", " - [$key] => ${if (value) "✅ 등록됨" else "❌ 취소됨"}")
+            Log.e("AlarmLogger", " - [$key] => ${if (value) " 등록됨" else "❌ 취소됨"}")
         }
     }
 
@@ -86,7 +86,7 @@ object AlarmScheduler {
         val repeatedDates = RepeatScheduleGenerator.generateRepeatedDatesForAlarm(
             repeatType = schedule.repeatType,
             startDate = schedule.start.date,
-            repeatUntil = schedule.repeatUntil ?: until // 🔥 repeatUntil 없어도 안전하게 범위 제한
+            repeatUntil = schedule.repeatUntil ?: until //  repeatUntil 없어도 안전하게 범위 제한
         ).takeWhile { it <= until }
 
         repeatedDates.forEachIndexed { index, date ->
@@ -141,7 +141,7 @@ object AlarmScheduler {
             )
 
             val key = schedule.id
-            registeredAlarms[key] = true // ✅ 등록됨 표시
+            registeredAlarms[key] = true //  등록됨 표시
 
 //            Log.e("AlarmLogger", "Alarm scheduled for ${schedule.title} / ${schedule.start.date} / ${schedule.alarmOption.name}")
         } catch (e: Exception) {
@@ -205,7 +205,7 @@ object AlarmScheduler {
             alarmManager.cancel(it)
 
             val key = schedule.id
-            registeredAlarms[key] = false // ✅ 취소됨 표시
+            registeredAlarms[key] = false //  취소됨 표시
             Log.e("AlarmLogger", "❌ 알람 취소됨: ${schedule.title} ${schedule.start.date} ${schedule.start.time} $requestCode")
         } ?: {
             Log.e("AlarmLogger", "❌ 알람 취소 실패: ${schedule.title} ${schedule.start.date} ${schedule.start.time} $requestCode")

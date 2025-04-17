@@ -23,7 +23,7 @@ interface ScheduleDao {
     ))
     OR (repeatType != 'NONE' AND 
         strftime('%Y-%m', substr(startDate, 1, instr(startDate, '|') - 1)) <= :maxMonth
-        AND (repeatUntil IS NULL OR strftime('%Y-%m', repeatUntil) >= :minMonth) -- 🔥 추가된 조건
+        AND (repeatUntil IS NULL OR strftime('%Y-%m', repeatUntil) >= :minMonth) --  추가된 조건
     )
 """)
     fun getSchedulesForMonths(months: List<String>, minMonth: String, maxMonth: String): Flow<List<ScheduleEntity>>

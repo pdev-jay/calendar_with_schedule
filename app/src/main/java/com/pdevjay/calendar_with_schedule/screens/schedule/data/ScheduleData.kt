@@ -49,7 +49,7 @@ fun ScheduleData.toScheduleEntity(): ScheduleEntity {
 
 fun ScheduleData.toRecurringData(originalStartDate: LocalDate? = null, selectedDate: LocalDate, repeatIndex: Int): RecurringData {
     return RecurringData(
-        id = UUID.randomUUID().toString(), // ✅ 항상 새 UUID로 고유하게 생성
+        id = UUID.randomUUID().toString(), //  항상 새 UUID로 고유하게 생성
         originalEventId = this.id,
         originalRecurringDate = originalStartDate ?: selectedDate, // 수정 전 반복 일정 날짜
         originatedFrom = this.id, // 원본 일정
