@@ -14,10 +14,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 
@@ -36,6 +32,7 @@ object PermissionUtils {
             } else {
                 onPermissionDenied()
             }
+            SharedPreferencesUtil.putBoolean(context,"notification_enabled", isGranted)
         }
 
         LaunchedEffect(Unit) {
@@ -43,6 +40,7 @@ object PermissionUtils {
                 when {
                     ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED -> {
                         onPermissionGranted()
+                        SharedPreferencesUtil.putBoolean(context,"notification_enabled", true)
                     }
                     else -> {
                         launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -50,6 +48,10 @@ object PermissionUtils {
                 }
             } else {
                 // TIRAMISU 미만은 자동 허용
+                val firstLaunch = SharedPreferencesUtil.getBoolean(context, "first_launch", true)
+                if (firstLaunch) {
+                    SharedPreferencesUtil.putBoolean(context, "notification_enabled", true)
+                }
                 onPermissionGranted()
             }
         }

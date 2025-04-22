@@ -121,5 +121,7 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:33.12.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-crashlytics")
+
+    implementation("androidx.navigation:navigation-compose:2.8.9")
 }
 

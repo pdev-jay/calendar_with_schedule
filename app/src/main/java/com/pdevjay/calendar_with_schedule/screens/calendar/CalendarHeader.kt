@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,7 +47,8 @@ import java.util.Locale
 fun CalendarHeader(state: CalendarState,
                    navController: NavController,
                    onTodayClick: () -> Unit = {},
-                   onClick: () -> Unit = {}) {
+                   onClick: () -> Unit = {},
+                   onMenuClick: () -> Unit = {}) {
     TopAppBar(
         title = {
             val formatter = DateTimeFormatter.ofPattern("MMMM", Locale.ENGLISH)
@@ -62,28 +64,57 @@ fun CalendarHeader(state: CalendarState,
             }
         },
         navigationIcon = {
+            if (state.selectedDate != null){
                 IconButton(
-                    onClick = {
-                        if (state.selectedDate == null) {
-                            onTodayClick()
-                        } else {
-                            onClick()
-                        }
-                    }
+                    onClick = onClick
                 ) {
-                    if (state.selectedDate == null) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_today),
-                            tint = MaterialTheme.colorScheme.onSurface,
-                            contentDescription = "Logo"
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back"
+                    )
                 }
+            } else {
+                IconButton(
+                    onClick = onMenuClick
+                ) {
+                    Icon(Icons.Default.Menu, contentDescription = "Menu")
+                }
+            }
+//                IconButton(
+//                    onClick = {
+//                        if (state.selectedDate == null) {
+//                            onTodayClick()
+//                        } else {
+//                            onClick()
+//                        }
+//                    }
+//                ) {
+//                    if (state.selectedDate == null) {
+//                        Icon(
+//                            painter = painterResource(id = R.drawable.ic_today),
+//                            tint = MaterialTheme.colorScheme.onSurface,
+//                            contentDescription = "Logo"
+//                        )
+//                    } else {
+//                        Icon(
+//                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+//                            contentDescription = "Back"
+//                        )
+//                    }
+//                }
         },
+        actions = {
+            if (state.selectedDate == null) {
+                IconButton(
+                    onClick = onTodayClick
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_today),
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        contentDescription = "Today"
+                    )
+                }
+            }
+        }
     )
 }

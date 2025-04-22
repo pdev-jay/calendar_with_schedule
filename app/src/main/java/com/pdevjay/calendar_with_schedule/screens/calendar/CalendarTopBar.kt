@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.DrawerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,6 +46,7 @@ import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarWeek
 import com.pdevjay.calendar_with_schedule.screens.calendar.intents.CalendarIntent
 import com.pdevjay.calendar_with_schedule.screens.calendar.viewmodels.CalendarViewModel
 import com.pdevjay.calendar_with_schedule.utils.ExpandVerticallyContainerFromTop
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -58,11 +60,13 @@ import java.time.temporal.ChronoUnit
 fun CalendarTopBar(
     viewModel: CalendarViewModel,
     listState: LazyListState,
-    navController: NavController
+    navController: NavController,
+    drawerState: DrawerState,
+    coroutineScope: CoroutineScope
 ) {
     val state by viewModel.state.collectAsState()
 //    val months by viewModel.months.collectAsState()
-    val coroutineScope = rememberCoroutineScope()
+//    val coroutineScope = rememberCoroutineScope()
 
     val baseDate = state.selectedDate ?: LocalDate.now()
     val infiniteStartPage = remember { Int.MAX_VALUE / 2 }
@@ -126,7 +130,10 @@ fun CalendarTopBar(
                     }
                 }
             },
-            onClick = { viewModel.processIntent(CalendarIntent.DateUnselected) }
+            onClick = { viewModel.processIntent(CalendarIntent.DateUnselected) },
+            onMenuClick = {
+                coroutineScope.launch { drawerState.open() }
+            }
         )
 
         WeekHeader()

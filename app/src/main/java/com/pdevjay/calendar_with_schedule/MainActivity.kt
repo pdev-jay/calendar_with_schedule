@@ -14,6 +14,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.animation.doOnEnd
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -24,6 +25,7 @@ import com.pdevjay.calendar_with_schedule.screens.calendar.viewmodels.CalendarVi
 import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
 import com.pdevjay.calendar_with_schedule.ui.theme.AppTheme
 import com.pdevjay.calendar_with_schedule.utils.PermissionUtils
+import com.pdevjay.calendar_with_schedule.utils.SharedPreferencesUtil
 import com.pdevjay.calendar_with_schedule.utils.SplashViewModel
 import com.pdevjay.calendar_with_schedule.utils.WorkUtils
 import dagger.hilt.android.AndroidEntryPoint
@@ -77,11 +79,19 @@ class MainActivity : ComponentActivity() {
 fun AppRoot(
     navigateDateString: String? = null,
 ) {
+    val context = LocalContext.current
 
     val navController = rememberNavController()
     val calendarViewModel: CalendarViewModel = hiltViewModel()
     val scheduleViewModel: ScheduleViewModel = hiltViewModel()
-    PermissionUtils.EnsureNotificationPermission()
+
+    val isFirstLaunch = SharedPreferencesUtil.getBoolean(context, "first_launch", true)
+
+    if (isFirstLaunch){
+        PermissionUtils.EnsureNotificationPermission()
+    }
+
+    SharedPreferencesUtil.putBoolean(context, "first_launch", false)
 
     LaunchedEffect(navigateDateString) {
         navigateDateString?.let {
