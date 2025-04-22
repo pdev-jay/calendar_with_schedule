@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.core.animation.doOnEnd
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -65,6 +66,7 @@ class MainActivity : ComponentActivity() {
 
         AlarmScheduler.createNotificationChannel(this)
         WorkUtils.scheduleDailyAlarmRefreshWork(this)
+
         enableEdgeToEdge()
         setContent {
             AppTheme {
@@ -85,13 +87,13 @@ fun AppRoot(
     val calendarViewModel: CalendarViewModel = hiltViewModel()
     val scheduleViewModel: ScheduleViewModel = hiltViewModel()
 
-    val isFirstLaunch = SharedPreferencesUtil.getBoolean(context, "first_launch", true)
+    val isFirstLaunch = SharedPreferencesUtil.getBoolean(context, SharedPreferencesUtil.KEY_FIRST_LAUNCH, true)
 
     if (isFirstLaunch){
         PermissionUtils.EnsureNotificationPermission()
     }
 
-    SharedPreferencesUtil.putBoolean(context, "first_launch", false)
+    SharedPreferencesUtil.putBoolean(context, SharedPreferencesUtil.KEY_FIRST_LAUNCH, false)
 
     LaunchedEffect(navigateDateString) {
         navigateDateString?.let {

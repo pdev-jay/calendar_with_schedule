@@ -33,8 +33,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.pdevjay.calendar_with_schedule.R
 import com.pdevjay.calendar_with_schedule.screens.schedule.GroupContainer
 import com.pdevjay.calendar_with_schedule.screens.schedule.SwitchSelector
 import com.pdevjay.calendar_with_schedule.utils.NotificationPermissionDeniedDialog
@@ -47,7 +49,7 @@ fun SettingsScreen(
     navController: NavController
 ){
     val context = LocalContext.current
-    val notificationEnabled = SharedPreferencesUtil.getBoolean(context, "notification_enabled", false)
+    val notificationEnabled = SharedPreferencesUtil.getBoolean(context, SharedPreferencesUtil.KEY_NOTIFICATION_ENABLED, false)
     val notificationPermissionGranted = PermissionUtils.hasNotificationPermission(context)
     var isNotificationEnabled by remember { mutableStateOf(notificationEnabled && notificationPermissionGranted) }
     var showPermissionDialog by remember { mutableStateOf(false) }
@@ -91,7 +93,7 @@ fun SettingsScreen(
                                 isNotificationEnabled = false
                                 showPermissionDialog = true
                             }
-                            SharedPreferencesUtil.putBoolean(context, "notification_enabled", it)
+                            SharedPreferencesUtil.putBoolean(context, SharedPreferencesUtil.KEY_NOTIFICATION_ENABLED, it)
                         }
                     )
                 }

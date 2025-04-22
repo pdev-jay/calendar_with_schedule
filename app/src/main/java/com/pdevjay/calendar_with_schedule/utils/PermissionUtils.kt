@@ -15,7 +15,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
+import com.pdevjay.calendar_with_schedule.R
 
 object PermissionUtils {
     @Composable
@@ -32,7 +34,7 @@ object PermissionUtils {
             } else {
                 onPermissionDenied()
             }
-            SharedPreferencesUtil.putBoolean(context,"notification_enabled", isGranted)
+            SharedPreferencesUtil.putBoolean(context, SharedPreferencesUtil.KEY_NOTIFICATION_ENABLED, isGranted)
         }
 
         LaunchedEffect(Unit) {
@@ -40,7 +42,7 @@ object PermissionUtils {
                 when {
                     ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED -> {
                         onPermissionGranted()
-                        SharedPreferencesUtil.putBoolean(context,"notification_enabled", true)
+                        SharedPreferencesUtil.putBoolean(context, SharedPreferencesUtil.KEY_NOTIFICATION_ENABLED, true)
                     }
                     else -> {
                         launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -48,9 +50,9 @@ object PermissionUtils {
                 }
             } else {
                 // TIRAMISU 미만은 자동 허용
-                val firstLaunch = SharedPreferencesUtil.getBoolean(context, "first_launch", true)
+                val firstLaunch = SharedPreferencesUtil.getBoolean(context, SharedPreferencesUtil.KEY_FIRST_LAUNCH, true)
                 if (firstLaunch) {
-                    SharedPreferencesUtil.putBoolean(context, "notification_enabled", true)
+                    SharedPreferencesUtil.putBoolean(context, SharedPreferencesUtil.KEY_NOTIFICATION_ENABLED, true)
                 }
                 onPermissionGranted()
             }
@@ -78,10 +80,10 @@ fun NotificationPermissionDeniedDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text("알림 권한 필요")
+            Text(stringResource(R.string.notification_dialog_title))
         },
         text = {
-            Text("알림 기능을 사용하려면 설정에서 알림 권한을 허용해주세요.")
+            Text(stringResource(R.string.notification_dialog_body))
         },
         confirmButton = {
             TextButton(
@@ -94,12 +96,12 @@ fun NotificationPermissionDeniedDialog(
                     onDismiss()
                 }
             ) {
-                Text("설정으로 이동")
+                Text(stringResource(R.string.notification_dialog_go_to_setting))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("취소")
+                Text(stringResource(R.string.cancel))
             }
         }
     )

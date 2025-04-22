@@ -23,7 +23,7 @@ import java.time.ZoneId
 
 class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
-        val isNotificationEnabled = SharedPreferencesUtil.getBoolean(context, "notification_enabled")
+        val isNotificationEnabled = SharedPreferencesUtil.getBoolean(context, SharedPreferencesUtil.KEY_NOTIFICATION_ENABLED)
 
         if (isNotificationEnabled){
             val title = intent?.getStringExtra("title") ?: "알림"
@@ -46,21 +46,21 @@ class AlarmReceiver : BroadcastReceiver() {
             )
 
             val contentText = when (alarmOption) {
-                AlarmOption.AT_TIME -> "지금 일정이 시작됩니다."
-                AlarmOption.MIN_5 -> "5분 뒤에 일정이 시작됩니다."
-                AlarmOption.MIN_10 -> "10분 뒤에 일정이 시작됩니다."
-                AlarmOption.MIN_15 -> "15분 뒤에 일정이 시작됩니다."
-                AlarmOption.MIN_30 -> "30분 뒤에 일정이 시작됩니다."
-                AlarmOption.HOUR_1 -> "1시간 뒤에 일정이 시작됩니다."
-                AlarmOption.HOUR_2 -> "2시간 뒤에 일정이 시작됩니다."
-                AlarmOption.DAY_1 -> "내일 일정이 시작됩니다."
-                AlarmOption.DAY_2 -> "모레 일정이 시작됩니다."
-                AlarmOption.WEEK_1 -> "1주일 뒤에 일정이 시작됩니다."
-                AlarmOption.NONE -> "일정 알림이 도착했어요."
+                AlarmOption.AT_TIME -> context.getString(R.string.alarm_message_at_time)
+                AlarmOption.MIN_5 -> context.getString(R.string.alarm_message_5_min)
+                AlarmOption.MIN_10 -> context.getString(R.string.alarm_message_10_min)
+                AlarmOption.MIN_15 -> context.getString(R.string.alarm_message_15_min)
+                AlarmOption.MIN_30 -> context.getString(R.string.alarm_message_30_min)
+                AlarmOption.HOUR_1 -> context.getString(R.string.alarm_message_1_hour)
+                AlarmOption.HOUR_2 -> context.getString(R.string.alarm_message_2_hour)
+                AlarmOption.DAY_1 -> context.getString(R.string.alarm_message_1_day)
+                AlarmOption.DAY_2 -> context.getString(R.string.alarm_message_2_day)
+                AlarmOption.WEEK_1 -> context.getString(R.string.alarm_message_1_week)
+                AlarmOption.NONE -> context.getString(R.string.alarm_message_none)
             }
 
             val notification = NotificationCompat.Builder(context, "default_channel")
-                .setSmallIcon(R.drawable.ic_notification_schedy)
+                .setSmallIcon(R.drawable.ic_notification_schedy_2)
                 .setContentTitle(title)
                 .setContentText(contentText)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)

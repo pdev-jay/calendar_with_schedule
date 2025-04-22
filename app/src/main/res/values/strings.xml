@@ -32,5 +32,46 @@
 
     <string name="cancel">취소</string>
 
+    <string name="ok_eng">OK</string>
+    <string name="confirm_eng">Confirm</string>
+    <string name="cancel_eng">Cancel</string>
+
+    <string name="select_time">시간 선택</string>
+
+
+    <!--    alarmOption  -->
+    <string name="alarm_option_none">알림 없음</string>
+    <string name="alarm_option_at_time">정시에 알림</string>
+    <string name="alarm_option_5_min">5분 전</string>
+    <string name="alarm_option_10_min">10분 전</string>
+    <string name="alarm_option_15_min">15분 전</string>
+    <string name="alarm_option_30_min">30분 전</string>
+    <string name="alarm_option_1_hour">1시간 전</string>
+    <string name="alarm_option_2_hour">2시간 전</string>
+    <string name="alarm_option_1_day">1일 전</string>
+    <string name="alarm_option_2_day">2일 전</string>
+    <string name="alarm_option_1_week">1주일 전</string>
+
+    <string name="alarm_message_none">일정 알림이 도착했어요.</string>
+    <string name="alarm_message_at_time">지금 일정이 시작됩니다.</string>
+    <string name="alarm_message_5_min">5분 뒤에 일정이 시작됩니다.</string>
+    <string name="alarm_message_10_min">10분 뒤에 일정이 시작됩니다.</string>
+    <string name="alarm_message_15_min">15분 뒤에 일정이 시작됩니다.</string>
+    <string name="alarm_message_30_min">30분 뒤에 일정이 시작됩니다.</string>
+    <string name="alarm_message_1_hour">1시간 뒤에 일정이 시작됩니다.</string>
+    <string name="alarm_message_2_hour">2시간 뒤에 일정이 시작됩니다.</string>
+    <string name="alarm_message_1_day">내일 일정이 시작됩니다.</string>
+    <string name="alarm_message_2_day">모레 일정이 시작됩니다.</string>
+    <string name="alarm_message_1_week">1주일 뒤에 일정이 시작됩니다.</string>
+
+
+    <!--    notification permission  -->
+    <string name="notification_dialog_title">알림 권한 필요</string>
+    <string name="notification_dialog_body">알림 기능을 사용하려면 설정에서 알림 권한을 허용해주세요.</string>
+    <string name="notification_dialog_go_to_setting">설정으로 이동</string>
+
+    <!--    back key  -->
+    <string name="double_back_to_exit">한 번 더 누르면 종료됩니다.</string>
+
 </resources>
 

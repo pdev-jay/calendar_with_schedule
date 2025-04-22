@@ -5,6 +5,8 @@ import android.content.SharedPreferences
 
 object SharedPreferencesUtil {
     private const val PREF_NAME = "my_prefs"
+    const val KEY_NOTIFICATION_ENABLED = "notification_enabled"
+    const val KEY_FIRST_LAUNCH = "first_launch"
 
     private fun getPrefs(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)

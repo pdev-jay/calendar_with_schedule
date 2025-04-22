@@ -21,7 +21,7 @@ class SplashViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            delay(800L) // 최소 스플래시 유지 시간
+            delay(1000L) // 최소 스플래시 유지 시간
 
             scheduleRepository.isScheduleMapReady
                 .filter { it } // true일 때만
