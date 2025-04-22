@@ -60,7 +60,7 @@ class CalendarViewModel @Inject constructor(
         }
     }
 
-    fun initializeMonths() {
+    fun initializeMonths(refreshScheduleMap: Boolean = false) {
         Log.e("", "initializeMonths")
             viewModelScope.launch {
                 val now = YearMonth.now()
@@ -73,7 +73,10 @@ class CalendarViewModel @Inject constructor(
 //                    generateMonth(yearMonth.year, yearMonth.monthValue)
 //                }
                 _state.value = _state.value.copy(months = months.toMutableList())
-//                loadScheduleMap(now)
+
+                if (refreshScheduleMap) {
+                    loadScheduleMap(now)
+                }
             }
     }
 

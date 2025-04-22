@@ -103,7 +103,7 @@ fun CalendarTopBar(
             navController,
             onTodayClick = {
                 if (state.selectedDate == null) {
-                    viewModel.initializeMonths()
+                    viewModel.initializeMonths(true)
                     coroutineScope.launch {
                         viewModel.state.collect { newState -> //  state 변경을 감지한 후 실행
                             val now = YearMonth.now()
@@ -117,7 +117,7 @@ fun CalendarTopBar(
                         }
                     }
                 } else {
-                    viewModel.initializeMonths()
+                    viewModel.initializeMonths(true)
                     coroutineScope.launch {
                         viewModel.state.collect { newState -> //  state 변경을 감지한 후 실행
                             Log.e("CalendarIntent.DateSelected", "pagerState3 : new state")

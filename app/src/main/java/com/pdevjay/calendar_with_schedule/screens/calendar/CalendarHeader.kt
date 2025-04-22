@@ -104,16 +104,14 @@ fun CalendarHeader(state: CalendarState,
 //                }
         },
         actions = {
-            if (state.selectedDate == null) {
-                IconButton(
-                    onClick = onTodayClick
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_today),
-                        tint = MaterialTheme.colorScheme.onSurface,
-                        contentDescription = "Today"
-                    )
-                }
+            IconButton(
+                onClick = onTodayClick
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_today),
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    contentDescription = "Today"
+                )
             }
         }
     )
