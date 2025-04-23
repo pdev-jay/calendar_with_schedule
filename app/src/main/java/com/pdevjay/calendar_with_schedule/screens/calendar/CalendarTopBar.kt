@@ -11,9 +11,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
@@ -21,7 +24,9 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DrawerState
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -136,7 +141,7 @@ fun CalendarTopBar(
             }
         )
 
-        WeekHeader()
+        WeekHeader(state.selectedDate)
 
         // 애니메이션 제대로 동작하게 key 추가
         ExpandVerticallyContainerFromTop(
@@ -175,44 +180,48 @@ fun WeekRow(
     selectedDate: LocalDate?,
     onDateClick: (LocalDate) -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-        ,
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        weekDates.forEach { date ->
-            val isSelected = date == selectedDate
-            val isToday = date == LocalDate.now()
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp)
+            ,
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            weekDates.forEach { date ->
+                val isSelected = date == selectedDate
+                val isToday = date == LocalDate.now()
 
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(
-                        when {
-                            isSelected -> MaterialTheme.colorScheme.error
-                            else -> Color.Transparent
-                        }
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onDateClick(date) },
+                    contentAlignment = Alignment.Center
+                ){
+                    Text(
+                        modifier = Modifier.padding(12.dp),
+                        text = date.dayOfMonth.toString(),
+                        style = TextStyle(
+                            color = when {
+                                isToday -> Color.Red
+                                else -> MaterialTheme.colorScheme.onSurface
+                            },
+                        )
                     )
-                    .clickable { onDateClick(date) },
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = date.dayOfMonth.toString(),
-                    style = TextStyle(
-                    color = when {
-                        isSelected -> Color.White
-                        isToday -> Color.Red
-                        else -> MaterialTheme.colorScheme.onSurface
-                    },
-
-                    )
-                )
+                    if (isSelected) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(4.dp)
+                                .background(Color.Red)
+                                .align(Alignment.BottomCenter)
+                        )
+                    }
+                }
             }
         }
+        HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

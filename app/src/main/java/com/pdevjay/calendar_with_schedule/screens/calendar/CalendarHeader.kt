@@ -80,28 +80,6 @@ fun CalendarHeader(state: CalendarState,
                     Icon(Icons.Default.Menu, contentDescription = "Menu")
                 }
             }
-//                IconButton(
-//                    onClick = {
-//                        if (state.selectedDate == null) {
-//                            onTodayClick()
-//                        } else {
-//                            onClick()
-//                        }
-//                    }
-//                ) {
-//                    if (state.selectedDate == null) {
-//                        Icon(
-//                            painter = painterResource(id = R.drawable.ic_today),
-//                            tint = MaterialTheme.colorScheme.onSurface,
-//                            contentDescription = "Logo"
-//                        )
-//                    } else {
-//                        Icon(
-//                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-//                            contentDescription = "Back"
-//                        )
-//                    }
-//                }
         },
         actions = {
             IconButton(

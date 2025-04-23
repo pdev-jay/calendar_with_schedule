@@ -104,14 +104,14 @@ fun ScheduleAddScreen(
     }
 
     LaunchedEffect(repeatType){
-            repeatUntil = when (repeatType) {
-                RepeatType.DAILY -> start.date.plusDays(30)  // 기본 30일 후
-                RepeatType.WEEKLY -> start.date.plusMonths(3) // 기본 3개월 후
-                RepeatType.BIWEEKLY -> start.date.plusMonths(6) // 기본 6개월 후
-                RepeatType.MONTHLY -> start.date.plusYears(1)  // 기본 1년 후
-                RepeatType.YEARLY -> start.date.plusYears(3)   // 기본 3년 후
-                RepeatType.NONE -> end.date.plusWeeks(1)
-            }
+        repeatUntil = when (repeatType) {
+            RepeatType.DAILY -> start.date.plusDays(30)  // 기본 30일 후
+            RepeatType.WEEKLY -> start.date.plusMonths(3) // 기본 3개월 후
+            RepeatType.BIWEEKLY -> start.date.plusMonths(6) // 기본 6개월 후
+            RepeatType.MONTHLY -> start.date.plusYears(1)  // 기본 1년 후
+            RepeatType.YEARLY -> start.date.plusYears(3)   // 기본 3년 후
+            RepeatType.NONE -> end.date.plusWeeks(1)
+        }
     }
 
     Scaffold(
@@ -147,9 +147,9 @@ fun ScheduleAddScreen(
                 // All-day Toggle
                 SwitchSelector(label = stringResource(R.string.all_day), option = allDay, onSwitch = { allDay = it })
                 CustomHorizontalDivider()
-                DateTimeSelector(stringResource(R.string.starts), start.date, start.time, onDateClick = {showDatePickerForStart = true}, onTimeClick = {showTimePickerForStart = true})
+                DateTimeSelector(stringResource(R.string.starts), start.date, start.time, onDateClick = {showDatePickerForStart = true}, onTimeClick = {showTimePickerForStart = true}, isAllDay = allDay)
                 CustomHorizontalDivider()
-                DateTimeSelector(stringResource(R.string.ends), end.date, end.time, onDateClick = {showDatePickerForEnd = true}, onTimeClick = {showTimePickerForEnd = true})
+                DateTimeSelector(stringResource(R.string.ends), end.date, end.time, onDateClick = {showDatePickerForEnd = true}, onTimeClick = {showTimePickerForEnd = true}, isAllDay = allDay)
 
             }
 
@@ -408,11 +408,11 @@ fun StyledTextField(value: String, label: String, onValueChange: (String) -> Uni
 @Composable
 fun DateTimeSelector(
     label: String,
-//    dateTime: DateTimePeriod,
     date: LocalDate,
     time: LocalTime? = null,
     onDateClick: () -> Unit,
-    onTimeClick: (() -> Unit)? = null
+    onTimeClick: (() -> Unit)? = null,
+    isAllDay: Boolean = false
 ) {
     Row(
         modifier = Modifier
@@ -440,11 +440,11 @@ fun DateTimeSelector(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
-                        .clickable(onClick = onTimeClick)
+                        .clickable(enabled = !isAllDay, onClick = onTimeClick)
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(time.toString(), fontSize = 16.sp)
+                    Text(time.toString(), fontSize = 16.sp, color = if (isAllDay) Color.Gray else MaterialTheme.colorScheme.onBackground)
                 }
             }
         }

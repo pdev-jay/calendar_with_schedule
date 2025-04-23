@@ -74,6 +74,17 @@ fun ScheduleDetailScreen(
     var showUpdateBottomSheet by remember{ mutableStateOf(false) }
     var showPermissionDialog by remember { mutableStateOf(false) }
 
+    var title by remember { mutableStateOf(schedule.title ?: "New Event") }
+    var location by remember { mutableStateOf(schedule.location ?: "") }
+    var start by remember { mutableStateOf(schedule.start ?: DateTimePeriod(LocalDate.now(), LocalTime.of(9, 0))) }
+    var end by remember { mutableStateOf(schedule.end ?: DateTimePeriod(LocalDate.now(), LocalTime.of(10, 0))) }
+    var allDay by remember { mutableStateOf(schedule.isAllDay) }
+    var repeatType by remember { mutableStateOf(schedule.repeatType ?: RepeatType.NONE) }
+    var isRepeatUntilEnabled by remember { mutableStateOf(if (schedule.repeatUntil == null) false else true) }
+    var repeatUntil by remember { mutableStateOf(schedule.repeatUntil) }
+    var alarmOption by remember { mutableStateOf(schedule.alarmOption ?: AlarmOption.NONE) }
+    var selectedColor by remember { mutableStateOf<Int?>(schedule.color ?: 0xFF5AC8FA.toInt()) }
+
     BackHandler {
         navController.popBackStack()
     }
@@ -84,17 +95,6 @@ fun ScheduleDetailScreen(
         }
     }
 
-    var title by remember { mutableStateOf(schedule.title ?: "New Event") }
-    var location by remember { mutableStateOf(schedule.location ?: "") }
-    var start by remember { mutableStateOf(schedule.start ?: DateTimePeriod(LocalDate.now(), LocalTime.of(9, 0))) }
-    var end by remember { mutableStateOf(schedule.end ?: DateTimePeriod(LocalDate.now(), LocalTime.of(10, 0))) }
-    var allDay by remember { mutableStateOf(false) }
-    var repeatType by remember { mutableStateOf(schedule.repeatType ?: RepeatType.NONE) }
-    var isRepeatUntilEnabled by remember { mutableStateOf(if (schedule.repeatUntil == null) false else true) }
-    var repeatUntil by remember { mutableStateOf(schedule.repeatUntil) }
-    var alarmOption by remember { mutableStateOf(schedule.alarmOption ?: AlarmOption.NONE) }
-    var selectedColor by remember { mutableStateOf<Int?>(schedule.color ?: 0xFF5AC8FA.toInt()) }
-
     fun updateSchedule(schedule: RecurringData, editType: ScheduleEditType) {
         try {
             val updatedRecurringData = schedule.copy(
@@ -102,6 +102,7 @@ fun ScheduleDetailScreen(
                 location = location,
                 start = start,
                 end = end,
+                isAllDay = allDay,
                 repeatType = repeatType,
                 repeatUntil = if (isRepeatUntilEnabled) repeatUntil else null,
                 alarmOption = alarmOption,
@@ -164,9 +165,9 @@ fun ScheduleDetailScreen(
             ) {
                 SwitchSelector(label = stringResource(R.string.all_day), option = allDay, onSwitch = { allDay = it })
                 CustomHorizontalDivider()
-                DateTimeSelector(stringResource(R.string.starts), start.date, start.time, onDateClick = {showDatePickerForStart = true}, onTimeClick = {showTimePickerForStart = true})
+                DateTimeSelector(stringResource(R.string.starts), start.date, start.time, onDateClick = {showDatePickerForStart = true}, onTimeClick = {showTimePickerForStart = true}, isAllDay = allDay)
                 CustomHorizontalDivider()
-                DateTimeSelector(stringResource(R.string.ends), end.date, end.time, onDateClick = {showDatePickerForEnd = true}, onTimeClick = {showTimePickerForEnd = true})
+                DateTimeSelector(stringResource(R.string.ends), end.date, end.time, onDateClick = {showDatePickerForEnd = true}, onTimeClick = {showTimePickerForEnd = true}, isAllDay = allDay)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -177,6 +178,34 @@ fun ScheduleDetailScreen(
                     title = stringResource(R.string.repeat),
                     options = RepeatType.entries.map { it.label },
                     selectedOption = repeatType.label,
+                    onOptionSelected = { label -> repeatType = RepeatType.fromLabel(label) }
+                )
+
+                // 반복 옵션을 선택하면 나타나는 반복 마지막 날 선택 옵션
+                if (repeatType != RepeatType.NONE) {
+                    CustomHorizontalDivider()
+                    SwitchSelector(label = stringResource(R.string.set_repeat_until), option = isRepeatUntilEnabled,
+                        onSwitch = {
+                            // FIXME:
+                            repeatUntil = if (it) schedule.repeatUntil ?: end.date else null
+                            isRepeatUntilEnabled = it
+                        }
+                    )
+                    if (isRepeatUntilEnabled){
+                        CustomHorizontalDivider()
+                        DateTimeSelector(stringResource(R.string.repeat_until), date = repeatUntil ?: end.date, onDateClick = {showDatePickerForRepeatUntil = true})
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Alarm Dropdown
+            GroupContainer {
+                DropdownMenuSelector(
+                    title = stringResource(R.string.notification),
+                    options = AlarmOption.entries.map { it.label },
+                    selectedOption = alarmOption.label,
                     onOptionSelected = { label ->
                         val selected = AlarmOption.fromLabel(label)
                         if (selected.requiresPermission()) {
@@ -190,34 +219,6 @@ fun ScheduleDetailScreen(
                             alarmOption = selected
                         }
                     }
-                )
-
-                // 반복 옵션을 선택하면 나타나는 반복 마지막 날 선택 옵션
-                if (repeatType != RepeatType.NONE) {
-                    CustomHorizontalDivider()
-                    SwitchSelector(label = stringResource(R.string.set_repeat_until), option = isRepeatUntilEnabled,
-                        onSwitch = {
-                            // FIXME:
-                            repeatUntil = if (it) schedule.repeatUntil ?: LocalDate.now() else null
-                            isRepeatUntilEnabled = it
-                        }
-                    )
-                    if (isRepeatUntilEnabled){
-                        CustomHorizontalDivider()
-                        DateTimeSelector(stringResource(R.string.repeat_until), date = repeatUntil ?: LocalDate.now(), onDateClick = {showDatePickerForRepeatUntil = true})
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Alarm Dropdown
-            GroupContainer {
-                DropdownMenuSelector(
-                    title = stringResource(R.string.notification),
-                    options = AlarmOption.entries.map { it.label },
-                    selectedOption = alarmOption.label,
-                    onOptionSelected = { label -> alarmOption = AlarmOption.fromLabel(label) }
                 )
             }
 

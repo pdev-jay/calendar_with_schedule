@@ -308,14 +308,14 @@
                     android:propertyName="fillAlpha"
                     android:duration="750"
                     android:valueFrom="1"
-                    android:valueTo="0"
+                    android:valueTo="0.2"
                     android:valueType="floatType"
                     android:interpolator="@android:anim/accelerate_decelerate_interpolator"/>
                 <objectAnimator
                     android:propertyName="strokeAlpha"
                     android:duration="750"
                     android:valueFrom="1"
-                    android:valueTo="0"
+                    android:valueTo="0.2"
                     android:valueType="floatType"
                     android:interpolator="@android:anim/accelerate_decelerate_interpolator"/>
             </set>
@@ -328,14 +328,14 @@
                     android:propertyName="fillAlpha"
                     android:duration="750"
                     android:valueFrom="1"
-                    android:valueTo="0"
+                    android:valueTo="0.2"
                     android:valueType="floatType"
                     android:interpolator="@android:anim/accelerate_decelerate_interpolator"/>
                 <objectAnimator
                     android:propertyName="strokeAlpha"
                     android:duration="750"
                     android:valueFrom="1"
-                    android:valueTo="0"
+                    android:valueTo="0.2"
                     android:valueType="floatType"
                     android:interpolator="@android:anim/accelerate_decelerate_interpolator"/>
             </set>
@@ -348,14 +348,14 @@
                     android:propertyName="fillAlpha"
                     android:duration="750"
                     android:valueFrom="1"
-                    android:valueTo="0"
+                    android:valueTo="0.2"
                     android:valueType="floatType"
                     android:interpolator="@android:anim/accelerate_decelerate_interpolator"/>
                 <objectAnimator
                     android:propertyName="strokeAlpha"
                     android:duration="750"
                     android:valueFrom="1"
-                    android:valueTo="0"
+                    android:valueTo="0.2"
                     android:valueType="floatType"
                     android:interpolator="@android:anim/accelerate_decelerate_interpolator"/>
             </set>

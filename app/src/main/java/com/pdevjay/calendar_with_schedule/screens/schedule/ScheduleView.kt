@@ -79,7 +79,8 @@ fun ScheduleView(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .border(1.dp, Color.White, shape = RoundedCornerShape(8.dp))
-                                .background(eventColor, shape = RoundedCornerShape(8.dp)),
+                                .background(eventColor, shape = RoundedCornerShape(8.dp))
+                                .clickable{ onEventClick(event) },
                             contentAlignment = Alignment.Center,
 
                         ) {
