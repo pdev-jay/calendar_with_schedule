@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,18 +23,26 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.times
@@ -41,7 +51,8 @@ import com.pdevjay.calendar_with_schedule.screens.schedule.data.RecurringData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.overlapsWith
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatType
 import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
-import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
+import kotlinx.coroutines.channels.ticker
+import kotlinx.coroutines.delay
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -53,7 +64,7 @@ fun ScheduleView(
     schedules: List<RecurringData>, //  BaseSchedule 사용 (ScheduleData + RecurringData 모두 처리 가능)
     onEventClick: (RecurringData) -> Unit, //  BaseSchedule로 변경
     onBackButtonClicked: () -> Unit
-){
+) {
 
     val scrollState = rememberScrollState()
 
@@ -67,28 +78,11 @@ fun ScheduleView(
     val groupedEvents = remember(nonAllDayEvents) { groupOverlappingEvents(nonAllDayEvents) }
     Box(modifier = modifier.fillMaxSize()) {
         Column {
-
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                if (selectedDay != null) {
-                    allDayEvents.forEach { event ->
-                        val eventColor = event.color?.let { Color(it) } ?: MaterialTheme.colorScheme.primary
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .border(1.dp, Color.White, shape = RoundedCornerShape(8.dp))
-                                .background(eventColor, shape = RoundedCornerShape(8.dp))
-                                .clickable{ onEventClick(event) },
-                            contentAlignment = Alignment.Center,
-
-                        ) {
-                            Text(event.title, fontSize = 12.sp, color = Color.White, modifier = Modifier.padding(2.dp))
-                        }
-                    }
-                }
+            if (allDayEvents.isNotEmpty()) {
+                AllDayEventColumn(allDayEvents, onEventClick)
+                HorizontalDivider(thickness = 1.dp, color = Color.LightGray)
             }
+
             Column(
                 Modifier
                     .verticalScroll(scrollState)
@@ -119,7 +113,14 @@ fun ScheduleView(
                             val totalCount = group.size
                             group.forEachIndexed { index, event ->
                                 if (selectedDay != null) { // selectedDay가 null이 아닐 때만 실행
-                                    EventBlock(event, index, totalCount, maxWidth, selectedDay, onEventClick)
+                                    EventBlock(
+                                        event,
+                                        index,
+                                        totalCount,
+                                        maxWidth,
+                                        selectedDay,
+                                        onEventClick
+                                    )
                                 }
                             }
                         }
@@ -151,7 +152,9 @@ fun TimeColumn() {
     ) {
         for (hour in 0 until 24) {
             Box(
-                modifier = Modifier.height(60.dp).fillMaxWidth(),
+                modifier = Modifier
+                    .height(60.dp)
+                    .fillMaxWidth(),
                 contentAlignment = Alignment.TopCenter
             ) {
                 Text(text = "${hour}:00", fontSize = 12.sp)
@@ -161,7 +164,14 @@ fun TimeColumn() {
 }
 
 @Composable
-fun EventBlock(event: RecurringData, index: Int, totalCount: Int, maxWidth: Dp, selectedDay: LocalDate, onEventClick: (RecurringData) -> Unit) {
+fun EventBlock(
+    event: RecurringData,
+    index: Int,
+    totalCount: Int,
+    maxWidth: Dp,
+    selectedDay: LocalDate,
+    onEventClick: (RecurringData) -> Unit
+) {
     val startMinutes = if (event.start.date < selectedDay) {
         0  // 전날부터 이어진 이벤트는 오늘 0시부터 표시
     } else {
@@ -182,7 +192,8 @@ fun EventBlock(event: RecurringData, index: Int, totalCount: Int, maxWidth: Dp, 
 
     // 색상 진하기 조절 (index가 클수록 진한 색상)
 //    val baseColor = Color(0xFF03A9F4)
-    val baseColor = event.color?.let { Color(it).copy(alpha = 0.7f) } ?: MaterialTheme.colorScheme.primary
+    val baseColor =
+        event.color?.let { Color(it).copy(alpha = 0.7f) } ?: MaterialTheme.colorScheme.primary
     val colorFactor = (index + 1).toFloat() / totalCount.toFloat()
     val darkerColor = baseColor.copy(
         red = (baseColor.red * (1 - 0.3f * colorFactor)),
@@ -192,15 +203,14 @@ fun EventBlock(event: RecurringData, index: Int, totalCount: Int, maxWidth: Dp, 
 
 
 
-    BoxWithConstraints(
-        modifier = Modifier
-            .offset(x = xOffset, y = startMinutes.dp)
-            .width(blockWidth)
-            .defaultMinSize(minHeight = 30.dp)
-            .height(durationMinutes.dp)
-            .clickable { onEventClick(event) }
-            .border(1.dp, Color.White, shape = RoundedCornerShape(8.dp))
-            .background(darkerColor, shape = RoundedCornerShape(8.dp)),
+    BoxWithConstraints(modifier = Modifier
+        .offset(x = xOffset, y = startMinutes.dp)
+        .width(blockWidth)
+        .defaultMinSize(minHeight = 30.dp)
+        .height(durationMinutes.dp)
+        .clickable { onEventClick(event) }
+        .border(1.dp, Color.White, shape = RoundedCornerShape(8.dp))
+        .background(darkerColor, shape = RoundedCornerShape(8.dp)),
         contentAlignment = Alignment.TopStart
 
     ) {
@@ -227,13 +237,21 @@ fun EventBlock(event: RecurringData, index: Int, totalCount: Int, maxWidth: Dp, 
         }
 
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
 
-        ){
-            Text(event.title, color = Color.White, fontSize = adjustedFontSize, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            if (event.repeatType != RepeatType.NONE){
+        ) {
+            Text(
+                event.title,
+                color = Color.White,
+                fontSize = adjustedFontSize,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            if (event.repeatType != RepeatType.NONE) {
                 Icon(
                     modifier = Modifier.size(adjustedIconSize),
                     painter = painterResource(id = R.drawable.ic_repeat),
@@ -243,22 +261,108 @@ fun EventBlock(event: RecurringData, index: Int, totalCount: Int, maxWidth: Dp, 
             }
         }
     }
-
 }
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun AllDayEventColumn(
+    allDayEvents: List<RecurringData>,
+    onEventClick: (RecurringData) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .padding(4.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+
+    ){
+        Text(text = "All-Day Events", fontSize = 12.sp)
+        Row() {
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+                maxItemsInEachRow = 3
+            ) {
+
+                allDayEvents.forEach { event ->
+                    val eventColor = event.color?.let { Color(it).copy(alpha = 0.8f) }
+                        ?: MaterialTheme.colorScheme.primary
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 2.dp)
+                            .border(1.dp, Color.White, shape = RoundedCornerShape(8.dp))
+                            .background(eventColor, shape = RoundedCornerShape(8.dp))
+                            .clickable { onEventClick(event) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+
+                        ) {
+                            Text(
+                                event.title,
+                                fontSize = 12.sp,
+                                color = Color.White,
+                                modifier = Modifier.padding(2.dp),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            if (event.repeatType != RepeatType.NONE) {
+                                Icon(
+                                    modifier = Modifier.size(14.dp),
+                                    painter = painterResource(id = R.drawable.ic_repeat),
+                                    tint = Color.White,
+                                    contentDescription = "repeat"
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 @Composable
 fun NowIndicator() {
-    val now = remember { LocalTime.now() }
-    val nowOffset = now.hour * 60 + now.minute
+    val currentMinute = remember { mutableIntStateOf(getCurrentMinuteOfDay()) }
 
-    Box(
-        modifier = Modifier
-            .offset(y = nowOffset.dp)
-            .fillMaxWidth()
-            .height(2.dp)
-            .background(Color.Red)
-    )
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(5 * 60 * 1000L)
+            currentMinute.intValue = getCurrentMinuteOfDay()
+        }
+    }
+
+    val density = LocalDensity.current
+
+    Box(modifier = Modifier
+        .offset {
+            with(density) {
+                IntOffset(
+                    x = 0, y = currentMinute.intValue.dp.roundToPx()
+                )
+            }
+        }
+        .fillMaxWidth()
+        .height(2.dp)
+        .background(Color.Red))
 }
+
+
+// 현재 시간을 분 단위로 반환
+fun getCurrentMinuteOfDay(): Int {
+    val now = LocalTime.now()
+    return now.hour * 60 + now.minute
+}
+
 
 fun groupOverlappingEvents(events: List<RecurringData>): List<List<RecurringData>> {
     if (events.isEmpty()) return emptyList() //  빈 리스트가 들어오면 빈 리스트 반환

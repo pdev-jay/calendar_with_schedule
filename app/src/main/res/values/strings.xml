@@ -38,6 +38,11 @@
 
     <string name="select_time">시간 선택</string>
 
+    <string name="inquiry">문의</string>
+    <string name="setting">설정</string>
+
+    <string name="no_email_apps">이메일 앱이 설치되어 있지 않습니다</string>
+
 
     <!--    alarmOption  -->
     <string name="alarm_option_none">알림 없음</string>

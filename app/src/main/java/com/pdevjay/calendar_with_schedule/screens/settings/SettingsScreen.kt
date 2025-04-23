@@ -61,7 +61,7 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
                 TopAppBar(
-                    title = { Text("설정") },
+                    title = { Text(stringResource(R.string.setting)) },
                     navigationIcon = {
                         IconButton(onClick = {
                             navController.popBackStack()
@@ -84,7 +84,7 @@ fun SettingsScreen(
             ) {
                 GroupContainer {
                     SwitchSelector(
-                        label = "알림",
+                        label = stringResource(R.string.notification),
                         option = isNotificationEnabled,
                         onSwitch = {
                             if (PermissionUtils.hasNotificationPermission(context)) {
@@ -106,7 +106,7 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ){
-                        Text(color = MaterialTheme.colorScheme.primary, text = "문의")
+                        Text(text = stringResource(R.string.inquiry))
                         IconButton(onClick = {
                             sendFeedbackEmail(context)
                         }) {
@@ -178,6 +178,6 @@ fun sendFeedbackEmail(context: Context) {
     if (intent.resolveActivity(packageManager) != null) {
         context.startActivity(intent)
     } else {
-        Toast.makeText(context, "이메일 앱이 설치되어 있지 않습니다", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.no_email_apps), Toast.LENGTH_SHORT).show()
     }
 }

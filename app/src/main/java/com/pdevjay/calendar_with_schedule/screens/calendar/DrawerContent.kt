@@ -39,9 +39,9 @@ fun DrawerContent(
     BoxWithConstraints {
             Column(
                 modifier = Modifier
-                    .background(color = MaterialTheme.colorScheme.primary)
+                    .background(color = MaterialTheme.colorScheme.surfaceDim)
                     .fillMaxHeight()
-                    .width(maxWidth / 2)
+                    .width(maxWidth * 0.4f)
                     .statusBarsPadding(),
                 horizontalAlignment = Alignment.Start,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -72,11 +72,11 @@ fun CustomMenuItem(
         Icon(
             imageVector = icon,
             contentDescription = contentDescription,
-            tint = MaterialTheme.colorScheme.onPrimary
+            tint = MaterialTheme.colorScheme.onSurface
         )
         Text(
             text = contentDescription,
-            color = MaterialTheme.colorScheme.onPrimary
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }
