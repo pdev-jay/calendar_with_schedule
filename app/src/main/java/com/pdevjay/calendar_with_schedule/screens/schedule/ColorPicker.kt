@@ -38,7 +38,7 @@ fun ColorPicker(
                     .background(Color(color.colorInt))
                     .border(
                         width = if (isSelected) 3.dp else 1.dp,
-                        color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Gray,
+                        color = if (isSelected) MaterialTheme.colorScheme.onSurfaceVariant else Color.Gray,
                         shape = CircleShape
                     )
                     .clickable { onColorSelected(color.colorInt) }

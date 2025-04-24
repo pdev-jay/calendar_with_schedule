@@ -50,7 +50,7 @@ fun ConfirmBottomSheet(
             ) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleLarge,
+//                    style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
 

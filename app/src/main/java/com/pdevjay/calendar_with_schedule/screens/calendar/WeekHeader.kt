@@ -35,12 +35,12 @@ fun WeekHeader(
                         .padding(4.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = day, fontWeight = FontWeight.W500)
+                    Text(text = day)
                 }
             }
         }
         if (selectedDate == null) {
-            HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.inverseOnSurface)
         }
     }
 }

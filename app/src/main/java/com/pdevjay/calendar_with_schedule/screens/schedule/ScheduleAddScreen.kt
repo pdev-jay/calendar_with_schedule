@@ -51,6 +51,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -234,7 +235,7 @@ fun ScheduleAddScreen(
                 },
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text(stringResource(R.string.save))
+                Text(stringResource(R.string.save), style = MaterialTheme.typography.bodyLarge)
             }
         }
     }
@@ -310,7 +311,7 @@ fun SwitchSelector(label:String, option: Boolean, onSwitch: (Boolean) -> Unit) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, fontSize = 16.sp)
+        Text(label, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Switch(
             checked = option,
             onCheckedChange = onSwitch
@@ -387,7 +388,7 @@ fun StyledTextField(value: String, label: String, onValueChange: (String) -> Uni
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
 //            .background(Color.LightGray.copy(alpha = 0.5f))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .background(MaterialTheme.colorScheme.surfaceBright)
             .padding(12.dp)
     ) {
         BasicTextField(
@@ -397,7 +398,7 @@ fun StyledTextField(value: String, label: String, onValueChange: (String) -> Uni
             textStyle = TextStyle(fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
             decorationBox = { innerTextField ->
                 if (value.isEmpty()) {
-                    Text(label, color = Color.Gray, fontSize = 16.sp)
+                    Text(label, color = Color.Gray)
                 }
                 innerTextField()
             }
@@ -421,7 +422,7 @@ fun DateTimeSelector(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, fontSize = 16.sp)
+        Text(label, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -430,10 +431,12 @@ fun DateTimeSelector(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
                     .clickable(onClick = onDateClick)
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .background(MaterialTheme.colorScheme.primary)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                ,
                 contentAlignment = Alignment.Center
             ) {
-                Text(date.toString(), fontSize = 16.sp)
+                Text(date.toString(), color = MaterialTheme.colorScheme.onPrimary)
             }
 
             if (time != null && onTimeClick != null) {
@@ -441,30 +444,74 @@ fun DateTimeSelector(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
                         .clickable(enabled = !isAllDay, onClick = onTimeClick)
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .background(MaterialTheme.colorScheme.primary)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                    ,
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(time.toString(), fontSize = 16.sp, color = if (isAllDay) Color.Gray else MaterialTheme.colorScheme.onBackground)
+                    Text(time.toString(), color = if (isAllDay) Color.Gray else MaterialTheme.colorScheme.onPrimary)
                 }
             }
         }
     }
 }
 
-@Composable
-fun RepeatUntilSelector(label:String, repeatUntil: LocalDate, onClick: () -> Unit, ){
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(text = label)
-        Spacer(modifier = Modifier.weight(1f))
-        Text(text = repeatUntil.toString())
-    }
-}
+//@OptIn(ExperimentalMaterial3Api::class)
+//@Composable
+//fun DropdownMenuSelector(
+//    title: String,
+//    options: List<String>,
+//    selectedOption: String,
+//    onOptionSelected: (String) -> Unit
+//) {
+//    var expanded by remember { mutableStateOf(false) }
+//
+//    ExposedDropdownMenuBox(
+//        expanded = expanded,
+//        onExpandedChange = { expanded = !expanded }
+//    ) {
+//        Row(
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .clickable { expanded = true } // 클릭 시 Dropdown 열기
+//                .padding(12.dp),
+//
+//            horizontalArrangement = Arrangement.SpaceBetween,
+//            verticalAlignment = Alignment.CenterVertically
+//        ) {
+//            Text(text = title)
+//            Box(
+//                modifier = Modifier
+//                    .menuAnchor(
+//                        MenuAnchorType.PrimaryNotEditable,
+//                        true
+//                    ) // 필수: DropdownMenu와 연결
+//                    .clip(RoundedCornerShape(8.dp))
+//                    .background(MaterialTheme.colorScheme.primary)
+//                    .padding(horizontal = 16.dp, vertical = 8.dp)
+//            ) {
+//                Text(text = "${selectedOption}", color = MaterialTheme.colorScheme.onPrimary)
+//                ExposedDropdownMenu(
+//                    modifier = Modifier.wrapContentSize(),
+//                    expanded = expanded,
+//                    onDismissRequest = { expanded = false }
+//                ) {
+//                    options.forEach { option ->
+//                        DropdownMenuItem(
+//                            modifier = Modifier.wrapContentSize(),
+//
+//                            text = { Text(option) },
+//                            onClick = {
+//                                onOptionSelected(option)
+//                                expanded = false
+//                            }
+//                        )
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -478,18 +525,17 @@ fun DropdownMenuSelector(
 
     ExposedDropdownMenuBox(
         expanded = expanded,
-        onExpandedChange = { expanded = !expanded }
+        onExpandedChange = { expanded = it }
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { expanded = true } // 클릭 시 Dropdown 열기
                 .padding(12.dp),
 
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = title)
+            Text(text = title, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Box(
                 modifier = Modifier
                     .menuAnchor(
@@ -504,6 +550,7 @@ fun DropdownMenuSelector(
                 ExposedDropdownMenu(
                     modifier = Modifier.wrapContentSize(),
                     expanded = expanded,
+                    shape = RoundedCornerShape(20.dp),
                     onDismissRequest = { expanded = false }
                 ) {
                     options.forEach { option ->
@@ -527,7 +574,7 @@ fun DropdownMenuSelector(
 fun GroupContainer(content: @Composable () -> Unit){
     Column(
         modifier = Modifier
-            .background(MaterialTheme.colorScheme.surfaceVariant, shape = RoundedCornerShape(10.dp))
+            .background(MaterialTheme.colorScheme.surfaceBright, shape = RoundedCornerShape(10.dp))
             .animateContentSize()
     ){
         content()
@@ -536,5 +583,5 @@ fun GroupContainer(content: @Composable () -> Unit){
 
 @Composable
 fun CustomHorizontalDivider(){
-    HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }

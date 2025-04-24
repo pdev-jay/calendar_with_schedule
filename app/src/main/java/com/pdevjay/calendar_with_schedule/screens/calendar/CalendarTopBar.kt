@@ -102,7 +102,10 @@ fun CalendarTopBar(
             }
     }
 
-    Column {
+    Column(
+        modifier = Modifier
+            .background(color = MaterialTheme.colorScheme.surfaceContainerLow)
+    ) {
         CalendarHeader(
             state,
             navController,
@@ -202,26 +205,24 @@ fun WeekRow(
                     Text(
                         modifier = Modifier.padding(12.dp),
                         text = date.dayOfMonth.toString(),
-                        style = TextStyle(
-                            color = when {
-                                isToday -> Color.Red
-                                else -> MaterialTheme.colorScheme.onSurface
-                            },
-                        )
+                        color = when {
+                            isToday -> Color.Red
+                            else -> MaterialTheme.colorScheme.onSurface
+                        },
                     )
                     if (isSelected) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(4.dp)
-                                .background(Color.Red)
+                                .background(MaterialTheme.colorScheme.error)
                                 .align(Alignment.BottomCenter)
                         )
                     }
                 }
             }
         }
-        HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.inverseOnSurface)
     }
 }
 

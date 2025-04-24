@@ -70,7 +70,7 @@ fun DaysGrid(
                     } else if (isInFirstWeek){
                         Spacer(Modifier.size(monthLabelHeight))
                     }
-                    HorizontalDivider(thickness = dividerHeight, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    HorizontalDivider(thickness = dividerHeight, color = MaterialTheme.colorScheme.surfaceContainerHigh)
                     DayCell(dayOrNull, cellHeight, schedules, onDayClick)
                 }
             }

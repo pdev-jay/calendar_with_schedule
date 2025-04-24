@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,12 +25,17 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallFloatingActionButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -116,12 +122,12 @@ fun CalendarScreen(
         }
     }
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            DrawerContent(navController = navController, coroutineScope = coroutineScope, drawerState = drawerState)
-        }
-    ){
+//    ModalNavigationDrawer(
+//        drawerState = drawerState,
+//        drawerContent = {
+//            DrawerContent(navController = navController, coroutineScope = coroutineScope, drawerState = drawerState)
+//        }
+//    ){
         Scaffold(
             topBar = {
                 CalendarTopBar(calendarViewModel, listState, navController,
@@ -130,19 +136,19 @@ fun CalendarScreen(
                 )
             },
             floatingActionButton = {
-                FloatingActionButton(
-                    onClick = {
-                        val destination = "add_schedule/${calendarState.selectedDate ?: LocalDate.now()}"
-                        navController.navigate(destination)
-                    },
-                    containerColor = MaterialTheme.colorScheme.primary
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Add,
-                        contentDescription = "Add",
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(32.dp)
-                    )
+                Row(){
+                    FloatingActionButton(
+                        onClick = {
+                            val destination = "add_schedule/${calendarState.selectedDate ?: LocalDate.now()}"
+                            navController.navigate(destination)
+                        },
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Add,
+                            contentDescription = "Add",
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
                 }
             }
         ) { innerPadding ->
@@ -208,7 +214,7 @@ fun CalendarScreen(
                 }
             }
         }
-    }
+//    }
 
     LaunchedEffect(listState) {
         //  첫 번째 아이템 감지 → 이전 달 데이터 로드

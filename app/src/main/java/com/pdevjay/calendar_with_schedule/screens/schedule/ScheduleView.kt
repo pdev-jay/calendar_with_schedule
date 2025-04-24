@@ -157,7 +157,7 @@ fun TimeColumn() {
                     .fillMaxWidth(),
                 contentAlignment = Alignment.TopCenter
             ) {
-                Text(text = "${hour}:00", fontSize = 12.sp)
+                Text(text = "${hour}:00", style = MaterialTheme.typography.bodySmall)
             }
         }
     }
@@ -209,7 +209,7 @@ fun EventBlock(
         .defaultMinSize(minHeight = 30.dp)
         .height(durationMinutes.dp)
         .clickable { onEventClick(event) }
-        .border(1.dp, Color.White, shape = RoundedCornerShape(8.dp))
+//        .border(0.5.dp, MaterialTheme.colorScheme.outline, shape = RoundedCornerShape(8.dp))
         .background(darkerColor, shape = RoundedCornerShape(8.dp)),
         contentAlignment = Alignment.TopStart
 
@@ -276,7 +276,7 @@ fun AllDayEventColumn(
         horizontalAlignment = Alignment.CenterHorizontally
 
     ){
-        Text(text = "All-Day Events", fontSize = 12.sp)
+        Text(text = "All-Day Events", style = MaterialTheme.typography.titleMedium)
         Row() {
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
@@ -292,7 +292,7 @@ fun AllDayEventColumn(
                         modifier = Modifier
                             .weight(1f)
                             .padding(horizontal = 2.dp)
-                            .border(1.dp, Color.White, shape = RoundedCornerShape(8.dp))
+//                            .border(0.5.dp, MaterialTheme.colorScheme.outline, shape = RoundedCornerShape(8.dp))
                             .background(eventColor, shape = RoundedCornerShape(8.dp))
                             .clickable { onEventClick(event) },
                         contentAlignment = Alignment.Center
@@ -307,7 +307,7 @@ fun AllDayEventColumn(
                         ) {
                             Text(
                                 event.title,
-                                fontSize = 12.sp,
+                                style = MaterialTheme.typography.bodySmall,
                                 color = Color.White,
                                 modifier = Modifier.padding(2.dp),
                                 maxLines = 1,

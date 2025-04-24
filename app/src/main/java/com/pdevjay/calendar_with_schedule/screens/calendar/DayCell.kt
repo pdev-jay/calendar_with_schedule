@@ -1,15 +1,14 @@
 package com.pdevjay.calendar_with_schedule.screens.calendar
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,16 +22,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarDay
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
-import com.pdevjay.calendar_with_schedule.screens.schedule.data.DateTimePeriod
-import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
-import java.time.LocalDate
-import java.time.LocalTime
 
 @Composable
 fun DayCell(
@@ -50,23 +44,31 @@ fun DayCell(
         modifier = Modifier
             .size(height)
             .padding(2.dp)
-            .clickable (
+            .clickable(
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() }
-            ){ onClick(day) },
+            ) { onClick(day) },
         contentAlignment = Alignment.Center
     ) {
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize(),
+//                .border(width = 1.dp, color = Color.LightGray),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
+        ) {
 
             Column(
-                modifier = Modifier.padding(vertical = 4.dp),
-            ){
+                modifier = Modifier
+                    .fillMaxWidth()
+//                    .border(width = 1.dp, color = Color.Green)
+                    .background(color = if (day.isToday) MaterialTheme.colorScheme.error else Color.Transparent, shape = RoundedCornerShape(4.dp))
+                    .padding(2.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Text(
                     text = day.date.dayOfMonth.toString(),
-                    style = TextStyle(fontStyle = MaterialTheme.typography.bodyLarge.fontStyle, color = if (day.isToday) Color.Red else MaterialTheme.colorScheme.onSurface),
+                    color = if (day.isToday) Color.White else MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center
                 )
 
@@ -74,18 +76,29 @@ fun DayCell(
 
             if (sortedSchedules.isNotEmpty()) {
 
-                Column (
+                Column(
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                ){
+                    verticalArrangement = Arrangement.spacedBy(1.dp, Alignment.Top),
+                ) {
                     sortedSchedules.take(3).forEachIndexed { index, schedule ->
-                        val backgroundColor = calculateScheduleColor(index, totalCount, schedule.color)
+                        val backgroundColor =
+                            calculateScheduleColor(index, totalCount, schedule.color)
 
-                        ScheduleListPreview(backgroundColor, Color.White, Alignment.CenterStart, schedule.title)
+                        ScheduleListPreview(
+                            backgroundColor,
+                            Color.White,
+                            Alignment.CenterStart,
+                            schedule.title
+                        )
                     }
 
                     if (schedules.size > 3) {
-                        ScheduleListPreview(Color.Transparent, Color.LightGray, Alignment.Center, "+${schedules.size - 3} more")
+                        ScheduleListPreview(
+                            Color.Transparent,
+                            MaterialTheme.colorScheme.onSurfaceVariant,
+                            Alignment.Center,
+                            "+${schedules.size - 3} more"
+                        )
                     }
                 }
             }
@@ -110,8 +123,9 @@ private fun ScheduleListPreview(
 
         Text(
             text = title,
-            style = TextStyle(color = textColor),
-            fontSize = 10.sp,
+//            fontSize = 10.sp,
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+            color = textColor,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )

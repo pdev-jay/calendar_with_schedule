@@ -137,7 +137,7 @@ fun ScheduleDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Schedule Detail") },
+                title = { Text(stringResource(R.string.edit_schedule)) },
                 navigationIcon = {
                     IconButton(onClick = {
                         navController.popBackStack()
@@ -241,7 +241,7 @@ fun ScheduleDetailScreen(
                 },
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text(stringResource(R.string.update_schedule))
+                Text(stringResource(R.string.update_schedule), style = MaterialTheme.typography.bodyLarge)
             }
             Spacer(modifier = Modifier.height(8.dp))
             Button(
@@ -250,7 +250,7 @@ fun ScheduleDetailScreen(
                 },
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text(stringResource(R.string.delete))
+                Text(stringResource(R.string.delete), style = MaterialTheme.typography.bodyLarge)
             }
             Spacer(modifier = Modifier.height(8.dp))
         }
