@@ -1,12 +1,7 @@
 package com.pdevjay.calendar_with_schedule.screens.calendar
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.util.Log
-import androidx.activity.compose.LocalActivity
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,24 +13,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SmallFloatingActionButton
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,11 +35,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarMonth
@@ -72,7 +52,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.launch
 import java.net.URLEncoder
 import java.time.LocalDate
 import java.time.YearMonth
@@ -122,99 +101,92 @@ fun CalendarScreen(
         }
     }
 
-//    ModalNavigationDrawer(
-//        drawerState = drawerState,
-//        drawerContent = {
-//            DrawerContent(navController = navController, coroutineScope = coroutineScope, drawerState = drawerState)
-//        }
-//    ){
-        Scaffold(
-            topBar = {
-                CalendarTopBar(calendarViewModel, listState, navController,
-                    drawerState,
-                    coroutineScope
-                )
-            },
-            floatingActionButton = {
-                Row(){
-                    FloatingActionButton(
-                        onClick = {
-                            val destination = "add_schedule/${calendarState.selectedDate ?: LocalDate.now()}"
-                            navController.navigate(destination)
-                        },
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Add,
-                            contentDescription = "Add",
-                            modifier = Modifier.size(32.dp)
-                        )
-                    }
-                }
-            }
-        ) { innerPadding ->
-
-            BoxWithConstraints(
-                modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-            ) {
-                SlideInVerticallyContainerFromBottom (
-                    isVisible = calendarState.selectedDate == null,
+    Scaffold(
+        topBar = {
+            CalendarTopBar(calendarViewModel, listState, navController,
+                drawerState,
+                coroutineScope
+            )
+        },
+        floatingActionButton = {
+            Row(){
+                FloatingActionButton(
+                    onClick = {
+                        val destination = "add_schedule/${calendarState.selectedDate ?: LocalDate.now()}"
+                        navController.navigate(destination)
+                    },
                 ) {
-                    key(calendarState.selectedDate) {
-                            LazyColumn(
-                                state = listState,
-                                modifier = Modifier.fillMaxSize()
-                            ) {
-
-                                items(calendarState.months, key = { it.yearMonth.toString() }) { month ->
-                                    val mappedSchedules = remember(calendarState.scheduleMap) {
-                                        calendarViewModel.getMappedSchedulesForMonth(month)
-                                    }
-
-                                    MonthItem(
-                                            month,
-                                            mappedSchedules
-                                        ) { date ->
-                                            if (calendarState.selectedDate == null || calendarState.selectedDate != date.date) {
-                                                calendarViewModel.processIntent(
-                                                    CalendarIntent.DateSelected(
-                                                        date.date
-                                                    )
-                                                )
-                                            } else {
-                                                calendarViewModel.processIntent(CalendarIntent.DateUnselected)
-                                            }
-                                        }
-                                }
-
-                                item {
-                                    if (isLoading.value) {
-                                        CircularProgressIndicator(modifier = Modifier.fillMaxWidth())
-                                    }
-                                }
-                        }
-                    }
-                }
-                ExpandVerticallyContainerFromTop (
-                    isVisible = calendarState.selectedDate != null,
-                ) {
-                    SchedulePager(
-                        modifier = Modifier.height(maxHeight),
-                        calendarViewModel = calendarViewModel,
-                        scheduleViewModel = scheduleViewModel,
-                        onEventClick = { event ->
-                            val jsonSchedule = URLEncoder.encode(JsonUtils.gson.toJson(event), "UTF-8")
-                            navController.navigate("scheduleDetail/${URLEncoder.encode(jsonSchedule, "UTF-8")}")
-                        },
-                        onBackButtonClicked = {
-                            calendarViewModel.processIntent(CalendarIntent.DateUnselected)
-                        }
+                    Icon(
+                        imageVector = Icons.Filled.Add,
+                        contentDescription = "Add",
+                        modifier = Modifier.size(32.dp)
                     )
                 }
             }
         }
-//    }
+    ) { innerPadding ->
+
+        BoxWithConstraints(
+            modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            SlideInVerticallyContainerFromBottom (
+                isVisible = calendarState.selectedDate == null,
+            ) {
+                key(calendarState.selectedDate) {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+
+                        items(calendarState.months, key = { it.yearMonth.toString() }) { month ->
+                            val mappedSchedules = remember(calendarState.scheduleMap) {
+                                calendarViewModel.getMappedSchedulesForMonth(month)
+                            }
+
+                            MonthItem(
+                                month,
+                                mappedSchedules
+                            ) { date ->
+                                if (calendarState.selectedDate == null || calendarState.selectedDate != date.date) {
+                                    calendarViewModel.processIntent(
+                                        CalendarIntent.DateSelected(
+                                            date.date
+                                        )
+                                    )
+                                } else {
+                                    calendarViewModel.processIntent(CalendarIntent.DateUnselected)
+                                }
+                            }
+                        }
+
+                        item {
+                            if (isLoading.value) {
+                                CircularProgressIndicator(modifier = Modifier.fillMaxWidth())
+                            }
+                        }
+                    }
+                }
+            }
+            ExpandVerticallyContainerFromTop (
+                isVisible = calendarState.selectedDate != null,
+            ) {
+                SchedulePager(
+                    modifier = Modifier.height(maxHeight),
+                    calendarViewModel = calendarViewModel,
+                    scheduleViewModel = scheduleViewModel,
+                    onEventClick = { event ->
+                        val jsonSchedule = URLEncoder.encode(JsonUtils.gson.toJson(event), "UTF-8")
+                        navController.navigate("scheduleDetail/${URLEncoder.encode(jsonSchedule, "UTF-8")}")
+                    },
+                    onBackButtonClicked = {
+                        calendarViewModel.processIntent(CalendarIntent.DateUnselected)
+                    }
+                )
+            }
+        }
+    }
 
     LaunchedEffect(listState) {
         //  첫 번째 아이템 감지 → 이전 달 데이터 로드

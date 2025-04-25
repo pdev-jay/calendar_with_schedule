@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,77 +32,24 @@ import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
 @Composable
 fun DayCell(
     day: CalendarDay,
-    height: Dp,
-    schedules: List<BaseSchedule>,
-    onClick: (CalendarDay) -> Unit
+    dayCellPadding: Dp
 ) {
-    val sortedSchedules = schedules.sortedWith(
-        compareBy({ it.start.date }, { it.start.time }) // 시작 날짜 → 시작 시간 순으로 정렬
-    )
-    val totalCount = schedules.size
-
-    Box(
+    Column(
         modifier = Modifier
-            .size(height)
-            .padding(2.dp)
-            .clickable(
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() }
-            ) { onClick(day) },
-        contentAlignment = Alignment.Center
-    ) {
+            .padding(dayCellPadding),
+        ){
         Column(
             modifier = Modifier
-                .fillMaxSize(),
-//                .border(width = 1.dp, color = Color.LightGray),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
+                .fillMaxWidth()
+                .background(color = if (day.isToday) MaterialTheme.colorScheme.error else Color.Transparent, shape = RoundedCornerShape(4.dp)),
+//                .padding(dayCellPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-//                    .border(width = 1.dp, color = Color.Green)
-                    .background(color = if (day.isToday) MaterialTheme.colorScheme.error else Color.Transparent, shape = RoundedCornerShape(4.dp))
-                    .padding(2.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = day.date.dayOfMonth.toString(),
-                    color = if (day.isToday) Color.White else MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.Center
-                )
-
-            }
-
-            if (sortedSchedules.isNotEmpty()) {
-
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(1.dp, Alignment.Top),
-                ) {
-                    sortedSchedules.take(3).forEachIndexed { index, schedule ->
-                        val backgroundColor =
-                            calculateScheduleColor(index, totalCount, schedule.color)
-
-                        ScheduleListPreview(
-                            backgroundColor,
-                            Color.White,
-                            Alignment.CenterStart,
-                            schedule.title
-                        )
-                    }
-
-                    if (schedules.size > 3) {
-                        ScheduleListPreview(
-                            Color.Transparent,
-                            MaterialTheme.colorScheme.onSurfaceVariant,
-                            Alignment.Center,
-                            "+${schedules.size - 3} more"
-                        )
-                    }
-                }
-            }
+            Text(
+                text = day.date.dayOfMonth.toString(),
+                color = if (day.isToday) Color.White else MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
@@ -123,7 +71,6 @@ private fun ScheduleListPreview(
 
         Text(
             text = title,
-//            fontSize = 10.sp,
             style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
             color = textColor,
             maxLines = 1,
@@ -132,14 +79,3 @@ private fun ScheduleListPreview(
     }
 }
 
-@Composable
-fun calculateScheduleColor(index: Int, totalCount: Int, color: Int?): Color {
-    val baseColor = color?.let { Color(it) } ?: MaterialTheme.colorScheme.primary
-    val colorFactor = (index.toFloat() / totalCount.toFloat()) // 인덱스 비율
-
-    return baseColor.copy(
-        red = (baseColor.red * (1 - 0.3f * colorFactor)),
-        green = (baseColor.green * (1 - 0.3f * colorFactor)),
-        blue = (baseColor.blue * (1 - 0.3f * colorFactor))
-    )
-}

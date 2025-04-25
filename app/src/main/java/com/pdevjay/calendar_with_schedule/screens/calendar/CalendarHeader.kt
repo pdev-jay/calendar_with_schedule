@@ -27,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -43,7 +44,6 @@ fun CalendarHeader(
     navController: NavController,
     onTodayClick: () -> Unit = {},
     onClick: () -> Unit = {},
-    onMenuClick: () -> Unit = {}
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -79,35 +79,12 @@ fun CalendarHeader(
                     enabled = false,
                     onClick = {}
                 ) {
-//                    Icon(Icons.Default.Menu, contentDescription = "Menu")
                     Icon(
                         painter = painterResource(R.drawable.schedy_white_svg),
                         tint = MaterialTheme.colorScheme.onBackground,
                         contentDescription = "More options"
                     )
                 }
-//                Box(
-//                    modifier = Modifier
-//                ) {
-//                    IconButton(onClick = { expanded = !expanded }) {
-//                        Icon(painter = painterResource(R.drawable.schedy_white_svg) , contentDescription = "More options")
-//                    }
-//                    DropdownMenu(
-//                        shape = RoundedCornerShape(20.dp),
-//                        expanded = expanded,
-//                        onDismissRequest = { expanded = false }
-//                    ) {
-//                        DropdownMenuItem(
-//                            leadingIcon = { Icon(Icons.Default.Settings, contentDescription = "Menu") },
-//                            text = { Text("설정") },
-//                            onClick = {
-//                                expanded = false
-//                                val destination = "settings"
-//                                navController.navigate(destination)
-//                            },
-//                        )
-//                    }
-//                }
             }
         },
         actions = {
@@ -130,7 +107,7 @@ fun CalendarHeader(
                 ) {
                     DropdownMenuItem(
                         leadingIcon = { Icon(Icons.Default.Settings, contentDescription = "Menu") },
-                        text = { Text("설정") },
+                        text = { Text(stringResource(R.string.setting)) },
                         onClick = {
                             expanded = false
                             val destination = "settings"

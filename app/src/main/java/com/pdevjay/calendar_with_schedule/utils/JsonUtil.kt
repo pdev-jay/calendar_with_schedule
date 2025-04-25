@@ -1,11 +1,17 @@
 package com.pdevjay.calendar_with_schedule.utils
 
-import android.util.Log
-import com.google.gson.*
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonDeserializationContext
+import com.google.gson.JsonDeserializer
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
+import com.google.gson.JsonPrimitive
+import com.google.gson.JsonSerializationContext
+import com.google.gson.JsonSerializer
 import com.google.gson.reflect.TypeToken
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.RecurringData
-import com.pdevjay.calendar_with_schedule.screens.schedule.data.RecurringScheduleMap
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
 import java.lang.reflect.Type
 import java.net.URLDecoder

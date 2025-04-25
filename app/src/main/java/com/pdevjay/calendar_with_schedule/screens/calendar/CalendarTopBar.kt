@@ -70,8 +70,6 @@ fun CalendarTopBar(
     coroutineScope: CoroutineScope
 ) {
     val state by viewModel.state.collectAsState()
-//    val months by viewModel.months.collectAsState()
-//    val coroutineScope = rememberCoroutineScope()
 
     val baseDate = state.selectedDate ?: LocalDate.now()
     val infiniteStartPage = remember { Int.MAX_VALUE / 2 }
@@ -139,9 +137,6 @@ fun CalendarTopBar(
                 }
             },
             onClick = { viewModel.processIntent(CalendarIntent.DateUnselected) },
-            onMenuClick = {
-                coroutineScope.launch { drawerState.open() }
-            }
         )
 
         WeekHeader(state.selectedDate)
