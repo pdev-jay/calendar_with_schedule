@@ -159,8 +159,6 @@ fun WeekScheduleRow(
                         }
                         .width(with(density) { (width).toDp() })
                         .height(rowHeight)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(Color.LightGray)
                     ,
                     contentAlignment = Alignment.Center
                 ) {

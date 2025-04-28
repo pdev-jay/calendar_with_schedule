@@ -286,14 +286,18 @@ fun AllDayEventColumn(
             ) {
 
                 allDayEvents.forEach { event ->
-                    val eventColor = event.color?.let { Color(it).copy(alpha = 0.8f) }
-                        ?: MaterialTheme.colorScheme.primary
+                    val baseColor =
+                        event.color?.let { Color(it).copy(alpha = 0.7f) } ?: MaterialTheme.colorScheme.primary
+                    val darkerColor = baseColor.copy(
+                        red = (baseColor.red * (1 - 0.1f)),
+                        green = (baseColor.green * (1 - 0.1f)),
+                        blue = (baseColor.blue * (1 - 0.1f))
+                    )
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .padding(horizontal = 2.dp)
-//                            .border(0.5.dp, MaterialTheme.colorScheme.outline, shape = RoundedCornerShape(8.dp))
-                            .background(eventColor, shape = RoundedCornerShape(8.dp))
+                            .background(darkerColor, shape = RoundedCornerShape(8.dp))
                             .clickable { onEventClick(event) },
                         contentAlignment = Alignment.Center
                     ) {
