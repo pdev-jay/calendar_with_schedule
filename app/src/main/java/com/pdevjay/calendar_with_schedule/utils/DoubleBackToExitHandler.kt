@@ -18,16 +18,13 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun DoubleBackToExitHandler(
-    drawerState: DrawerState
 ) {
     val context = LocalContext.current
     val activity = LocalActivity.current
     var lastBackPressedTime by remember { mutableLongStateOf(0L) }
     val toast = remember { Toast.makeText(context, context.getString(R.string.double_back_to_exit), Toast.LENGTH_SHORT) }
-    val scope = rememberCoroutineScope()
 
     BackHandler {
-        if (drawerState.isClosed) {
             val currentTime = System.currentTimeMillis()
             if (currentTime - lastBackPressedTime < 1000) {
                 toast.cancel()
@@ -38,11 +35,5 @@ fun DoubleBackToExitHandler(
                 lastBackPressedTime = currentTime
                 toast.show()
             }
-        } else if (drawerState.isOpen) {
-            scope.launch {
-                drawerState.close()
-            }
-        }
-
     }
 }

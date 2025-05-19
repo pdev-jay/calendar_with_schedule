@@ -7,6 +7,7 @@ object SharedPreferencesUtil {
     private const val PREF_NAME = "my_prefs"
     const val KEY_NOTIFICATION_ENABLED = "notification_enabled"
     const val KEY_FIRST_LAUNCH = "first_launch"
+    const val KEY_SHOW_LUNAR_DATE = "show_lunar_date"
 
     private fun getPrefs(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)

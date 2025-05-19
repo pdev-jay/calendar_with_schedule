@@ -42,15 +42,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.github.usingsky.calendar.KoreanLunarCalendar
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarDay
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarWeek
 import com.pdevjay.calendar_with_schedule.screens.calendar.intents.CalendarIntent
 import com.pdevjay.calendar_with_schedule.screens.calendar.viewmodels.CalendarViewModel
 import com.pdevjay.calendar_with_schedule.utils.ExpandVerticallyContainerFromTop
+import com.pdevjay.calendar_with_schedule.utils.LunarCalendarUtils
+import com.pdevjay.calendar_with_schedule.utils.SharedPreferencesUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
@@ -66,7 +70,6 @@ fun CalendarTopBar(
     viewModel: CalendarViewModel,
     listState: LazyListState,
     navController: NavController,
-    drawerState: DrawerState,
     coroutineScope: CoroutineScope
 ) {
     val state by viewModel.state.collectAsState()
@@ -178,6 +181,11 @@ fun WeekRow(
     selectedDate: LocalDate?,
     onDateClick: (LocalDate) -> Unit
 ) {
+    val context = LocalContext.current
+    val isShowLunarDate = SharedPreferencesUtil.getBoolean(context, SharedPreferencesUtil.KEY_SHOW_LUNAR_DATE, false)
+
+    val lunarMonthDay = LunarCalendarUtils.getLunarMonthDay(selectedDate ?: LocalDate.now())
+
     Column {
         Row(
             modifier = Modifier
@@ -197,14 +205,28 @@ fun WeekRow(
                         .clickable { onDateClick(date) },
                     contentAlignment = Alignment.Center
                 ){
-                    Text(
+                    Column(
                         modifier = Modifier.padding(12.dp),
-                        text = date.dayOfMonth.toString(),
-                        color = when {
-                            isToday -> Color.Red
-                            else -> MaterialTheme.colorScheme.onSurface
-                        },
-                    )
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ){
+                        Text(
+                            text = date.dayOfMonth.toString(),
+                            color = when {
+                                isToday -> Color.Red
+                                else -> MaterialTheme.colorScheme.onSurface
+                            },
+                        )
+                        if (isShowLunarDate) {
+                            Text(
+                                text = lunarMonthDay,
+                                color = when {
+                                    isToday -> Color.Red
+                                    else -> MaterialTheme.colorScheme.onSurface
+                                },
+                                style = MaterialTheme.typography.labelSmall,
+                            )
+                        }
+                    }
                     if (isSelected) {
                         Box(
                             modifier = Modifier

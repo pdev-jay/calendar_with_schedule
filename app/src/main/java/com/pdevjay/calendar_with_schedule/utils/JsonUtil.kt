@@ -34,8 +34,6 @@ object JsonUtils {
             .create()
     }
 
-    // 지연 초기화된 타입 토큰 (ProGuard-safe)
-
     fun parseRecurringScheduleJson(scheduleJson: String): RecurringData {
         return gson.fromJson(URLDecoder.decode(scheduleJson, "UTF-8"), RecurringData::class.java)
     }

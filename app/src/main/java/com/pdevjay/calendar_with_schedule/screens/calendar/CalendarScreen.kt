@@ -67,7 +67,6 @@ fun CalendarScreen(
 ) {
     val calendarState by calendarViewModel.state.collectAsState()
 
-    val drawerState = rememberDrawerState(DrawerValue.Closed)
     val coroutineScope = rememberCoroutineScope()
 
     val isLoading = remember { mutableStateOf(false) }
@@ -75,7 +74,7 @@ fun CalendarScreen(
 
     val currentVisibleMonth by rememberCurrentVisibleMonth(listState, calendarState.months)
 
-    DoubleBackToExitHandler(drawerState)
+    DoubleBackToExitHandler()
 
     // 중앙에 보이는 부분이 어느 달인지
     LaunchedEffect(currentVisibleMonth) {
@@ -104,7 +103,6 @@ fun CalendarScreen(
     Scaffold(
         topBar = {
             CalendarTopBar(calendarViewModel, listState, navController,
-                drawerState,
                 coroutineScope
             )
         },

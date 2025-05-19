@@ -27,7 +27,7 @@ class SplashViewModel @Inject constructor(
                 .filter { it } // true일 때만
                 .first() // 한 번만 받음
                 .let {
-                    isSplashRunning.value = false
+                    finishSplash()
                 }
         }
     }

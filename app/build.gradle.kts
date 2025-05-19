@@ -123,5 +123,7 @@ dependencies {
     implementation("com.google.firebase:firebase-crashlytics")
 
     implementation("androidx.navigation:navigation-compose:2.8.9")
+    implementation ("com.github.usingsky:KoreanLunarCalendar:0.3.1")
+
 }
 

@@ -41,6 +41,7 @@
 
     <string name="inquiry">문의</string>
     <string name="setting">설정</string>
+    <string name="show_lunar_date">음력 날짜 보이기</string>
 
     <string name="no_email_apps">이메일 앱이 설치되어 있지 않습니다</string>
 

@@ -51,10 +51,14 @@ fun SettingsScreen(
     navController: NavController
 ){
     val context = LocalContext.current
+
     val notificationEnabled = SharedPreferencesUtil.getBoolean(context, SharedPreferencesUtil.KEY_NOTIFICATION_ENABLED, false)
     val notificationPermissionGranted = PermissionUtils.hasNotificationPermission(context)
     var isNotificationEnabled by remember { mutableStateOf(notificationEnabled && notificationPermissionGranted) }
     var showPermissionDialog by remember { mutableStateOf(false) }
+
+    val isShowLunarDate = SharedPreferencesUtil.getBoolean(context, SharedPreferencesUtil.KEY_SHOW_LUNAR_DATE, false)
+    var showLunarDate by remember { mutableStateOf(isShowLunarDate) }
 
     BackHandler {
         navController.popBackStack()
@@ -96,6 +100,17 @@ fun SettingsScreen(
                                 showPermissionDialog = true
                             }
                             SharedPreferencesUtil.putBoolean(context, SharedPreferencesUtil.KEY_NOTIFICATION_ENABLED, it)
+                        }
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                GroupContainer {
+                    SwitchSelector(
+                        label = stringResource(R.string.show_lunar_date),
+                        option = showLunarDate,
+                        onSwitch = {
+                            showLunarDate = it
+                            SharedPreferencesUtil.putBoolean(context, SharedPreferencesUtil.KEY_SHOW_LUNAR_DATE, it)
                         }
                     )
                 }

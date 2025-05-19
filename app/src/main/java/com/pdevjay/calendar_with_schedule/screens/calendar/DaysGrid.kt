@@ -18,11 +18,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarDay
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
+import com.pdevjay.calendar_with_schedule.utils.SharedPreferencesUtil
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -33,13 +35,17 @@ fun DaysGrid(
     scheduleMap: Map<LocalDate, List<BaseSchedule>>,
     onDayClick: (CalendarDay) -> Unit
 ) {
+    val context = LocalContext.current
+    val isShowLunarDate = SharedPreferencesUtil.getBoolean(context, SharedPreferencesUtil.KEY_SHOW_LUNAR_DATE, false)
+
     val weeks = calculateWeeks(days)
     val firstWeek = weeks.firstOrNull() ?: emptyList() //  첫 번째 주 가져오기
 
     val density = LocalDensity.current
 
+    val lunarDateHeight = if (isShowLunarDate) (with(density) { MaterialTheme.typography.labelSmall.lineHeight.toDp() }) else 0.dp
     val dayCellHeight =
-        (with(density) { MaterialTheme.typography.bodyLarge.lineHeight.toDp() })
+        (with(density) { MaterialTheme.typography.bodyLarge.lineHeight.toDp() }) + lunarDateHeight
     val monthLabelHeight = with(density) { MaterialTheme.typography.titleLarge.lineHeight.toDp() }
 
     val dividerHeight = 1.dp
@@ -107,7 +113,8 @@ fun DaysGrid(
 
                                 DayCell(
                                     day = dayOrNull,
-                                    dayCellPadding = dayCellPadding
+                                    dayCellPadding = dayCellPadding,
+                                    isShowLunarDate = isShowLunarDate
                                 )
                             }
 
