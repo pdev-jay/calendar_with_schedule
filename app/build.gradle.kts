@@ -25,8 +25,8 @@ android {
         applicationId = "com.pdevjay.calendar_with_schedule"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.0.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -124,6 +124,9 @@ dependencies {
 
     implementation("androidx.navigation:navigation-compose:2.8.9")
     implementation ("com.github.usingsky:KoreanLunarCalendar:0.3.1")
+
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 
 }
 

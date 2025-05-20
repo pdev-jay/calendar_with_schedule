@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pdevjay.calendar_with_schedule.data.repository.RemoteDataRepository
 import com.pdevjay.calendar_with_schedule.data.repository.ScheduleRepository
 import com.pdevjay.calendar_with_schedule.notification.AlarmScheduler
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarDay
@@ -30,7 +31,8 @@ import javax.inject.Inject
 @HiltViewModel
 class CalendarViewModel @Inject constructor(
     private val scheduleRepository: ScheduleRepository,
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val remoteDataRepository: RemoteDataRepository
 ) : ViewModel() {
     private val _state = MutableStateFlow(CalendarState())
     val state: StateFlow<CalendarState> = _state

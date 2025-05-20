@@ -80,5 +80,10 @@
     <!--    back key  -->
     <string name="double_back_to_exit">한 번 더 누르면 종료됩니다.</string>
 
+
+    <!--    update  -->
+    <string name="need_update">업데이트 필요</string>
+    <string name="update">업데이트</string>
+
 </resources>
 
