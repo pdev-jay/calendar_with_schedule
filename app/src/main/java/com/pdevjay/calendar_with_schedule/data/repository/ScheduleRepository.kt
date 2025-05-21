@@ -1,5 +1,6 @@
 package com.pdevjay.calendar_with_schedule.data.repository
 
+import com.pdevjay.calendar_with_schedule.screens.calendar.data.HolidayData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.RecurringData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
@@ -12,6 +13,7 @@ import java.time.YearMonth
 interface ScheduleRepository {
     val isScheduleMapReady: StateFlow<Boolean>
     val scheduleMap: StateFlow<Map<LocalDate, List<RecurringData>>>
+    val holidayMap: StateFlow<Map<LocalDate, List<HolidayData>>>
     val scheduleMapFlowForWorker: Flow<Map<LocalDate, List<RecurringData>>>
     suspend fun loadSchedulesForMonths(months: List<YearMonth>)
 

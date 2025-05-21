@@ -9,6 +9,7 @@ import com.pdevjay.calendar_with_schedule.data.database.ScheduleDao
 import com.pdevjay.calendar_with_schedule.data.entity.toRecurringData
 import com.pdevjay.calendar_with_schedule.data.entity.toScheduleData
 import com.pdevjay.calendar_with_schedule.notification.AlarmScheduler
+import com.pdevjay.calendar_with_schedule.screens.calendar.data.HolidayData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.RecurringData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
@@ -56,6 +57,9 @@ class ScheduleRepositoryImpl @Inject constructor(
     private val _scheduleMap = MutableStateFlow<Map<LocalDate, List<RecurringData>>>(emptyMap())
     override val scheduleMap: StateFlow<Map<LocalDate, List<RecurringData>>> = _scheduleMap
 
+    private val _holidayMap = MutableStateFlow<Map<LocalDate, List<HolidayData>>>(emptyMap())
+    override val holidayMap: StateFlow<Map<LocalDate, List<HolidayData>>> = _holidayMap
+
     private val _isScheduleMapReady = MutableStateFlow(false)
     override val isScheduleMapReady: StateFlow<Boolean> = _isScheduleMapReady
 
@@ -87,18 +91,22 @@ class ScheduleRepositoryImpl @Inject constructor(
                     _currentMonths.value.minOrNull()?.toString() ?: YearMonth.now().toString(),
                     _currentMonths.value.maxOrNull()?.toString() ?: YearMonth.now().toString()
                 ).distinctUntilChanged(),
+                holidayDao.getHolidaysForMonths(_currentMonths.value.map { it.toString() }),
                 _currentMonths
-            ) { scheduleEntities, recurringEntities, months ->
+            ) { scheduleEntities, recurringEntities, holidayEntities, months ->
                 Log.e("viemodel_repository", "✅ months 업데이트 됨 : ${months}")
                 val originalSchedules = scheduleEntities.map { it.toScheduleData() }
                 val recurringSchedules = recurringEntities.map { it.toRecurringData() }
-                buildScheduleMap(originalSchedules, recurringSchedules, months)
+                val holidays = holidayEntities.map { it.toModel() }
+                buildScheduleMap(originalSchedules, recurringSchedules, holidays, months)
             }
                 .distinctUntilChanged()
-                .collectLatest { scheduleMap ->
-                    _scheduleMap.value = scheduleMap
+                .collectLatest { result ->
+                    _scheduleMap.value = result.first
+                    _holidayMap.value = result.second
                     _isScheduleMapReady.value = true
-                    Log.e("viemodel_repository", "✅ scheduleMap 자동 업데이트됨: ${scheduleMap.keys}")
+                    Log.e("viemodel_repository", "✅ scheduleMap 자동 업데이트됨: ${result.first.keys}")
+                    Log.e("viemodel_repository", "✅ _holidayMap 자동 업데이트됨: ${_holidayMap.value}")
                 }
         }
 
@@ -107,8 +115,9 @@ class ScheduleRepositoryImpl @Inject constructor(
     private fun buildScheduleMap(
         originalSchedules: List<ScheduleData>,
         recurringSchedules: List<RecurringData>,
+        holidays: List<HolidayData>,
         months: List<YearMonth>
-    ): Map<LocalDate, List<RecurringData>> {
+    ): Pair<Map<LocalDate, List<RecurringData>>, Map<LocalDate, List<HolidayData>>> {
         val allSchedules = mutableListOf<RecurringData>()
         val branchRoots = mutableMapOf<String?, RecurringData>()
 
@@ -134,7 +143,13 @@ class ScheduleRepositoryImpl @Inject constructor(
             .mapValues { it.value.sortedBy { item -> item.start.time } }
 
         val validDates = months.flatMap { month -> (1..month.lengthOfMonth()).map { month.atDay(it) } }
-        return validDates.associateWith { date -> expanded[date].orEmpty() }.toSortedMap()
+
+        // holidays
+        val holidayMap = holidays
+            .groupBy { LocalDate.parse(it.date) }
+            .filterKeys { it in validDates }
+
+        return Pair(validDates.associateWith { date -> expanded[date].orEmpty() }.toSortedMap(), holidayMap)
     }
 
 //    init {
