@@ -1,35 +1,28 @@
 package com.pdevjay.calendar_with_schedule.data.repository
 
-import android.content.Context
 import android.util.Log
-import com.pdevjay.calendar_with_schedule.BuildConfig
 import com.pdevjay.calendar_with_schedule.data.database.HolidayDao
 import com.pdevjay.calendar_with_schedule.data.database.RecurringScheduleDao
 import com.pdevjay.calendar_with_schedule.data.database.ScheduleDao
 import com.pdevjay.calendar_with_schedule.data.entity.toRecurringData
 import com.pdevjay.calendar_with_schedule.data.entity.toScheduleData
-import com.pdevjay.calendar_with_schedule.notification.AlarmScheduler
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.HolidayData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.RecurringData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
-import com.pdevjay.calendar_with_schedule.screens.schedule.data.resolveDisplayFieldsFromBranch
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.rangeTo
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.resolveDisplayOnly
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.toMarkAsDeletedData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.toNewBranchData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.toRecurringData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.toRecurringScheduleEntity
+import com.pdevjay.calendar_with_schedule.screens.schedule.data.toScheduleData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.toScheduleEntity
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.toSingleChangeData
+import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatType
 import com.pdevjay.calendar_with_schedule.screens.schedule.enums.ScheduleEditType
-import com.pdevjay.calendar_with_schedule.utils.RepeatScheduleGenerator
-import com.pdevjay.calendar_with_schedule.utils.RepeatScheduleGenerator.generateRepeatedDates
 import com.pdevjay.calendar_with_schedule.utils.RepeatScheduleGenerator.generateRepeatedDatesWithIndex
 import com.pdevjay.calendar_with_schedule.utils.RepeatScheduleGenerator.generateRepeatedScheduleInstances
-import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatType
-import com.pdevjay.calendar_with_schedule.screens.schedule.data.rangeTo
-import com.pdevjay.calendar_with_schedule.screens.schedule.data.toScheduleData
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -63,12 +56,13 @@ class ScheduleRepositoryImpl @Inject constructor(
     private val _isScheduleMapReady = MutableStateFlow(false)
     override val isScheduleMapReady: StateFlow<Boolean> = _isScheduleMapReady
 
-    val monthsToLoad = (-6..6).map{
+    val monthsToLoad = (-6..6).map {
         YearMonth.now().plusMonths(it.toLong())
     }
 
-    override val scheduleMapFlowForWorker: Flow<Map<LocalDate, List<RecurringData>>> = getSchedulesForMonths(monthsToLoad)
-        .filter { it.isNotEmpty() }
+    override val scheduleMapFlowForWorker: Flow<Map<LocalDate, List<RecurringData>>> =
+        getSchedulesForMonths(monthsToLoad)
+            .filter { it.isNotEmpty() }
 
 
     private val _currentMonths = MutableStateFlow<List<YearMonth>>(monthsToLoad) //  현재 조회 중인 월 리스트
@@ -80,34 +74,35 @@ class ScheduleRepositoryImpl @Inject constructor(
         Log.e("ScheduleRepository", " Created! hash=${this.hashCode()}")
 
         repositoryScope.launch {
-            combine(
-                scheduleDao.getSchedulesForMonths(
-                    _currentMonths.value.map { it.toString() },
-                    _currentMonths.value.minOrNull()?.toString() ?: YearMonth.now().toString(),
-                    _currentMonths.value.maxOrNull()?.toString() ?: YearMonth.now().toString()
-                ).distinctUntilChanged(),
-                recurringScheduleDao.getRecurringSchedulesForMonths(
-                    _currentMonths.value.map { it.toString() },
-                    _currentMonths.value.minOrNull()?.toString() ?: YearMonth.now().toString(),
-                    _currentMonths.value.maxOrNull()?.toString() ?: YearMonth.now().toString()
-                ).distinctUntilChanged(),
-                holidayDao.getHolidaysForMonths(_currentMonths.value.map { it.toString() }),
-                _currentMonths
-            ) { scheduleEntities, recurringEntities, holidayEntities, months ->
-                Log.e("viemodel_repository", "✅ months 업데이트 됨 : ${months}")
-                val originalSchedules = scheduleEntities.map { it.toScheduleData() }
-                val recurringSchedules = recurringEntities.map { it.toRecurringData() }
-                val holidays = holidayEntities.map { it.toModel() }
-                buildScheduleMap(originalSchedules, recurringSchedules, holidays, months)
-            }
-                .distinctUntilChanged()
-                .collectLatest { result ->
-                    _scheduleMap.value = result.first
-                    _holidayMap.value = result.second
-                    _isScheduleMapReady.value = true
-                    Log.e("viemodel_repository", "✅ scheduleMap 자동 업데이트됨: ${result.first.keys}")
-                    Log.e("viemodel_repository", "✅ _holidayMap 자동 업데이트됨: ${_holidayMap.value}")
+            _currentMonths.collectLatest { months ->
+                combine(
+                    scheduleDao.getSchedulesForMonths(
+                        _currentMonths.value.map { it.toString() },
+                        _currentMonths.value.minOrNull()?.toString() ?: YearMonth.now().toString(),
+                        _currentMonths.value.maxOrNull()?.toString() ?: YearMonth.now().toString()
+                    ).distinctUntilChanged(),
+                    recurringScheduleDao.getRecurringSchedulesForMonths(
+                        _currentMonths.value.map { it.toString() },
+                        _currentMonths.value.minOrNull()?.toString() ?: YearMonth.now().toString(),
+                        _currentMonths.value.maxOrNull()?.toString() ?: YearMonth.now().toString()
+                    ).distinctUntilChanged(),
+                    holidayDao.getHolidaysForMonths(_currentMonths.value.map { it.toString() }),
+                ) { scheduleEntities, recurringEntities, holidayEntities ->
+                    Log.e("viemodel_repository", "months 업데이트 됨 : ${months}")
+                    val originalSchedules = scheduleEntities.map { it.toScheduleData() }
+                    val recurringSchedules = recurringEntities.map { it.toRecurringData() }
+                    val holidays = holidayEntities.map { it.toModel() }
+                    buildScheduleMap(originalSchedules, recurringSchedules, holidays, months)
                 }
+                    .distinctUntilChanged()
+                    .collectLatest { result ->
+                        _scheduleMap.value = result.first
+                        _holidayMap.value = result.second
+                        _isScheduleMapReady.value = true
+                        Log.e("viemodel_repository", "scheduleMap 자동 업데이트됨: ${result.first.keys}")
+                        Log.e("viemodel_repository", "_holidayMap 자동 업데이트됨: ${_holidayMap.value}")
+                    }
+            }
         }
 
     }
@@ -121,8 +116,21 @@ class ScheduleRepositoryImpl @Inject constructor(
         val allSchedules = mutableListOf<RecurringData>()
         val branchRoots = mutableMapOf<String?, RecurringData>()
 
-        inflateRecurringData(ScheduleTarget.Original(originalSchedules), recurringSchedules, months, allSchedules, branchRoots)
-        inflateRecurringData(ScheduleTarget.Branch(recurringSchedules), recurringSchedules, months, allSchedules, branchRoots, true)
+        inflateRecurringData(
+            ScheduleTarget.Original(originalSchedules),
+            recurringSchedules,
+            months,
+            allSchedules,
+            branchRoots
+        )
+        inflateRecurringData(
+            ScheduleTarget.Branch(recurringSchedules),
+            recurringSchedules,
+            months,
+            allSchedules,
+            branchRoots,
+            true
+        )
 
         val resolvedSchedules = allSchedules.map { item ->
             if (item.repeatType == RepeatType.NONE && !item.isFirstSchedule) {
@@ -142,14 +150,18 @@ class ScheduleRepositoryImpl @Inject constructor(
             .groupBy({ it.first }, { it.second })
             .mapValues { it.value.sortedBy { item -> item.start.time } }
 
-        val validDates = months.flatMap { month -> (1..month.lengthOfMonth()).map { month.atDay(it) } }
+        val validDates =
+            months.flatMap { month -> (1..month.lengthOfMonth()).map { month.atDay(it) } }
 
         // holidays
         val holidayMap = holidays
             .groupBy { LocalDate.parse(it.date) }
             .filterKeys { it in validDates }
 
-        return Pair(validDates.associateWith { date -> expanded[date].orEmpty() }.toSortedMap(), holidayMap)
+        return Pair(
+            validDates.associateWith { date -> expanded[date].orEmpty() }.toSortedMap(),
+            holidayMap
+        )
     }
 
 //    init {
@@ -193,7 +205,7 @@ class ScheduleRepositoryImpl @Inject constructor(
         _currentMonths.value = months //  `currentMonths` 를 갱신하면 자동으로 `scheduleMap` 업데이트됨
     }
 
-     override fun getSchedulesForMonths(months: List<YearMonth>): Flow<Map<LocalDate, List<RecurringData>>> {
+    override fun getSchedulesForMonths(months: List<YearMonth>): Flow<Map<LocalDate, List<RecurringData>>> {
 
         val monthStrings = months.map { it.toString() }
         val maxMonth = months.maxOrNull()?.toString() ?: YearMonth.now().toString()
@@ -203,7 +215,7 @@ class ScheduleRepositoryImpl @Inject constructor(
             scheduleDao.getSchedulesForMonths(monthStrings, minMonth, maxMonth),
             recurringScheduleDao.getRecurringSchedulesForMonths(monthStrings, minMonth, maxMonth)
         ) { scheduleEntities, recurringEntities ->
-         Log.e("viemodel_repository", "inside getSchedulesForMonths")
+            Log.e("viemodel_repository", "inside getSchedulesForMonths")
 
             val originalSchedules = scheduleEntities.map { it.toScheduleData() }
             val recurringSchedules = recurringEntities.map { it.toRecurringData() }
@@ -211,8 +223,21 @@ class ScheduleRepositoryImpl @Inject constructor(
             val allSchedules = mutableListOf<RecurringData>()
             val branchRoots: MutableMap<String?, RecurringData> = mutableMapOf()
 
-            inflateRecurringData(ScheduleTarget.Original(originalSchedules), recurringSchedules, months, allSchedules, branchRoots)
-            inflateRecurringData(ScheduleTarget.Branch(recurringSchedules), recurringSchedules, months, allSchedules, branchRoots, true)
+            inflateRecurringData(
+                ScheduleTarget.Original(originalSchedules),
+                recurringSchedules,
+                months,
+                allSchedules,
+                branchRoots
+            )
+            inflateRecurringData(
+                ScheduleTarget.Branch(recurringSchedules),
+                recurringSchedules,
+                months,
+                allSchedules,
+                branchRoots,
+                true
+            )
 
             val resolvedSchedules = allSchedules.map { item ->
                 if (item.repeatType == RepeatType.NONE && !item.isFirstSchedule) {
@@ -241,28 +266,34 @@ class ScheduleRepositoryImpl @Inject constructor(
 
 
 //  (6) 빈 날짜 처리
-            val validDates = months.flatMap { month -> (1..month.lengthOfMonth()).map { month.atDay(it) } }
+            val validDates =
+                months.flatMap { month -> (1..month.lengthOfMonth()).map { month.atDay(it) } }
             val result = validDates.associateWith { date -> expanded[date].orEmpty() }
 
             return@combine result.toSortedMap()
         }
     }
 
-    override suspend fun updateSchedule(schedule: RecurringData, scheduleEditType: ScheduleEditType, isOnlyContentChanged: Boolean) {
+    override suspend fun updateSchedule(
+        schedule: RecurringData,
+        scheduleEditType: ScheduleEditType,
+        isOnlyContentChanged: Boolean
+    ) {
 
-        when (scheduleEditType){
+        when (scheduleEditType) {
             ScheduleEditType.ONLY_THIS_EVENT -> {
                 // 반복 일정이 아닌 경우
-                if (schedule.branchId == null){
+                if (schedule.branchId == null) {
                     scheduleDao.insertSchedule(schedule.toScheduleData().toScheduleEntity())
-                }  else {
+                } else {
                     // 반복 일정의 첫번째 일정이 업데이트 되는 경우
-                    if (schedule.isFirstSchedule){
+                    if (schedule.isFirstSchedule) {
                         // 첫번째 일정이 수정될 때
-                        if (schedule.repeatType == RepeatType.NONE){
+                        if (schedule.repeatType == RepeatType.NONE) {
                             recurringScheduleDao.update(schedule.toRecurringScheduleEntity())
                         } else {
-                            val overridden = schedule.toSingleChangeData(needNewId = true).copy(isFirstSchedule = false)
+                            val overridden = schedule.toSingleChangeData(needNewId = true)
+                                .copy(isFirstSchedule = false)
                             recurringScheduleDao.insertRecurringSchedule(overridden.toRecurringScheduleEntity())
                         }
 
@@ -273,6 +304,7 @@ class ScheduleRepositoryImpl @Inject constructor(
                     }
                 }
             }
+
             ScheduleEditType.THIS_AND_FUTURE -> {
                 val previousRepeatDate = findPreviousRepeatDateFromScheduleMapByIndex(
                     scheduleMap = scheduleMap.value,
@@ -295,23 +327,29 @@ class ScheduleRepositoryImpl @Inject constructor(
                     repeatUntil = newRepeatUntil.toString()
                 )
                 // branch의 root인 경우 새로운 branch를 생성하지 않고 기존 branch를 업데이트
-                if (schedule.isFirstSchedule){
+                if (schedule.isFirstSchedule) {
                     recurringScheduleDao.insertRecurringSchedule(schedule.toRecurringScheduleEntity())
                 } else {
                     // 새로운 branch를 만드는 경우
                     // 단일 수정 일정에서 시작하는 경우 단일 수정 일정을 삭제
                     recurringScheduleDao.markRecurringScheduleAsDeleted(schedule.id)
                     // 새로운 branch를 생성
-                    recurringScheduleDao.insertRecurringSchedule(schedule.toNewBranchData().toRecurringScheduleEntity())
+                    recurringScheduleDao.insertRecurringSchedule(
+                        schedule.toNewBranchData().toRecurringScheduleEntity()
+                    )
 
                 }
-                if (isOnlyContentChanged){
+                if (isOnlyContentChanged) {
                     recurringScheduleDao.updateContentOnly(schedule.toRecurringScheduleEntity())
                 }
 
-                recurringScheduleDao.deleteThisAndFutureRecurringData(schedule.originalEventId, schedule.start.date)
+                recurringScheduleDao.deleteThisAndFutureRecurringData(
+                    schedule.originalEventId,
+                    schedule.start.date
+                )
 
             }
+
             ScheduleEditType.ALL_EVENTS -> TODO()
         }
     }
@@ -320,12 +358,12 @@ class ScheduleRepositoryImpl @Inject constructor(
         schedule: RecurringData,
         scheduleEditType: ScheduleEditType
     ) {
-        when (scheduleEditType){
+        when (scheduleEditType) {
             ScheduleEditType.ONLY_THIS_EVENT -> {
-                if (schedule.branchId == null){
+                if (schedule.branchId == null) {
                     scheduleDao.deleteScheduleById(schedule.originatedFrom)
                 } else {
-                    if (schedule.repeatType == RepeatType.NONE){
+                    if (schedule.repeatType == RepeatType.NONE) {
                         recurringScheduleDao.markRecurringScheduleAsDeleted(schedule.id)
                     } else {
                         val overridden = schedule.toSingleChangeData(needNewId = true)
@@ -334,14 +372,19 @@ class ScheduleRepositoryImpl @Inject constructor(
                     }
                 }
             }
+
             ScheduleEditType.THIS_AND_FUTURE -> {
-                if (schedule.isFirstSchedule){
-                    val alreadyExists = scheduleDao.countByBranchId(schedule.branchId.toString()) > 0
-                    if (alreadyExists){
+                if (schedule.isFirstSchedule) {
+                    val alreadyExists =
+                        scheduleDao.countByBranchId(schedule.branchId.toString()) > 0
+                    if (alreadyExists) {
                         scheduleDao.deleteScheduleByBranchId(schedule.branchId.toString())
                     }
                     // 해당 recurring data의 original event id를 가진 모든 recurring data를 기준 날짜 이후로 삭제
-                    recurringScheduleDao.deleteThisAndFutureRecurringData(schedule.originalEventId, schedule.start.date)
+                    recurringScheduleDao.deleteThisAndFutureRecurringData(
+                        schedule.originalEventId,
+                        schedule.start.date
+                    )
                 } else {
                     val previousRepeatDate = findPreviousRepeatDateFromScheduleMapByIndex(
                         scheduleMap = scheduleMap.value,
@@ -365,9 +408,13 @@ class ScheduleRepositoryImpl @Inject constructor(
                     )
 
                     // 해당 recurring data의 original event id를 가진 모든 recurring data를 기준 날짜 이후로 삭제
-                    recurringScheduleDao.deleteThisAndFutureRecurringData(schedule.originalEventId, schedule.start.date)
+                    recurringScheduleDao.deleteThisAndFutureRecurringData(
+                        schedule.originalEventId,
+                        schedule.start.date
+                    )
                 }
             }
+
             ScheduleEditType.ALL_EVENTS -> TODO()
         }
     }
@@ -410,22 +457,33 @@ class ScheduleRepositoryImpl @Inject constructor(
         class Branch(val list: List<RecurringData>) : ScheduleTarget()
     }
 
-    private fun inflateRecurringData(target: ScheduleTarget, recurringSchedules: List<RecurringData>, months: List<YearMonth>, allSchedules: MutableList<RecurringData>, branchRoots: MutableMap<String?, RecurringData>, addSingleRecurringEvents: Boolean = false) {
-        val filtered = when (target){
+    private fun inflateRecurringData(
+        target: ScheduleTarget,
+        recurringSchedules: List<RecurringData>,
+        months: List<YearMonth>,
+        allSchedules: MutableList<RecurringData>,
+        branchRoots: MutableMap<String?, RecurringData>,
+        addSingleRecurringEvents: Boolean = false
+    ) {
+        val filtered = when (target) {
             is ScheduleTarget.Original -> target.list
             is ScheduleTarget.Branch -> target.list.filter { it.isFirstSchedule }
         }
 
-        filtered.forEach{ schedule ->
-            when (schedule){
+        filtered.forEach { schedule ->
+            when (schedule) {
                 is ScheduleData -> {
                     if (schedule.branchId != null) {
-                        branchRoots[schedule.branchId] = schedule.toRecurringData(selectedDate = schedule.start.date, repeatIndex = 1)
+                        branchRoots[schedule.branchId] = schedule.toRecurringData(
+                            selectedDate = schedule.start.date,
+                            repeatIndex = 1
+                        )
 //                        branchRoots.add(schedule.toRecurringData(selectedDate = schedule.start.date, repeatIndex = 1))
                     }
                 }
+
                 is RecurringData -> {
-                    if (schedule.isFirstSchedule){
+                    if (schedule.isFirstSchedule) {
                         branchRoots[schedule.branchId] = schedule
 //                        branchRoots.add(schedule)
                     }

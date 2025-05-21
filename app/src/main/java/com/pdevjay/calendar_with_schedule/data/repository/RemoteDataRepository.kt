@@ -26,21 +26,21 @@ class RemoteDataRepository @Inject constructor(
             "2000-01-01T00:00:00Z"
         ) ?: "2000-01-01T00:00:00Z"
 
-        Log.d("HolidaySync", "🔍 lastSync = $lastSync")
+        Log.d("HolidaySync", "lastSync = $lastSync")
 
         val holidays = api.getUpdatedHolidays(lastSync)
 
-        Log.d("HolidaySync", "📦 조회된 holiday 수: ${holidays.size}")
+        Log.d("HolidaySync", "조회된 holiday 수: ${holidays.size}")
 //        holidays.forEach {
-//            Log.d("HolidaySync", "📄 holiday: date=${it.date}, name=${it.name}, updatedAt=${it.updatedAt}")
+//            Log.d("HolidaySync", "holiday: date=${it.date}, name=${it.name}, updatedAt=${it.updatedAt}")
 //        }
 
         if (holidays.isNotEmpty()) {
             dao.insertAll(holidays.map { it.toEntity() })
 
             val latestUpdateTime = holidays.maxOfOrNull { it.updatedAt } ?: lastSync
-            Log.d("HolidaySync", "✅ size = ${holidays.size}")
-            Log.d("HolidaySync", "✅ 최신 updatedAt = $latestUpdateTime")
+            Log.d("HolidaySync", "size = ${holidays.size}")
+            Log.d("HolidaySync", "최신 updatedAt = $latestUpdateTime")
 
             SharedPreferencesUtil.putString(
                 context,
@@ -48,7 +48,7 @@ class RemoteDataRepository @Inject constructor(
                 latestUpdateTime
             )
         } else {
-            Log.d("HolidaySync", "🔕 업데이트할 holiday 없음.")
+            Log.d("HolidaySync", "업데이트할 holiday 없음.")
         }
     }
 

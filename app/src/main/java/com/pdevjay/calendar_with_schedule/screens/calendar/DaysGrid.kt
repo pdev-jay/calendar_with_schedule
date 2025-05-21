@@ -27,6 +27,7 @@ import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarDay
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.HolidayData
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.toBaseSchedule
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.toHolidaySchedule
+import com.pdevjay.calendar_with_schedule.screens.calendar.data.toMergedHolidaySchedules
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.toRecurringData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
 import com.pdevjay.calendar_with_schedule.utils.SharedPreferencesUtil
@@ -72,10 +73,12 @@ fun DaysGrid(
                 (eventPreviewRowSpaceBy * (eventPreviewMaxRow - 1)) + dividerHeight + (dayCellPadding * 2) + eventPreviewBottomPadding
 
     weeks.forEach { week ->
-        val weekHoliday = holidayMap
+        val weekHoliday = (holidayMap
             .filterKeys { it in week.mapNotNull { it?.date } }
             .flatMap { it.value }
-            .map { it.toHolidaySchedule() } // RecurringData 변환
+            .toMergedHolidaySchedules()
+//            .map { it.toHolidaySchedule() } // RecurringData 변환
+        )
 
         val weekSchedules = scheduleMap
             .filterKeys { it in week.mapNotNull { it?.date } }

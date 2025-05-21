@@ -51,7 +51,7 @@ fun HolidayData.toHolidaySchedule(): HolidaySchedule {
         repeatRule = null,
         alarmOption = AlarmOption.NONE,
         branchId = null,
-        color = 0xFFFF6B81.toInt() // Soft red (휴일용 고정 색상)
+        color = 0xFFFF6B81.toInt()
     )
 }
 
@@ -73,7 +73,7 @@ fun HolidayData.toBaseSchedule(): BaseSchedule {
         repeatRule = null,
         alarmOption = AlarmOption.NONE,
         branchId = null,
-        color = 0xFFFF6B81.toInt() // Soft red
+        color = 0xFFFF6B81.toInt()
     )
 }
 
@@ -98,6 +98,56 @@ fun HolidayData.toRecurringData(): RecurringData {
         isFirstSchedule = true,
         branchId = null,
         repeatIndex = 1,
-        color = 0xFFFF6B81.toInt() // 또는 특정 색상 코드 예: Color.Red.hashCode()
+        color = 0xFFFF6B81.toInt()
     )
+}
+
+fun List<HolidayData>.toMergedHolidaySchedules(): List<HolidaySchedule> {
+    // 1. 이름 기준으로 그룹핑
+    return this
+        .groupBy { it.name }
+        .flatMap { (name, holidaysWithSameName) ->
+            // 2. 날짜 기준 정렬
+            holidaysWithSameName
+                .map { it.copy(date = it.date.trim()) }
+                .sortedBy { it.date }
+                .fold(mutableListOf<MutableList<HolidayData>>()) { acc, current ->
+                    val currentDate = LocalDate.parse(current.date)
+
+                    if (acc.isEmpty()) {
+                        acc.add(mutableListOf(current))
+                    } else {
+                        val lastGroup = acc.last()
+                        val lastDate = LocalDate.parse(lastGroup.last().date)
+
+                        if (lastDate.plusDays(1) == currentDate) {
+                            lastGroup.add(current) // 인접하면 현재 그룹에 추가
+                        } else {
+                            acc.add(mutableListOf(current)) // 아니면 새 그룹
+                        }
+                    }
+
+                    acc
+                }
+                .map { group ->
+                    val sorted = group.sortedBy { it.date }
+                    val startDate = LocalDate.parse(sorted.first().date)
+                    val endDate = LocalDate.parse(sorted.last().date)
+
+                    HolidaySchedule(
+                        id = "holiday_${name}_${startDate}_$endDate",
+                        title = name,
+                        location = null,
+                        isAllDay = true,
+                        start = DateTimePeriod(startDate, LocalTime.MIN),
+                        end = DateTimePeriod(endDate, LocalTime.MAX),
+                        repeatType = RepeatType.NONE,
+                        repeatUntil = null,
+                        repeatRule = null,
+                        alarmOption = AlarmOption.NONE,
+                        branchId = null,
+                        color = 0xFFFF6B81.toInt()
+                    )
+                }
+        }
 }

@@ -26,7 +26,7 @@ object AlarmScheduler {
     private val registeredAlarms = mutableMapOf<String, Boolean>()
 
     fun printAllRegisteredAlarms() {
-        Log.e("AlarmLogger", "📦 등록된 알람 현황 (registeredAlarms):")
+        Log.e("AlarmLogger", "등록된 알람 현황 (registeredAlarms):")
         registeredAlarms.forEach { (key, value) ->
             Log.e("AlarmLogger", " - [$key] => ${if (value) " 등록됨" else "❌ 취소됨"}")
         }
