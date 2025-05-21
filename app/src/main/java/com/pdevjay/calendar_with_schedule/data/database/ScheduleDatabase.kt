@@ -15,7 +15,7 @@ import com.pdevjay.calendar_with_schedule.utils.DateTimePeriodConverter
 @TypeConverters(DateTimePeriodConverter::class, AlarmOptionConverter::class)
 abstract class ScheduleDatabase : RoomDatabase() {
     abstract fun scheduleDao(): ScheduleDao
-    abstract fun recurringScheduleDao(): RecurringScheduleDao //  추가
+    abstract fun recurringScheduleDao(): RecurringScheduleDao
     abstract fun holidayDao(): HolidayDao
 
     companion object {
@@ -28,6 +28,7 @@ abstract class ScheduleDatabase : RoomDatabase() {
                 name TEXT NOT NULL,
                 isHoliday INTEGER NOT NULL,
                 seq INTEGER NOT NULL,
+                updatedAt TEXT NOT NULL DEFAULT '2000-01-01T00:00:00Z'
                 PRIMARY KEY(date, seq)
             )
         """.trimIndent()

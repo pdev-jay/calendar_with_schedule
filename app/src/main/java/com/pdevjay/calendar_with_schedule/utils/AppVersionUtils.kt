@@ -20,8 +20,8 @@ object AppVersionUtils {
             try {
                 val response = RetrofitClient.apiService.getAppVersion()
                 val latest = response.version
-                val current = BuildConfig.VERSION_NAME
                 val appUrl = response.appUrl
+                val current = BuildConfig.VERSION_NAME
                 Log.e("AppVersionUtil", "response : $response / current : $current / latest : $latest")
 
                 if (isVersionOlder(current, latest)) {

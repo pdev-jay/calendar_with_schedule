@@ -1,6 +1,7 @@
 package com.pdevjay.calendar_with_schedule.data.repository
 
 import android.content.Context
+import android.util.Log
 import com.pdevjay.calendar_with_schedule.data.database.HolidayDao
 import com.pdevjay.calendar_with_schedule.data.remote.DataApiService
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.HolidayData
@@ -18,17 +19,36 @@ class RemoteDataRepository @Inject constructor(
     ) {
 
     suspend fun refreshHolidays() {
-        val lastSync = SharedPreferencesUtil.getString(context, SharedPreferencesUtil.KEY_HOLIDAY_SYNC, "2000-01-01T00:00:00Z") ?: "2000-01-01T00:00:00Z"
+        val lastSync = SharedPreferencesUtil.getString(
+            context,
+            SharedPreferencesUtil.KEY_HOLIDAY_SYNC,
+            "2000-01-01T00:00:00Z"
+        ) ?: "2000-01-01T00:00:00Z"
+
+        Log.d("HolidaySync", "🔍 lastSync = $lastSync")
 
         val holidays = api.getUpdatedHolidays(lastSync)
 
+        Log.d("HolidaySync", "📦 조회된 holiday 수: ${holidays.size}")
+//        holidays.forEach {
+//            Log.d("HolidaySync", "📄 holiday: date=${it.date}, name=${it.name}, updatedAt=${it.updatedAt}")
+//        }
+
         if (holidays.isNotEmpty()) {
-            dao.insertAll(holidays.map { it.toEntity() })
+//            dao.insertAll(holidays.map { it.toEntity() })
 
             val latestUpdateTime = holidays.maxOfOrNull { it.updatedAt } ?: lastSync
-            SharedPreferencesUtil.putString(context, SharedPreferencesUtil.KEY_HOLIDAY_SYNC, latestUpdateTime)
+            Log.d("HolidaySync", "✅ size = ${holidays.size}")
+            Log.d("HolidaySync", "✅ 최신 updatedAt = $latestUpdateTime")
+//
+//            SharedPreferencesUtil.putString(
+//                context,
+//                SharedPreferencesUtil.KEY_HOLIDAY_SYNC,
+//                latestUpdateTime
+//            )
+        } else {
+            Log.d("HolidaySync", "🔕 업데이트할 holiday 없음.")
         }
-
     }
 
     suspend fun getLocalHolidays(): List<HolidayData> {
