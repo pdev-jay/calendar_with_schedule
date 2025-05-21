@@ -22,7 +22,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarDay
+import com.pdevjay.calendar_with_schedule.screens.calendar.data.HolidayData
+import com.pdevjay.calendar_with_schedule.screens.calendar.data.toBaseSchedule
+import com.pdevjay.calendar_with_schedule.screens.calendar.data.toHolidaySchedule
+import com.pdevjay.calendar_with_schedule.screens.calendar.data.toRecurringData
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
 import com.pdevjay.calendar_with_schedule.utils.SharedPreferencesUtil
 import java.time.LocalDate
@@ -33,6 +38,7 @@ import java.util.Locale
 fun DaysGrid(
     days: List<CalendarDay>,
     scheduleMap: Map<LocalDate, List<BaseSchedule>>,
+    holidayMap: Map<LocalDate, List<HolidayData>>,
     onDayClick: (CalendarDay) -> Unit
 ) {
     val context = LocalContext.current
@@ -53,7 +59,7 @@ fun DaysGrid(
     // 날짜 터치 영역의 사이즈를 구하기 위한 WeekScheduleRow의 높이에 관련된 변수들
     val eventPreviewRowHeight =
         (with(density) { MaterialTheme.typography.labelSmall.lineHeight.toDp() })
-    val eventPreviewMaxRow = 4
+    val eventPreviewMaxRow = 5
     val eventPreviewRowSpaceBy = 1.dp
     val eventPreviewBottomPadding = 2.dp
 
@@ -66,10 +72,17 @@ fun DaysGrid(
                 (eventPreviewRowSpaceBy * (eventPreviewMaxRow - 1)) + dividerHeight + (dayCellPadding * 2) + eventPreviewBottomPadding
 
     weeks.forEach { week ->
+        val weekHoliday = holidayMap
+            .filterKeys { it in week.mapNotNull { it?.date } }
+            .flatMap { it.value }
+            .map { it.toHolidaySchedule() } // RecurringData 변환
+
         val weekSchedules = scheduleMap
             .filterKeys { it in week.mapNotNull { it?.date } }
             .flatMap { it.value }
             .distinctBy { it.id }
+
+        val mergedSchedules = weekSchedules + weekHoliday
 
         Box(
             modifier = Modifier
@@ -123,7 +136,7 @@ fun DaysGrid(
                 }
                 WeekScheduleRow(
                     week = week,
-                    schedules = weekSchedules,
+                    schedules = mergedSchedules,
                     rowHeight = eventPreviewRowHeight,
                     maxRow = eventPreviewMaxRow,
                     rowSpaceBy = eventPreviewRowSpaceBy,

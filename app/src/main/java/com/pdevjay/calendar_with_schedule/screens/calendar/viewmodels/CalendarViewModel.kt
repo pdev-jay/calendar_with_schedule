@@ -11,6 +11,7 @@ import com.pdevjay.calendar_with_schedule.notification.AlarmScheduler
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarDay
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarMonth
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarWeek
+import com.pdevjay.calendar_with_schedule.screens.calendar.data.HolidayData
 import com.pdevjay.calendar_with_schedule.screens.calendar.intents.CalendarIntent
 import com.pdevjay.calendar_with_schedule.screens.calendar.states.CalendarState
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
@@ -20,6 +21,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.launch
@@ -51,16 +53,23 @@ class CalendarViewModel @Inject constructor(
             remoteDataRepository.refreshHolidays()
         }
         viewModelScope.launch {
-            scheduleRepository.scheduleMap
-                .filter { it.isNotEmpty() }
-                .collect { newScheduleMap ->
-                Log.e("viemodel_calendar", " scheduleMap in CalendarViewModel ${newScheduleMap.size}")
-                Log.e("viemodel_calendar", " scheduleMap 자동 업데이트됨 from: ${Thread.currentThread().name}")
-
-                _state.value = _state.value.copy(scheduleMap = newScheduleMap)
-                Log.e("", "scheduleMap updated ")
-                _isLoading.value = false
+            combine(
+                scheduleRepository.scheduleMap,
+                scheduleRepository.holidayMap
+            ) { scheduleMap, holidayMap ->
+                Pair(scheduleMap, holidayMap)
             }
+                .filter { (s, h) -> s.isNotEmpty() || h.isNotEmpty() } // 아무 값도 없으면 무시
+                .collect { (newScheduleMap, newHolidayMap) ->
+                    Log.e("viemodel_calendar", " scheduleMap updated: ${newScheduleMap.size}")
+                    Log.e("viemodel_calendar", " holidayMap updated: ${newHolidayMap.size}")
+
+                    _state.value = _state.value.copy(
+                        scheduleMap = newScheduleMap,
+                        holidayMap = newHolidayMap
+                    )
+                    _isLoading.value = false
+                }
         }
     }
 
@@ -180,5 +189,9 @@ class CalendarViewModel @Inject constructor(
     fun getMappedSchedulesForMonth(month: CalendarMonth): Map<LocalDate, List<BaseSchedule>> {
         val scheduleMap = _state.value.scheduleMap //  최신 일정 데이터 가져오기
         return month.mapSchedulesToDays(scheduleMap)
+    }
+    fun getMappedHolidayForMonth(month: CalendarMonth): Map<LocalDate, List<HolidayData>> {
+        val holidayMap = _state.value.holidayMap //  최신 일정 데이터 가져오기
+        return month.mapHolidaysToDays(holidayMap)
     }
 }

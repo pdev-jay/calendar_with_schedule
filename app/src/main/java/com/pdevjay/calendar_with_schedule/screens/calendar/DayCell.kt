@@ -17,9 +17,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.github.usingsky.calendar.KoreanLunarCalendar
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarDay
+import com.pdevjay.calendar_with_schedule.screens.calendar.data.HolidayData
 import com.pdevjay.calendar_with_schedule.utils.LunarCalendarUtils
+import java.time.LocalDate
 
 
 @Composable

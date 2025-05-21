@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.CalendarDay
+import com.pdevjay.calendar_with_schedule.screens.calendar.data.HolidaySchedule
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
 import com.pdevjay.calendar_with_schedule.screens.schedule.data.rangeTo
 import java.time.LocalDate
@@ -68,14 +69,15 @@ fun WeekScheduleRow(
         val placedSchedules = mutableListOf<MutableList<BaseSchedule>>()
         val hiddenCount = mutableMapOf<LocalDate, Int>()
 
-        //  먼저 여러 날에 걸친 일정 먼저 처리
+        val holidays = schedules.filterIsInstance<HolidaySchedule>()
+
         val multiDaySchedules = schedules.filter {
-            ChronoUnit.DAYS.between(it.start.date, it.end.date) >= 1
+            ChronoUnit.DAYS.between(it.start.date, it.end.date) >= 1 && it !is HolidaySchedule
         }
 
-        val singleDaySchedules = schedules - multiDaySchedules
+        val singleDaySchedules = schedules - holidays.toSet() - multiDaySchedules.toSet()
 
-        val sortedSchedules = multiDaySchedules + singleDaySchedules
+        val sortedSchedules = holidays + multiDaySchedules + singleDaySchedules
 
         sortedSchedules.forEach { schedule ->
             val start = schedule.start.date
@@ -100,7 +102,7 @@ fun WeekScheduleRow(
                 }
             }.takeIf { it >= 0 } ?: placedSchedules.size
 
-            if (layerIndex >= 3) {
+            if (layerIndex >= (maxRow - 1)) {
                 // 숨겨진 일정 처리
                 actualStart.rangeTo(actualEnd).forEach { date ->
                     if (date in firstDay..lastDay) {

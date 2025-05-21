@@ -18,6 +18,14 @@ data class CalendarMonth(
             scheduleMap[day.date] ?: emptyList() //  해당 날짜에 일정이 있으면 가져오고, 없으면 빈 리스트 반환
         })
     }
+
+    fun mapHolidaysToDays(
+        holidayMap: Map<LocalDate, List<HolidayData>>
+    ): Map<LocalDate, List<HolidayData>> {
+        return days.associateBy({ it.date }, { day ->
+            holidayMap[day.date] ?: emptyList()
+        })
+    }
 }
 
 data class CalendarDay(

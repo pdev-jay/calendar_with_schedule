@@ -139,13 +139,20 @@ fun CalendarScreen(
                     ) {
 
                         items(calendarState.months, key = { it.yearMonth.toString() }) { month ->
-                            val mappedSchedules = remember(calendarState.scheduleMap) {
-                                calendarViewModel.getMappedSchedulesForMonth(month)
-                            }
+//                            val mappedSchedules = remember(calendarState.scheduleMap) {
+//                                calendarViewModel.getMappedSchedulesForMonth(month)
+//                            }
+//                            val mappedHolidays = remember(calendarState.scheduleMap) {
+//                                calendarViewModel.getMappedHolidayForMonth(month)
+//                            }
 
+                            val (mappedSchedules, mappedHolidays) = remember(calendarState.scheduleMap) {
+                                Pair(calendarViewModel.getMappedSchedulesForMonth(month), calendarViewModel.getMappedHolidayForMonth(month))
+                            }
                             MonthItem(
                                 month,
-                                mappedSchedules
+                                mappedSchedules,
+                                mappedHolidays
                             ) { date ->
                                 if (calendarState.selectedDate == null || calendarState.selectedDate != date.date) {
                                     calendarViewModel.processIntent(
