@@ -9,6 +9,7 @@ object SharedPreferencesUtil {
     const val KEY_FIRST_LAUNCH = "first_launch"
     const val KEY_SHOW_LUNAR_DATE = "show_lunar_date"
     const val KEY_HOLIDAY_SYNC = "holiday_sync"
+    const val KEY_FIRST_HOLIDAY_SYNC = "holiday_sync_first"
 
     private fun getPrefs(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)

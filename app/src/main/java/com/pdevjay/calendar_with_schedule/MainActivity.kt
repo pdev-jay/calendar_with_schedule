@@ -27,7 +27,7 @@ import com.pdevjay.calendar_with_schedule.utils.AppVersionUtils
 import com.pdevjay.calendar_with_schedule.utils.PermissionUtils
 import com.pdevjay.calendar_with_schedule.utils.SharedPreferencesUtil
 import com.pdevjay.calendar_with_schedule.utils.other_viewmodels.SplashViewModel
-import com.pdevjay.calendar_with_schedule.utils.WorkUtils
+import com.pdevjay.calendar_with_schedule.utils.works.WorkUtils
 import dagger.hilt.android.AndroidEntryPoint
 import java.time.LocalDate
 
@@ -67,6 +67,7 @@ class MainActivity : ComponentActivity() {
 
         AlarmScheduler.createNotificationChannel(this)
         WorkUtils.scheduleDailyAlarmRefreshWork(this)
+        WorkUtils.scheduleHolidaySyncWork(this)
 
         enableEdgeToEdge()
         setContent {

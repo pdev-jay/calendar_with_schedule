@@ -49,9 +49,9 @@ class CalendarViewModel @Inject constructor(
 
     init {
         initializeMonths()
-        viewModelScope.launch {
-            remoteDataRepository.refreshHolidays()
-        }
+//        viewModelScope.launch {
+//            remoteDataRepository.refreshHolidays()
+//        }
         viewModelScope.launch {
             combine(
                 scheduleRepository.scheduleMap,

@@ -28,7 +28,7 @@ abstract class ScheduleDatabase : RoomDatabase() {
                 name TEXT NOT NULL,
                 isHoliday INTEGER NOT NULL,
                 seq INTEGER NOT NULL,
-                updatedAt TEXT NOT NULL DEFAULT '2000-01-01T00:00:00Z'
+                updatedAt TEXT NOT NULL DEFAULT '2000-01-01T00:00:00Z',
                 PRIMARY KEY(date, seq)
             )
         """.trimIndent()
