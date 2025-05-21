@@ -8,6 +8,7 @@ import com.pdevjay.calendar_with_schedule.screens.calendar.data.HolidayData
 import com.pdevjay.calendar_with_schedule.screens.calendar.data.toEntity
 import com.pdevjay.calendar_with_schedule.utils.SharedPreferencesUtil
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -35,17 +36,17 @@ class RemoteDataRepository @Inject constructor(
 //        }
 
         if (holidays.isNotEmpty()) {
-//            dao.insertAll(holidays.map { it.toEntity() })
+            dao.insertAll(holidays.map { it.toEntity() })
 
             val latestUpdateTime = holidays.maxOfOrNull { it.updatedAt } ?: lastSync
             Log.d("HolidaySync", "✅ size = ${holidays.size}")
             Log.d("HolidaySync", "✅ 최신 updatedAt = $latestUpdateTime")
-//
-//            SharedPreferencesUtil.putString(
-//                context,
-//                SharedPreferencesUtil.KEY_HOLIDAY_SYNC,
-//                latestUpdateTime
-//            )
+
+            SharedPreferencesUtil.putString(
+                context,
+                SharedPreferencesUtil.KEY_HOLIDAY_SYNC,
+                latestUpdateTime
+            )
         } else {
             Log.d("HolidaySync", "🔕 업데이트할 holiday 없음.")
         }
@@ -54,4 +55,8 @@ class RemoteDataRepository @Inject constructor(
     suspend fun getLocalHolidays(): List<HolidayData> {
         return dao.getAll().map { it.toModel() }
     }
+
+//    suspend fun getHolidaysForMonths(months: List<String>): List<HolidayData> {
+//        return dao.getHolidaysForMonths(months).map { it.toModel() }
+//    }
 }

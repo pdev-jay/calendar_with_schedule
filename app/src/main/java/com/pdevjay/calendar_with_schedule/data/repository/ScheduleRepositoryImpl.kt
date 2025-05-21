@@ -3,6 +3,7 @@ package com.pdevjay.calendar_with_schedule.data.repository
 import android.content.Context
 import android.util.Log
 import com.pdevjay.calendar_with_schedule.BuildConfig
+import com.pdevjay.calendar_with_schedule.data.database.HolidayDao
 import com.pdevjay.calendar_with_schedule.data.database.RecurringScheduleDao
 import com.pdevjay.calendar_with_schedule.data.database.ScheduleDao
 import com.pdevjay.calendar_with_schedule.data.entity.toRecurringData
@@ -48,8 +49,8 @@ import javax.inject.Singleton
 @Singleton
 class ScheduleRepositoryImpl @Inject constructor(
     private val scheduleDao: ScheduleDao,
-    private val recurringScheduleDao: RecurringScheduleDao, //  추가
-    @ApplicationContext private val context: Context
+    private val recurringScheduleDao: RecurringScheduleDao,
+    private val holidayDao: HolidayDao,
 ) : ScheduleRepository {
 
     private val _scheduleMap = MutableStateFlow<Map<LocalDate, List<RecurringData>>>(emptyMap())
@@ -87,26 +88,91 @@ class ScheduleRepositoryImpl @Inject constructor(
                     _currentMonths.value.maxOrNull()?.toString() ?: YearMonth.now().toString()
                 ).distinctUntilChanged(),
                 _currentMonths
-            ) { _, _, months ->
-                months
-            }.distinctUntilChanged()
-                .collectLatest { months ->
-                    Log.e("viemodel", "📌 _currentMonths 변경 감지됨: ${months}")
-
-                    if (months.isNotEmpty()) {
-                        getSchedulesForMonths(months)
-                            .distinctUntilChanged()
-                            .filter { it.isNotEmpty() }
-                            .collectLatest { newScheduleMap ->
-                                _scheduleMap.value = newScheduleMap
-                                _isScheduleMapReady.value = true
-                                Log.e("viemodel_repository", " scheduleMap 자동 업데이트됨: ${newScheduleMap.keys}")
-                            }
-                    }
+            ) { scheduleEntities, recurringEntities, months ->
+                Log.e("viemodel_repository", "✅ months 업데이트 됨 : ${months}")
+                val originalSchedules = scheduleEntities.map { it.toScheduleData() }
+                val recurringSchedules = recurringEntities.map { it.toRecurringData() }
+                buildScheduleMap(originalSchedules, recurringSchedules, months)
+            }
+                .distinctUntilChanged()
+                .collectLatest { scheduleMap ->
+                    _scheduleMap.value = scheduleMap
+                    _isScheduleMapReady.value = true
+                    Log.e("viemodel_repository", "✅ scheduleMap 자동 업데이트됨: ${scheduleMap.keys}")
                 }
         }
 
     }
+
+    private fun buildScheduleMap(
+        originalSchedules: List<ScheduleData>,
+        recurringSchedules: List<RecurringData>,
+        months: List<YearMonth>
+    ): Map<LocalDate, List<RecurringData>> {
+        val allSchedules = mutableListOf<RecurringData>()
+        val branchRoots = mutableMapOf<String?, RecurringData>()
+
+        inflateRecurringData(ScheduleTarget.Original(originalSchedules), recurringSchedules, months, allSchedules, branchRoots)
+        inflateRecurringData(ScheduleTarget.Branch(recurringSchedules), recurringSchedules, months, allSchedules, branchRoots, true)
+
+        val resolvedSchedules = allSchedules.map { item ->
+            if (item.repeatType == RepeatType.NONE && !item.isFirstSchedule) {
+                val root = branchRoots[item.branchId]
+                if (root != null) item.resolveDisplayOnly(root) else item
+            } else item
+        }
+
+        val expanded = resolvedSchedules
+            .filter { !it.isDeleted }
+            .flatMap { item ->
+                val startDate = item.start.date
+                val endDate = item.end.date
+                if (startDate == endDate) listOf(startDate to item)
+                else startDate.rangeTo(endDate).map { it to item }
+            }
+            .groupBy({ it.first }, { it.second })
+            .mapValues { it.value.sortedBy { item -> item.start.time } }
+
+        val validDates = months.flatMap { month -> (1..month.lengthOfMonth()).map { month.atDay(it) } }
+        return validDates.associateWith { date -> expanded[date].orEmpty() }.toSortedMap()
+    }
+
+//    init {
+//        Log.e("ScheduleRepository", " Created! hash=${this.hashCode()}")
+//
+//        repositoryScope.launch {
+//            combine(
+//                scheduleDao.getSchedulesForMonths(
+//                    _currentMonths.value.map { it.toString() },
+//                    _currentMonths.value.minOrNull()?.toString() ?: YearMonth.now().toString(),
+//                    _currentMonths.value.maxOrNull()?.toString() ?: YearMonth.now().toString()
+//                ).distinctUntilChanged(),
+//                recurringScheduleDao.getRecurringSchedulesForMonths(
+//                    _currentMonths.value.map { it.toString() },
+//                    _currentMonths.value.minOrNull()?.toString() ?: YearMonth.now().toString(),
+//                    _currentMonths.value.maxOrNull()?.toString() ?: YearMonth.now().toString()
+//                ).distinctUntilChanged(),
+//                _currentMonths
+//            ) { _, _, months ->
+//                months
+//            }.distinctUntilChanged()
+//                .collectLatest { months ->
+//                    Log.e("viemodel", "📌 _currentMonths 변경 감지됨: ${months}")
+//
+//                    if (months.isNotEmpty()) {
+//                        getSchedulesForMonths(months)
+//                            .distinctUntilChanged()
+//                            .filter { it.isNotEmpty() }
+//                            .collectLatest { newScheduleMap ->
+//                                _scheduleMap.value = newScheduleMap
+//                                _isScheduleMapReady.value = true
+//                                Log.e("viemodel_repository", " scheduleMap 자동 업데이트됨: ${newScheduleMap.keys}")
+//                            }
+//                    }
+//                }
+//        }
+//
+//    }
 
     override suspend fun loadSchedulesForMonths(months: List<YearMonth>) {
         _currentMonths.value = months //  `currentMonths` 를 갱신하면 자동으로 `scheduleMap` 업데이트됨
@@ -114,7 +180,7 @@ class ScheduleRepositoryImpl @Inject constructor(
 
      override fun getSchedulesForMonths(months: List<YearMonth>): Flow<Map<LocalDate, List<RecurringData>>> {
 
-         val monthStrings = months.map { it.toString() }
+        val monthStrings = months.map { it.toString() }
         val maxMonth = months.maxOrNull()?.toString() ?: YearMonth.now().toString()
         val minMonth = months.minOrNull()?.toString() ?: YearMonth.now().toString()
 
