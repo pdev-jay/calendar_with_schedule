@@ -29,7 +29,6 @@ import javax.inject.Inject
 class CalendarViewModel @Inject constructor(
     private val scheduleRepository: ScheduleRepository,
     @ApplicationContext private val context: Context,
-    private val remoteDataRepository: RemoteDataRepository
 ) : ViewModel() {
     private val _state = MutableStateFlow(CalendarState())
     val state: StateFlow<CalendarState> = _state
@@ -41,12 +40,8 @@ class CalendarViewModel @Inject constructor(
 
     var selectedDate = MutableStateFlow(LocalDate.now()) // 사용자가 선택한 날짜
 
-
     init {
         initializeMonths()
-//        viewModelScope.launch {
-//            remoteDataRepository.refreshHolidays()
-//        }
         viewModelScope.launch {
             combine(
                 scheduleRepository.scheduleMap,

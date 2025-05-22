@@ -18,7 +18,7 @@ class RemoteDataRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     ) {
 
-    suspend fun refreshHolidays() {
+    suspend fun refreshHolidays(): Boolean {
         val lastSync = SharedPreferencesUtil.getString(
             context,
             SharedPreferencesUtil.KEY_HOLIDAY_SYNC,
@@ -30,9 +30,6 @@ class RemoteDataRepository @Inject constructor(
         val holidays = api.getUpdatedHolidays(lastSync)
 
         Log.d("HolidaySync", "조회된 holiday 수: ${holidays.size}")
-//        holidays.forEach {
-//            Log.d("HolidaySync", "holiday: date=${it.date}, name=${it.name}, updatedAt=${it.updatedAt}")
-//        }
 
         if (holidays.isNotEmpty()) {
             dao.insertAll(holidays.map { it.toEntity() })
@@ -49,13 +46,15 @@ class RemoteDataRepository @Inject constructor(
         } else {
             Log.d("HolidaySync", "업데이트할 holiday 없음.")
         }
+
+        return dao.isHolidayReady()
     }
 
     suspend fun getLocalHolidays(): List<HolidayData> {
         return dao.getAll().map { it.toModel() }
     }
 
-//    suspend fun getHolidaysForMonths(months: List<String>): List<HolidayData> {
-//        return dao.getHolidaysForMonths(months).map { it.toModel() }
-//    }
+    suspend fun isHolidayReady(): Boolean{
+        return dao.isHolidayReady()
+    }
 }

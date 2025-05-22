@@ -21,4 +21,7 @@ interface HolidayDao {
         strftime('%Y-%m', date) IN (:months)
 """)
     fun getHolidaysForMonths(months: List<String>): Flow<List<HolidayDataEntity>>
+
+    @Query("SELECT EXISTS(SELECT 1 FROM holidays LIMIT 1)")
+    suspend fun isHolidayReady(): Boolean
 }

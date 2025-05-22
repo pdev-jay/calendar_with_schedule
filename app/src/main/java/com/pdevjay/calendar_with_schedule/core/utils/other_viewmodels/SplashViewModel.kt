@@ -13,7 +13,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SplashViewModel @Inject constructor(
-    private val scheduleRepository: ScheduleRepository
+    private val scheduleRepository: ScheduleRepository,
 ) : ViewModel() {
     var isSplashRunning = mutableStateOf(true)
 
