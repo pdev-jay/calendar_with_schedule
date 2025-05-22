@@ -44,6 +44,7 @@ import com.pdevjay.calendar_with_schedule.features.schedule.SwitchSelector
 import com.pdevjay.calendar_with_schedule.core.utils.extensions.NotificationPermissionDeniedDialog
 import com.pdevjay.calendar_with_schedule.core.utils.extensions.PermissionUtils
 import com.pdevjay.calendar_with_schedule.core.utils.SharedPreferencesUtil
+import com.pdevjay.calendar_with_schedule.core.utils.extensions.AppVersionUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,7 +87,8 @@ fun SettingsScreen(
                     .fillMaxSize()
                     .padding(innerPadding)
                     .padding(16.dp)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 GroupContainer {
                     SwitchSelector(
@@ -134,6 +136,15 @@ fun SettingsScreen(
                             )
                         }
                     }
+                }
+                Spacer(modifier = Modifier.weight(1f))
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ){
+                    Text(text = "Schedy", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(text = "v${AppVersionUtils.currentAppVersion}", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         if (showPermissionDialog) {

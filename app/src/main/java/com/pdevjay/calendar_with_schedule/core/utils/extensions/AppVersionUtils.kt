@@ -15,6 +15,8 @@ import kotlinx.coroutines.withContext
 
 object AppVersionUtils {
 
+    var currentAppVersion = BuildConfig.VERSION_NAME
+
     fun checkAppVersion(activity: Activity) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -24,7 +26,7 @@ object AppVersionUtils {
                 val current = BuildConfig.VERSION_NAME
                 val contents = response.contents
                 Log.e("AppVersionUtil", "response : $response / current : $current / latest : $latest")
-
+                currentAppVersion = current
                 if (isVersionOlder(current, latest)) {
                     withContext(Dispatchers.Main) {
                         showUpdateDialog(activity, latest, contents, appUrl)

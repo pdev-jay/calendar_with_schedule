@@ -30,7 +30,8 @@ data class HolidaySchedule(
     override val repeatRule: String?,
     override val alarmOption: AlarmOption,
     override val branchId: String?,
-    override val color: Int?
+    override val color: Int?,
+    val isHoliday: Boolean = true
 ) : BaseSchedule(
     id, title, location, isAllDay, start, end,
     repeatType, repeatUntil, repeatRule, alarmOption, branchId, color

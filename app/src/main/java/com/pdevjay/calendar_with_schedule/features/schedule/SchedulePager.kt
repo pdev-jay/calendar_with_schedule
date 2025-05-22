@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import com.pdevjay.calendar_with_schedule.features.calendar.data.toMergedHolidaySchedules
 import com.pdevjay.calendar_with_schedule.features.calendar.intents.CalendarIntent
 import com.pdevjay.calendar_with_schedule.features.calendar.viewmodels.CalendarViewModel
 import com.pdevjay.calendar_with_schedule.features.schedule.data.BaseSchedule
@@ -88,11 +89,14 @@ fun SchedulePager(
         ) { page ->
             val selectedDay = allDays[page]
             val schedules by remember { derivedStateOf { calendarState.scheduleMap[selectedDay.date] ?: emptyList() } }
+            val holidays by remember { derivedStateOf { calendarState.holidayMap[selectedDay.date] ?: emptyList() } }
+            val totalSchedule = schedules + holidays.toMergedHolidaySchedules()
+
             ScheduleView(
                 modifier = modifier,
                 selectedDay = selectedDay.date,
                 scheduleViewModel = scheduleViewModel,
-                schedules = schedules,
+                schedules = totalSchedule,
                 onEventClick = onEventClick,
                 onBackButtonClicked = onBackButtonClicked
             )

@@ -71,13 +71,15 @@ fun WeekScheduleRow(
 
         val holidays = schedules.filterIsInstance<HolidaySchedule>()
 
+        val allDayEvents = schedules.filter { it.isAllDay && it !is HolidaySchedule }
+
         val multiDaySchedules = schedules.filter {
             ChronoUnit.DAYS.between(it.start.date, it.end.date) >= 1 && it !is HolidaySchedule
         }
 
-        val singleDaySchedules = schedules - holidays.toSet() - multiDaySchedules.toSet()
+        val singleDaySchedules = schedules - holidays.toSet() - allDayEvents.toSet() - multiDaySchedules.toSet()
 
-        val sortedSchedules = holidays + multiDaySchedules + singleDaySchedules
+        val sortedSchedules = holidays + allDayEvents + multiDaySchedules + singleDaySchedules
 
         sortedSchedules.forEach { schedule ->
             val start = schedule.start.date

@@ -42,7 +42,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.times
 import com.pdevjay.calendar_with_schedule.R
-import com.pdevjay.calendar_with_schedule.features.schedule.data.RecurringData
+import com.pdevjay.calendar_with_schedule.features.calendar.data.HolidaySchedule
+import com.pdevjay.calendar_with_schedule.features.schedule.data.BaseSchedule
 import com.pdevjay.calendar_with_schedule.features.schedule.data.overlapsWith
 import com.pdevjay.calendar_with_schedule.features.schedule.enums.RepeatType
 import com.pdevjay.calendar_with_schedule.features.schedule.viewmodels.ScheduleViewModel
@@ -55,8 +56,8 @@ fun ScheduleView(
     modifier: Modifier = Modifier,
     scheduleViewModel: ScheduleViewModel,
     selectedDay: LocalDate?,
-    schedules: List<RecurringData>, //  BaseSchedule 사용 (ScheduleData + RecurringData 모두 처리 가능)
-    onEventClick: (RecurringData) -> Unit, //  BaseSchedule로 변경
+    schedules: List<BaseSchedule>, //  BaseSchedule 사용 (ScheduleData + RecurringData 모두 처리 가능)
+    onEventClick: (BaseSchedule) -> Unit, //  BaseSchedule로 변경
     onBackButtonClicked: () -> Unit
 ) {
 
@@ -67,7 +68,10 @@ fun ScheduleView(
     }
 
     val dayEvents = schedules
-    val allDayEvents = dayEvents.filter { it.isAllDay }
+    val allDayEvents = dayEvents
+        .filter { it.isAllDay }
+        .sortedWith(compareByDescending<BaseSchedule> { it is HolidaySchedule })
+
     val nonAllDayEvents = dayEvents.filter { !it.isAllDay }
     val groupedEvents = remember(nonAllDayEvents) { groupOverlappingEvents(nonAllDayEvents) }
     Box(modifier = modifier.fillMaxSize()) {
@@ -159,12 +163,12 @@ fun TimeColumn() {
 
 @Composable
 fun EventBlock(
-    event: RecurringData,
+    event: BaseSchedule,
     index: Int,
     totalCount: Int,
     maxWidth: Dp,
     selectedDay: LocalDate,
-    onEventClick: (RecurringData) -> Unit
+    onEventClick: (BaseSchedule) -> Unit
 ) {
     val startMinutes = if (event.start.date < selectedDay) {
         0  // 전날부터 이어진 이벤트는 오늘 0시부터 표시
@@ -202,7 +206,11 @@ fun EventBlock(
         .width(blockWidth)
         .defaultMinSize(minHeight = 30.dp)
         .height(durationMinutes.dp)
-        .clickable { onEventClick(event) }
+        .clickable {
+            if (event !is HolidaySchedule) {
+                onEventClick(event)
+            }
+        }
 //        .border(0.5.dp, MaterialTheme.colorScheme.outline, shape = RoundedCornerShape(8.dp))
         .background(darkerColor, shape = RoundedCornerShape(8.dp)),
         contentAlignment = Alignment.TopStart
@@ -260,8 +268,8 @@ fun EventBlock(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AllDayEventColumn(
-    allDayEvents: List<RecurringData>,
-    onEventClick: (RecurringData) -> Unit
+    allDayEvents: List<BaseSchedule>,
+    onEventClick: (BaseSchedule) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -269,7 +277,7 @@ fun AllDayEventColumn(
         verticalArrangement = Arrangement.spacedBy(2.dp),
         horizontalAlignment = Alignment.CenterHorizontally
 
-    ){
+    ) {
         Text(text = "All-Day Events", style = MaterialTheme.typography.titleMedium)
         Row() {
             FlowRow(
@@ -281,7 +289,8 @@ fun AllDayEventColumn(
 
                 allDayEvents.forEach { event ->
                     val baseColor =
-                        event.color?.let { Color(it).copy(alpha = 0.7f) } ?: MaterialTheme.colorScheme.primary
+                        event.color?.let { Color(it).copy(alpha = 0.7f) }
+                            ?: MaterialTheme.colorScheme.primary
                     val darkerColor = baseColor.copy(
                         red = (baseColor.red * (1 - 0.1f)),
                         green = (baseColor.green * (1 - 0.1f)),
@@ -292,7 +301,11 @@ fun AllDayEventColumn(
                             .weight(1f)
                             .padding(horizontal = 2.dp)
                             .background(darkerColor, shape = RoundedCornerShape(8.dp))
-                            .clickable { onEventClick(event) },
+                            .clickable {
+                                if (event !is HolidaySchedule) {
+                                    onEventClick(event)
+                                }
+                            },
                         contentAlignment = Alignment.Center
                     ) {
                         Row(
@@ -362,12 +375,12 @@ fun getCurrentMinuteOfDay(): Int {
 }
 
 
-fun groupOverlappingEvents(events: List<RecurringData>): List<List<RecurringData>> {
+fun groupOverlappingEvents(events: List<BaseSchedule>): List<List<BaseSchedule>> {
     if (events.isEmpty()) return emptyList() //  빈 리스트가 들어오면 빈 리스트 반환
     //  일정들을 시작 시간 기준으로 정렬 (시간을 분 단위로 변환하여 비교)
     val sorted = events.sortedBy { it.start.time.hour * 60 + it.start.time.minute }
 
-    val result = mutableListOf<MutableList<RecurringData>>() //  그룹화된 결과 리스트
+    val result = mutableListOf<MutableList<BaseSchedule>>() //  그룹화된 결과 리스트
     var currentGroup = mutableListOf(sorted.first()) //  첫 번째 일정으로 첫 그룹 시작
 
     //  두 번째 일정부터 순회하면서 그룹화 진행
