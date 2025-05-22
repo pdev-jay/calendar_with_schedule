@@ -3,11 +3,11 @@ package com.pdevjay.calendar_with_schedule.di
 import android.content.Context
 import android.util.Log
 import androidx.room.Room
-import com.pdevjay.calendar_with_schedule.data.database.HolidayDao
-import com.pdevjay.calendar_with_schedule.data.database.RecurringScheduleDao
-import com.pdevjay.calendar_with_schedule.data.database.ScheduleDao
+import com.pdevjay.calendar_with_schedule.data.database.dao.HolidayDao
+import com.pdevjay.calendar_with_schedule.data.database.dao.RecurringScheduleDao
+import com.pdevjay.calendar_with_schedule.data.database.dao.ScheduleDao
 import com.pdevjay.calendar_with_schedule.data.database.ScheduleDatabase
-import com.pdevjay.calendar_with_schedule.data.remote.DataApiService
+import com.pdevjay.calendar_with_schedule.data.remote.api.DataApiService
 import com.pdevjay.calendar_with_schedule.data.remote.RetrofitClient
 import com.pdevjay.calendar_with_schedule.data.repository.ScheduleRepository
 import com.pdevjay.calendar_with_schedule.data.repository.ScheduleRepositoryImpl

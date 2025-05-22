@@ -18,16 +18,17 @@ import androidx.core.animation.doOnEnd
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.rememberNavController
+import com.pdevjay.calendar_with_schedule.app.AppNavGraph
 import com.pdevjay.calendar_with_schedule.notification.AlarmScheduler
-import com.pdevjay.calendar_with_schedule.screens.calendar.intents.CalendarIntent
-import com.pdevjay.calendar_with_schedule.screens.calendar.viewmodels.CalendarViewModel
-import com.pdevjay.calendar_with_schedule.screens.schedule.viewmodels.ScheduleViewModel
+import com.pdevjay.calendar_with_schedule.features.calendar.intents.CalendarIntent
+import com.pdevjay.calendar_with_schedule.features.calendar.viewmodels.CalendarViewModel
+import com.pdevjay.calendar_with_schedule.features.schedule.viewmodels.ScheduleViewModel
 import com.pdevjay.calendar_with_schedule.ui.theme.AppTheme
-import com.pdevjay.calendar_with_schedule.utils.AppVersionUtils
-import com.pdevjay.calendar_with_schedule.utils.PermissionUtils
-import com.pdevjay.calendar_with_schedule.utils.SharedPreferencesUtil
-import com.pdevjay.calendar_with_schedule.utils.other_viewmodels.SplashViewModel
-import com.pdevjay.calendar_with_schedule.utils.works.WorkUtils
+import com.pdevjay.calendar_with_schedule.core.utils.extensions.AppVersionUtils
+import com.pdevjay.calendar_with_schedule.core.utils.extensions.PermissionUtils
+import com.pdevjay.calendar_with_schedule.core.utils.SharedPreferencesUtil
+import com.pdevjay.calendar_with_schedule.core.utils.other_viewmodels.SplashViewModel
+import com.pdevjay.calendar_with_schedule.works.WorkUtils
 import dagger.hilt.android.AndroidEntryPoint
 import java.time.LocalDate
 

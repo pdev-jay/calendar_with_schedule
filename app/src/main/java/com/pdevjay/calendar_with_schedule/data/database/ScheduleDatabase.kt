@@ -8,8 +8,11 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.pdevjay.calendar_with_schedule.data.entity.HolidayDataEntity
 import com.pdevjay.calendar_with_schedule.data.entity.RecurringScheduleEntity
 import com.pdevjay.calendar_with_schedule.data.entity.ScheduleEntity
-import com.pdevjay.calendar_with_schedule.utils.AlarmOptionConverter
-import com.pdevjay.calendar_with_schedule.utils.DateTimePeriodConverter
+import com.pdevjay.calendar_with_schedule.core.utils.converters.AlarmOptionConverter
+import com.pdevjay.calendar_with_schedule.core.utils.converters.DateTimePeriodConverter
+import com.pdevjay.calendar_with_schedule.data.database.dao.HolidayDao
+import com.pdevjay.calendar_with_schedule.data.database.dao.RecurringScheduleDao
+import com.pdevjay.calendar_with_schedule.data.database.dao.ScheduleDao
 
 @Database(entities = [ScheduleEntity::class, RecurringScheduleEntity::class, HolidayDataEntity::class], version = 2)
 @TypeConverters(DateTimePeriodConverter::class, AlarmOptionConverter::class)

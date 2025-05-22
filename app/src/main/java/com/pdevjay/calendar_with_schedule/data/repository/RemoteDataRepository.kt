@@ -2,13 +2,12 @@ package com.pdevjay.calendar_with_schedule.data.repository
 
 import android.content.Context
 import android.util.Log
-import com.pdevjay.calendar_with_schedule.data.database.HolidayDao
-import com.pdevjay.calendar_with_schedule.data.remote.DataApiService
-import com.pdevjay.calendar_with_schedule.screens.calendar.data.HolidayData
-import com.pdevjay.calendar_with_schedule.screens.calendar.data.toEntity
-import com.pdevjay.calendar_with_schedule.utils.SharedPreferencesUtil
+import com.pdevjay.calendar_with_schedule.data.database.dao.HolidayDao
+import com.pdevjay.calendar_with_schedule.data.remote.api.DataApiService
+import com.pdevjay.calendar_with_schedule.features.calendar.data.HolidayData
+import com.pdevjay.calendar_with_schedule.features.calendar.data.toEntity
+import com.pdevjay.calendar_with_schedule.core.utils.SharedPreferencesUtil
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 

@@ -1,7 +1,7 @@
 package com.pdevjay.calendar_with_schedule.data.entity
 
 import androidx.room.Entity
-import com.pdevjay.calendar_with_schedule.screens.calendar.data.HolidayData
+import com.pdevjay.calendar_with_schedule.features.calendar.data.HolidayData
 
 @Entity(tableName = "holidays", primaryKeys = ["date", "seq"])
 data class HolidayDataEntity(

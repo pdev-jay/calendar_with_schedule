@@ -27,17 +27,17 @@
 -keep class com.google.gson.reflect.TypeToken { *; }
 
 # RecurringData, ScheduleData 관련 클래스 보존
--keep class com.pdevjay.calendar_with_schedule.screens.schedule.data.RecurringData { *; }
--keep class com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData { *; }
--keep class com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule { *; }
--keep class com.pdevjay.calendar_with_schedule.screens.calendar.data.HolidayData { *; }
+-keep class com.pdevjay.calendar_with_schedule.features.schedule.data.RecurringData { *; }
+-keep class com.pdevjay.calendar_with_schedule.features.schedule.data.ScheduleData { *; }
+-keep class com.pdevjay.calendar_with_schedule.features.schedule.data.BaseSchedule { *; }
+-keep class com.pdevjay.calendar_with_schedule.features.calendar.data.HolidayData { *; }
 -keep class com.pdevjay.calendar_with_schedule.data.entity.HolidayDataEntity { *; }
--keep class com.pdevjay.calendar_with_schedule.screens.settings.data.VersionResponse { *; }
--keep interface com.pdevjay.calendar_with_schedule.data.remote.DataApiService { *; }
+-keep class com.pdevjay.calendar_with_schedule.features.settings.data.VersionResponse { *; }
+-keep interface com.pdevjay.calendar_with_schedule.data.remote.api.DataApiService { *; }
 -keep class com.pdevjay.calendar_with_schedule.data.remote.RetrofitClient { *; }
 # JSON 유틸 및 어댑터 보존
--keep class com.pdevjay.calendar_with_schedule.utils.JsonUtils { *; }
--keep class com.pdevjay.calendar_with_schedule.utils.ScheduleMapAdapter { *; }
+-keep class com.pdevjay.calendar_with_schedule.core.utils.helpers.JsonUtils { *; }
+-keep class com.pdevjay.calendar_with_schedule.core.utils.helpers.ScheduleMapAdapter { *; }
 
 # Kotlin metadata (선택적이지만 도움이 됨)
 -keep class kotlin.Metadata { *; }
@@ -48,21 +48,21 @@
     public static ** valueOf(java.lang.String);
 }
 
--keep enum com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption { *; }
--keep enum com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatType { *; }
+-keep enum com.pdevjay.calendar_with_schedule.features.schedule.enums.AlarmOption { *; }
+-keep enum com.pdevjay.calendar_with_schedule.features.schedule.enums.RepeatType { *; }
 
 # Gson이 enum과 필드를 리플렉션으로 접근할 수 있게
 -keepclassmembers class * {
     @com.google.gson.annotations.SerializedName <fields>;
 }
 
--keep enum com.pdevjay.calendar_with_schedule.notification.AlarmAction { *; }
--keep enum com.pdevjay.calendar_with_schedule.notification.ScheduleType { *; }
+-keep enum com.pdevjay.calendar_with_schedule.works.AlarmAction { *; }
+-keep enum com.pdevjay.calendar_with_schedule.works.ScheduleType { *; }
 
 # AlarmRegisterWorker와 AlarmRefreshWorker는 이름 그대로 유지하고 제거 금지
--keep class com.pdevjay.calendar_with_schedule.notification.AlarmRegisterWorker { *; }
--keep class com.pdevjay.calendar_with_schedule.notification.AlarmRefreshWorker { *; }
--keep class com.pdevjay.calendar_with_schedule.utils.works.HolidaySyncWorker { *; }
+-keep class com.pdevjay.calendar_with_schedule.works.AlarmRegisterWorker { *; }
+-keep class com.pdevjay.calendar_with_schedule.works.AlarmRefreshWorker { *; }
+-keep class com.pdevjay.calendar_with_schedule.works.HolidaySyncWorker { *; }
 
 # 모든 Worker의 기본 구조 보존 (안전망용)
 -keep class androidx.work.Worker { *; }
@@ -72,7 +72,7 @@
 -keep class dagger.assisted.AssistedInject { *; }
 -keep class **_AssistedFactory { *; }
 
--keep class com.pdevjay.calendar_with_schedule.utils.ScheduleMapAdapter { *; }
+-keep class com.pdevjay.calendar_with_schedule.core.utils.helpers.ScheduleMapAdapter { *; }
 
 
 ######## Retrofit ########

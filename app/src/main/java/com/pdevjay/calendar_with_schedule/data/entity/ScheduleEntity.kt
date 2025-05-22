@@ -3,10 +3,10 @@ package com.pdevjay.calendar_with_schedule.data.entity
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.pdevjay.calendar_with_schedule.screens.schedule.data.DateTimePeriod
-import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
-import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
-import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatType
+import com.pdevjay.calendar_with_schedule.features.schedule.data.DateTimePeriod
+import com.pdevjay.calendar_with_schedule.features.schedule.data.ScheduleData
+import com.pdevjay.calendar_with_schedule.features.schedule.enums.AlarmOption
+import com.pdevjay.calendar_with_schedule.features.schedule.enums.RepeatType
 import java.time.LocalDate
 
 @Entity(tableName = "schedules")

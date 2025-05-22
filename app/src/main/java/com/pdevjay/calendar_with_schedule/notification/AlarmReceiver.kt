@@ -1,25 +1,20 @@
 package com.pdevjay.calendar_with_schedule.notification
 
 import android.Manifest
-import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.os.Build
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.pdevjay.calendar_with_schedule.MainActivity
 import com.pdevjay.calendar_with_schedule.R
-import com.pdevjay.calendar_with_schedule.screens.schedule.enums.AlarmOption
-import com.pdevjay.calendar_with_schedule.screens.schedule.enums.RepeatType
-import com.pdevjay.calendar_with_schedule.utils.SharedPreferencesUtil
-import java.time.Instant
+import com.pdevjay.calendar_with_schedule.features.schedule.enums.AlarmOption
+import com.pdevjay.calendar_with_schedule.core.utils.SharedPreferencesUtil
 import java.time.LocalDate
-import java.time.ZoneId
 
 class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {

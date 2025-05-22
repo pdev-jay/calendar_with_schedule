@@ -4,7 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import com.pdevjay.calendar_with_schedule.utils.works.WorkUtils
+import com.pdevjay.calendar_with_schedule.works.WorkUtils
 
 class BootCompletedReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {

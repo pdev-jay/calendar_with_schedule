@@ -1,10 +1,10 @@
 package com.pdevjay.calendar_with_schedule.data.repository
 
-import com.pdevjay.calendar_with_schedule.screens.calendar.data.HolidayData
-import com.pdevjay.calendar_with_schedule.screens.schedule.data.BaseSchedule
-import com.pdevjay.calendar_with_schedule.screens.schedule.data.RecurringData
-import com.pdevjay.calendar_with_schedule.screens.schedule.data.ScheduleData
-import com.pdevjay.calendar_with_schedule.screens.schedule.enums.ScheduleEditType
+import com.pdevjay.calendar_with_schedule.features.calendar.data.HolidayData
+import com.pdevjay.calendar_with_schedule.features.schedule.data.BaseSchedule
+import com.pdevjay.calendar_with_schedule.features.schedule.data.RecurringData
+import com.pdevjay.calendar_with_schedule.features.schedule.data.ScheduleData
+import com.pdevjay.calendar_with_schedule.features.schedule.enums.ScheduleEditType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import java.time.LocalDate
