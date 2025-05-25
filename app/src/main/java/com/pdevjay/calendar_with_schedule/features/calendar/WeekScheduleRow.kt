@@ -74,7 +74,7 @@ fun WeekScheduleRow(
         val allDayEvents = schedules.filter { it.isAllDay && it !is HolidaySchedule }
 
         val multiDaySchedules = schedules.filter {
-            ChronoUnit.DAYS.between(it.start.date, it.end.date) >= 1 && it !is HolidaySchedule
+            ChronoUnit.DAYS.between(it.start.date, it.end.date) >= 1 && it !is HolidaySchedule && !it.isAllDay
         }
 
         val singleDaySchedules = schedules - holidays.toSet() - allDayEvents.toSet() - multiDaySchedules.toSet()

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavController
 import com.pdevjay.calendar_with_schedule.features.calendar.data.CalendarDay
 import com.pdevjay.calendar_with_schedule.features.calendar.data.CalendarMonth
 import com.pdevjay.calendar_with_schedule.features.calendar.data.HolidayData
@@ -15,9 +16,10 @@ fun MonthItem(
     month: CalendarMonth,
     scheduleMap: Map<LocalDate, List<BaseSchedule>>,
     holidayMap: Map<LocalDate, List<HolidayData>>,
+    navController: NavController,
     onDayClick: (CalendarDay) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        DaysGrid(month.days, scheduleMap, holidayMap, onDayClick)
+        DaysGrid(month.days, scheduleMap, holidayMap, navController, onDayClick)
     }
 }

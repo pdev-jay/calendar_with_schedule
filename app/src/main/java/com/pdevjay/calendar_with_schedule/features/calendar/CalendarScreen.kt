@@ -144,7 +144,8 @@ fun CalendarScreen(
                             MonthItem(
                                 month,
                                 mappedSchedules,
-                                mappedHolidays
+                                mappedHolidays,
+                                navController
                             ) { date ->
                                 if (calendarState.selectedDate == null || calendarState.selectedDate != date.date) {
                                     calendarViewModel.processIntent(
