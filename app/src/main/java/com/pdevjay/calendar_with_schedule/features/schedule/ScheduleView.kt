@@ -1,9 +1,14 @@
 package com.pdevjay.calendar_with_schedule.features.schedule
 
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -22,30 +27,47 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.times
+import androidx.navigation.NavController
 import com.pdevjay.calendar_with_schedule.R
 import com.pdevjay.calendar_with_schedule.features.calendar.data.HolidaySchedule
 import com.pdevjay.calendar_with_schedule.features.schedule.data.BaseSchedule
+import com.pdevjay.calendar_with_schedule.features.schedule.data.RecurringData
 import com.pdevjay.calendar_with_schedule.features.schedule.data.overlapsWith
 import com.pdevjay.calendar_with_schedule.features.schedule.enums.RepeatType
+import com.pdevjay.calendar_with_schedule.features.schedule.enums.ScheduleEditType
+import com.pdevjay.calendar_with_schedule.features.schedule.intents.ScheduleIntent
 import com.pdevjay.calendar_with_schedule.features.schedule.viewmodels.ScheduleViewModel
 import kotlinx.coroutines.delay
 import java.time.LocalDate
@@ -57,11 +79,16 @@ fun ScheduleView(
     scheduleViewModel: ScheduleViewModel,
     selectedDay: LocalDate?,
     schedules: List<BaseSchedule>, //  BaseSchedule 사용 (ScheduleData + RecurringData 모두 처리 가능)
+    navController: NavController,
     onEventClick: (BaseSchedule) -> Unit, //  BaseSchedule로 변경
     onBackButtonClicked: () -> Unit
 ) {
 
     val scrollState = rememberScrollState()
+    var showDeleteBottomSheet by remember { mutableStateOf(false) }
+    var menuExpanded by remember { mutableStateOf(false) }
+    var currentEvent by remember { mutableStateOf<BaseSchedule?>(null) }
+    var anchorPosition by remember { mutableStateOf(Offset.Zero) }
 
     BackHandler {
         onBackButtonClicked()
@@ -95,6 +122,31 @@ fun ScheduleView(
                             .weight(1f)
                             .height(1440.dp)  // 24시간 = 1440분
                     ) {
+                        val density = LocalDensity.current
+                        val maxWidth = maxWidth
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .pointerInput(Unit) {
+                                    detectTapGestures(
+                                        onLongPress = { offset ->
+                                            val yInDp = with(density) { offset.y.toDp() }
+                                            val totalMinutes = yInDp.value.toInt().coerceIn(0, 1439)
+                                            val hour = totalMinutes / 60
+                                            val minute = totalMinutes % 60
+                                            val roundedMinute = (minute / 15) * 15
+
+                                            Log.d(
+                                                "LongPressTime",
+                                                "롱클릭 시간: %02d:%02d".format(hour, roundedMinute)
+                                            )
+                                            val destination =
+                                                "add_schedule/${selectedDay}?hour=${hour}&minute=${roundedMinute}"
+                                            navController.navigate(destination)
+                                        }
+                                    )
+                                }
+                        )
                         Canvas(modifier = Modifier.matchParentSize()) {
                             for (hour in 0 until 24) {
                                 val y = hour * 60f.dp.toPx()
@@ -107,19 +159,47 @@ fun ScheduleView(
                             }
                         }
                         // 이벤트 블록 표시
-                        groupedEvents.forEach { group ->
-                            val totalCount = group.size
-                            group.forEachIndexed { index, event ->
-                                if (selectedDay != null) { // selectedDay가 null이 아닐 때만 실행
-                                    EventBlock(
-                                        event,
-                                        index,
-                                        totalCount,
-                                        maxWidth,
-                                        selectedDay,
-                                        onEventClick
-                                    )
+                        Box{
+
+                            groupedEvents.forEach { group ->
+                                val totalCount = group.size
+                                group.forEachIndexed { index, event ->
+                                    if (selectedDay != null) { // selectedDay가 null이 아닐 때만 실행
+                                        EventBlock(
+                                            event,
+                                            index,
+                                            totalCount,
+                                            maxWidth,
+                                            selectedDay,
+                                            onEventClick = onEventClick,
+                                            onEventLongClick = { event, position ->
+                                                currentEvent = event
+                                                anchorPosition = position
+                                                menuExpanded = true
+                                            }
+                                        )
+                                    }
                                 }
+                            }
+                            DropdownMenu(
+                                expanded = menuExpanded,
+                                onDismissRequest = { menuExpanded = false },
+                                offset = with(LocalDensity.current) {
+                                    DpOffset(anchorPosition.x.toDp(), anchorPosition.y.toDp())
+                                },
+                                modifier = Modifier
+                                    .padding(4.dp)
+                            ) {
+                                DropdownMenuItem(
+                                    leadingIcon = { Icon(Icons.Default.Delete, contentDescription = "Menu") },
+                                    text = { Text(stringResource(R.string.delete_single_occurrence)) },
+                                    onClick = {
+                                        // 예: 편집
+                                        menuExpanded = false
+                                        currentEvent?.let {
+                                            showDeleteBottomSheet = true
+                                        }
+                                    })
                             }
                         }
 
@@ -133,6 +213,64 @@ fun ScheduleView(
         }
     }
 
+    if (currentEvent != null) {
+        if (currentEvent!!.branchId == null) {
+            ConfirmBottomSheet(
+                title = stringResource(R.string.delete_schedule),
+                description = stringResource(R.string.delete_description_for_single_occurrence),
+                single = stringResource(R.string.delete_single_occurrence),
+                isVisible = showDeleteBottomSheet,
+                onDismiss = { showDeleteBottomSheet = false },
+                onSingle = {
+                    try {
+                        scheduleViewModel.processIntent(
+                            ScheduleIntent.DeleteSchedule(
+                                currentEvent as RecurringData,
+                                ScheduleEditType.ONLY_THIS_EVENT
+                            )
+                        )
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                },
+            )
+
+        } else {
+            ConfirmBottomSheet(
+                title = stringResource(R.string.delete_schedule),
+                description = stringResource(R.string.delete_description),
+                single = stringResource(R.string.delete_single),
+                future = stringResource(R.string.delete_future),
+                isVisible = showDeleteBottomSheet,
+                onDismiss = { showDeleteBottomSheet = false },
+                onSingle = {
+
+                    try {
+                        scheduleViewModel.processIntent(
+                            ScheduleIntent.DeleteSchedule(
+                                currentEvent as RecurringData,
+                                ScheduleEditType.ONLY_THIS_EVENT
+                            )
+                        )
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                },
+                onFuture = {
+                    try {
+                        scheduleViewModel.processIntent(
+                            ScheduleIntent.DeleteSchedule(
+                                currentEvent as RecurringData,
+                                ScheduleEditType.THIS_AND_FUTURE
+                            )
+                        )
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                },
+            )
+        }
+    }
     LaunchedEffect(Unit) {
         val now = LocalTime.now()
         val nowOffset = now.hour * 60 + now.minute
@@ -161,6 +299,7 @@ fun TimeColumn() {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun EventBlock(
     event: BaseSchedule,
@@ -168,8 +307,11 @@ fun EventBlock(
     totalCount: Int,
     maxWidth: Dp,
     selectedDay: LocalDate,
-    onEventClick: (BaseSchedule) -> Unit
+    onEventClick: (BaseSchedule) -> Unit,
+    onEventLongClick: (BaseSchedule, Offset) -> Unit
 ) {
+    var blockPosition by remember { mutableStateOf(Offset.Zero) }
+
     val startMinutes = if (event.start.date < selectedDay) {
         0  // 전날부터 이어진 이벤트는 오늘 0시부터 표시
     } else {
@@ -203,14 +345,27 @@ fun EventBlock(
 
     BoxWithConstraints(modifier = Modifier
         .offset(x = xOffset, y = startMinutes.dp)
+        .onGloballyPositioned { coords ->
+            blockPosition = coords.localToWindow(Offset.Zero)
+        }
         .width(blockWidth)
         .defaultMinSize(minHeight = 30.dp)
         .height(durationMinutes.dp)
-        .clickable {
-            if (event !is HolidaySchedule) {
-                onEventClick(event)
-            }
-        }
+        .combinedClickable(
+            onClick = {
+                if (event !is HolidaySchedule) {
+                    onEventClick(event)
+                }
+            },
+            onLongClick = {
+                if (event !is HolidaySchedule) {
+                    onEventLongClick(event, blockPosition)
+                }
+            },
+            indication = null,
+            interactionSource = remember { MutableInteractionSource() }
+        )
+
 //        .border(0.5.dp, MaterialTheme.colorScheme.outline, shape = RoundedCornerShape(8.dp))
         .background(darkerColor, shape = RoundedCornerShape(8.dp)),
         contentAlignment = Alignment.TopStart

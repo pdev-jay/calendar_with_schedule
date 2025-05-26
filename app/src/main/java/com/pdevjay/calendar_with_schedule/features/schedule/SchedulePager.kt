@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavController
 import com.pdevjay.calendar_with_schedule.features.calendar.data.toMergedHolidaySchedules
 import com.pdevjay.calendar_with_schedule.features.calendar.intents.CalendarIntent
 import com.pdevjay.calendar_with_schedule.features.calendar.viewmodels.CalendarViewModel
@@ -27,6 +28,7 @@ fun SchedulePager(
     modifier: Modifier = Modifier,
     calendarViewModel: CalendarViewModel,
     scheduleViewModel: ScheduleViewModel,
+    navController: NavController,
     onEventClick: (BaseSchedule) -> Unit,
     onBackButtonClicked: () -> Unit
 ) {
@@ -97,6 +99,7 @@ fun SchedulePager(
                 selectedDay = selectedDay.date,
                 scheduleViewModel = scheduleViewModel,
                 schedules = totalSchedule,
+                navController = navController,
                 onEventClick = onEventClick,
                 onBackButtonClicked = onBackButtonClicked
             )

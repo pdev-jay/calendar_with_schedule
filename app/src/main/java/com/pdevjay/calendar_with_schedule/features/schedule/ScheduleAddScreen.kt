@@ -56,6 +56,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.pdevjay.calendar_with_schedule.R
+import com.pdevjay.calendar_with_schedule.core.utils.extensions.NotificationPermissionDeniedDialog
+import com.pdevjay.calendar_with_schedule.core.utils.extensions.PermissionUtils
+import com.pdevjay.calendar_with_schedule.core.utils.helpers.RRuleHelper.generateRRule
 import com.pdevjay.calendar_with_schedule.features.schedule.data.DateTimePeriod
 import com.pdevjay.calendar_with_schedule.features.schedule.data.ScheduleData
 import com.pdevjay.calendar_with_schedule.features.schedule.enums.AlarmOption
@@ -63,9 +66,6 @@ import com.pdevjay.calendar_with_schedule.features.schedule.enums.RepeatType
 import com.pdevjay.calendar_with_schedule.features.schedule.enums.ScheduleColor
 import com.pdevjay.calendar_with_schedule.features.schedule.intents.ScheduleIntent
 import com.pdevjay.calendar_with_schedule.features.schedule.viewmodels.ScheduleViewModel
-import com.pdevjay.calendar_with_schedule.core.utils.extensions.NotificationPermissionDeniedDialog
-import com.pdevjay.calendar_with_schedule.core.utils.extensions.PermissionUtils
-import com.pdevjay.calendar_with_schedule.core.utils.helpers.RRuleHelper.generateRRule
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -73,17 +73,34 @@ import java.time.LocalTime
 @Composable
 fun ScheduleAddScreen(
     selectedDate: LocalDate?,
+    selectedTime: LocalTime? = null,
     navController: NavController,
     scheduleViewModel: ScheduleViewModel,
 ) {
     val now = remember { LocalTime.now() }
     val initialDate = remember { selectedDate ?: LocalDate.now() }
     val context = LocalContext.current
-
     var title by remember { mutableStateOf("") }
     var location by remember { mutableStateOf("") }
-    var start by remember { mutableStateOf(DateTimePeriod(initialDate, LocalTime.of(now.hour, 0))) }
-    var end by remember { mutableStateOf(DateTimePeriod(initialDate, LocalTime.of(now.plusHours(1).hour, 0))) }
+    var start by remember {
+        mutableStateOf(
+            DateTimePeriod(
+                initialDate,
+                LocalTime.of(selectedTime?.hour ?: now.hour, selectedTime?.minute ?: 0)
+            )
+        )
+    }
+    var end by remember {
+        mutableStateOf(
+            DateTimePeriod(
+                initialDate,
+                LocalTime.of(
+                    selectedTime?.hour?.plus(1) ?: now.plusHours(1).hour,
+                    selectedTime?.minute ?: 0
+                )
+            )
+        )
+    }
     var allDay by remember { mutableStateOf(false) }
     // repeat과 alarm 상태 추가
     var repeatType by remember { mutableStateOf(RepeatType.NONE) }
@@ -103,7 +120,7 @@ fun ScheduleAddScreen(
         navController.popBackStack()
     }
 
-    LaunchedEffect(repeatType){
+    LaunchedEffect(repeatType) {
         repeatUntil = when (repeatType) {
             RepeatType.DAILY -> start.date.plusDays(30)  // 기본 30일 후
             RepeatType.WEEKLY -> start.date.plusMonths(3) // 기본 3개월 후
@@ -138,18 +155,38 @@ fun ScheduleAddScreen(
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            StyledTextField(value = title, label = stringResource(R.string.title), onValueChange = { title = it })
+            StyledTextField(
+                value = title,
+                label = stringResource(R.string.title),
+                onValueChange = { title = it })
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            GroupContainer (
-            ){
+            GroupContainer(
+            ) {
                 // All-day Toggle
-                SwitchSelector(label = stringResource(R.string.all_day), option = allDay, onSwitch = { allDay = it })
+                SwitchSelector(
+                    label = stringResource(R.string.all_day),
+                    option = allDay,
+                    onSwitch = { allDay = it })
                 CustomHorizontalDivider()
-                DateTimeSelector(stringResource(R.string.starts), start.date, start.time, onDateClick = {showDatePickerForStart = true}, onTimeClick = {showTimePickerForStart = true}, isAllDay = allDay)
+                DateTimeSelector(
+                    stringResource(R.string.starts),
+                    start.date,
+                    start.time,
+                    onDateClick = { showDatePickerForStart = true },
+                    onTimeClick = { showTimePickerForStart = true },
+                    isAllDay = allDay
+                )
                 CustomHorizontalDivider()
-                DateTimeSelector(stringResource(R.string.ends), end.date, end.time, onDateClick = {showDatePickerForEnd = true}, onTimeClick = {showTimePickerForEnd = true}, isAllDay = allDay)
+                DateTimeSelector(
+                    stringResource(R.string.ends),
+                    end.date,
+                    end.time,
+                    onDateClick = { showDatePickerForEnd = true },
+                    onTimeClick = { showTimePickerForEnd = true },
+                    isAllDay = allDay
+                )
 
             }
 
@@ -167,10 +204,16 @@ fun ScheduleAddScreen(
                 // 반복 옵션을 선택하면 나타나는 반복 마지막 날 선택 옵션
                 if (repeatType != RepeatType.NONE) {
                     CustomHorizontalDivider()
-                    SwitchSelector(label = stringResource(R.string.set_repeat_until), option = isRepeatUntilEnabled, onSwitch = {isRepeatUntilEnabled = it})
-                    if (isRepeatUntilEnabled){
+                    SwitchSelector(
+                        label = stringResource(R.string.set_repeat_until),
+                        option = isRepeatUntilEnabled,
+                        onSwitch = { isRepeatUntilEnabled = it })
+                    if (isRepeatUntilEnabled) {
                         CustomHorizontalDivider()
-                        DateTimeSelector(stringResource(R.string.repeat_until), date = repeatUntil, onDateClick = {showDatePickerForRepeatUntil = true})
+                        DateTimeSelector(
+                            stringResource(R.string.repeat_until),
+                            date = repeatUntil,
+                            onDateClick = { showDatePickerForRepeatUntil = true })
                     }
                 }
             }
@@ -302,7 +345,7 @@ fun ScheduleAddScreen(
 }
 
 @Composable
-fun SwitchSelector(label:String, option: Boolean, onSwitch: (Boolean) -> Unit) {
+fun SwitchSelector(label: String, option: Boolean, onSwitch: (Boolean) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -310,7 +353,11 @@ fun SwitchSelector(label:String, option: Boolean, onSwitch: (Boolean) -> Unit) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            label,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
         Switch(
             checked = option,
             onCheckedChange = onSwitch
@@ -394,7 +441,10 @@ fun StyledTextField(value: String, label: String, onValueChange: (String) -> Uni
             modifier = Modifier.fillMaxWidth(),
             value = value,
             onValueChange = onValueChange,
-            textStyle = TextStyle(fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
+            textStyle = TextStyle(
+                fontSize = 16.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            ),
             decorationBox = { innerTextField ->
                 if (value.isEmpty()) {
                     Text(label, color = Color.Gray)
@@ -421,7 +471,11 @@ fun DateTimeSelector(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            label,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
 
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -431,8 +485,7 @@ fun DateTimeSelector(
                     .clip(RoundedCornerShape(8.dp))
                     .clickable(onClick = onDateClick)
                     .background(MaterialTheme.colorScheme.primary)
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                ,
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(date.toString(), color = MaterialTheme.colorScheme.onPrimary)
@@ -444,11 +497,13 @@ fun DateTimeSelector(
                         .clip(RoundedCornerShape(8.dp))
                         .clickable(enabled = !isAllDay, onClick = onTimeClick)
                         .background(MaterialTheme.colorScheme.primary)
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                    ,
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(time.toString(), color = if (isAllDay) Color.Gray else MaterialTheme.colorScheme.onPrimary)
+                    Text(
+                        time.toString(),
+                        color = if (isAllDay) Color.Gray else MaterialTheme.colorScheme.onPrimary
+                    )
                 }
             }
         }
@@ -534,7 +589,11 @@ fun DropdownMenuSelector(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = title, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                text = title,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             Box(
                 modifier = Modifier
                     .menuAnchor(
@@ -570,17 +629,21 @@ fun DropdownMenuSelector(
 }
 
 @Composable
-fun GroupContainer(content: @Composable () -> Unit){
+fun GroupContainer(content: @Composable () -> Unit) {
     Column(
         modifier = Modifier
             .background(MaterialTheme.colorScheme.surfaceBright, shape = RoundedCornerShape(10.dp))
             .animateContentSize()
-    ){
+    ) {
         content()
     }
 }
 
 @Composable
-fun CustomHorizontalDivider(){
-    HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+fun CustomHorizontalDivider() {
+    HorizontalDivider(
+        modifier = Modifier.padding(horizontal = 12.dp),
+        thickness = 0.5.dp,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
 }

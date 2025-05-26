@@ -19,6 +19,7 @@ import com.pdevjay.calendar_with_schedule.features.schedule.viewmodels.ScheduleV
 import com.pdevjay.calendar_with_schedule.features.settings.SettingsScreen
 import com.pdevjay.calendar_with_schedule.core.utils.helpers.JsonUtils
 import java.time.LocalDate
+import java.time.LocalTime
 
 @Composable
 fun AppNavGraph(
@@ -60,8 +61,18 @@ fun AppNavGraph(
         }
 
         composable(
-            route = "add_schedule/{selectedDate}",
-            arguments = listOf(navArgument("selectedDate") { type = NavType.StringType }),
+            route = "add_schedule/{selectedDate}?hour={hour}&minute={minute}",
+            arguments = listOf(
+                navArgument("selectedDate") { type = NavType.StringType },
+                navArgument("hour") {
+                    type = NavType.IntType
+                    defaultValue = -1
+                },
+                navArgument("minute") {
+                    type = NavType.IntType
+                    defaultValue = -1
+                }
+            ),
             enterTransition = {
                 slideInHorizontally(
                     initialOffsetX = { it },
@@ -76,10 +87,15 @@ fun AppNavGraph(
             }
         ) { backStackEntry ->
             val dateString = backStackEntry.arguments?.getString("selectedDate")
+            val hour = backStackEntry.arguments?.getInt("hour")?.takeIf { it >= 0 }
+            val minute = backStackEntry.arguments?.getInt("minute")?.takeIf { it >= 0 }
+
             val selectedDate = dateString?.let { LocalDate.parse(it) }
+            val selectedTime = if (hour != null && minute != null) LocalTime.of(hour, minute) else null
 
             ScheduleAddScreen(
                 selectedDate = selectedDate,
+                selectedTime = selectedTime,
                 navController = navController,
                 scheduleViewModel = scheduleViewModel,
             )

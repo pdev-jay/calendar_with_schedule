@@ -174,6 +174,7 @@ fun CalendarScreen(
                     modifier = Modifier.height(maxHeight),
                     calendarViewModel = calendarViewModel,
                     scheduleViewModel = scheduleViewModel,
+                    navController = navController,
                     onEventClick = { event ->
                         val jsonSchedule = URLEncoder.encode(JsonUtils.gson.toJson(event), "UTF-8")
                         navController.navigate("scheduleDetail/${URLEncoder.encode(jsonSchedule, "UTF-8")}")
