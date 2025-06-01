@@ -14,6 +14,7 @@ import com.pdevjay.calendar_with_schedule.data.repository.ScheduleRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
+import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
@@ -57,4 +58,11 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindScheduleRepository(impl: ScheduleRepositoryImpl): ScheduleRepository
+}
+
+// 3) EntryPoint 인터페이스 생성
+@EntryPoint
+@InstallIn(SingletonComponent::class)
+interface ScheduleRepositoryEntryPoint {
+    fun getScheduleRepository(): ScheduleRepository
 }
