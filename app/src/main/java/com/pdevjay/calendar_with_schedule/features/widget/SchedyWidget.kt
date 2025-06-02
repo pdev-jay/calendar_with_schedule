@@ -10,10 +10,15 @@ import androidx.compose.ui.unit.dp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.LocalSize
+import androidx.glance.action.Action
+import androidx.glance.action.actionStartActivity
+import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.cornerRadius
+import androidx.glance.appwidget.lazy.LazyColumn
+import androidx.glance.appwidget.lazy.items
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
 import androidx.glance.layout.Alignment
@@ -25,24 +30,29 @@ import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
+import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
+import com.pdevjay.calendar_with_schedule.MainActivity
 import com.pdevjay.calendar_with_schedule.data.repository.ScheduleRepository
 import com.pdevjay.calendar_with_schedule.di.ScheduleRepositoryEntryPoint
+import com.pdevjay.calendar_with_schedule.features.calendar.data.HolidayData
+import com.pdevjay.calendar_with_schedule.features.calendar.data.toBaseSchedule
+import com.pdevjay.calendar_with_schedule.features.calendar.data.toRecurringData
+import com.pdevjay.calendar_with_schedule.features.schedule.data.BaseSchedule
 import com.pdevjay.calendar_with_schedule.features.schedule.data.RecurringData
+import com.pdevjay.calendar_with_schedule.ui.theme.AppTheme
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.EntryPointAccessors
+import kotlinx.coroutines.flow.first
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.util.Locale
 
 @AndroidEntryPoint
 class SchedyWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = SchedyWidget()
-    override fun onEnabled(context: Context) {
-        super.onEnabled(context)
-        // 위젯이 처음 활성화될 때 강제로 업데이트 요청 (옵션)
-    }
-
 }
 
 class SchedyWidget : GlanceAppWidget() {
@@ -61,59 +71,82 @@ class SchedyWidget : GlanceAppWidget() {
     )
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        Log.e("widget", "provideGlance called")
         val entryPoint = EntryPointAccessors.fromApplication(
             context.applicationContext,
             ScheduleRepositoryEntryPoint::class.java
         )
         val repository: ScheduleRepository = entryPoint.getScheduleRepository()
-        val scheduleMap = repository.scheduleMap.value
-        val holidayMap = repository.holidayMap.value
-        val totalScheduleMap = scheduleMap + holidayMap
+//        val scheduleMap = repository.scheduleMap.value
+//        val holidayMap = repository.holidayMap.value
+        val scheduleMap = repository.scheduleMap.first { it.isNotEmpty() }
+        val holidayMap  = repository.holidayMap.first { it.isNotEmpty() }
+
         provideContent {
-            WidgetContent(scheduleMap)
+            WidgetContent(scheduleMap, holidayMap)
         }
     }
 
     @Composable
-    private fun WidgetContent(scheduleMap: Map<LocalDate, List<RecurringData>>) {
+    private fun WidgetContent(
+        scheduleMap: Map<LocalDate, List<RecurringData>>,
+        holidayMap: Map<LocalDate, List<HolidayData>>
+    ) {
         val size = LocalSize.current
-        val today: LocalDate = LocalDate.now()
-        val todayEvents: List<RecurringData> = scheduleMap[today] ?: emptyList()
-        val nextEvents = getNextWeekSchedules(scheduleMap)
+        val totalTodayEvents = getTodaySchedules(scheduleMap, holidayMap)
+        val nextEvents = getNextWeekSchedules(scheduleMap, holidayMap)
+
+        val widgetAction = actionStartActivity<MainActivity>()
 
         Row(
-            modifier = GlanceModifier.fillMaxSize().background(Color.LightGray.copy(alpha = 0.7f)),
+            modifier = GlanceModifier
+                .fillMaxSize()
+                .background(Color.LightGray.copy(alpha = 0.7f)),
         ) {
             Column(
-                modifier = GlanceModifier.fillMaxSize().defaultWeight().padding(4.dp),
+                modifier = GlanceModifier
+                    .fillMaxSize()
+                    .defaultWeight()
+                    .padding(8.dp)
+                    .clickable(widgetAction),
                 verticalAlignment = Alignment.Vertical.Top,
                 horizontalAlignment = Alignment.Horizontal.CenterHorizontally
             ) {
-                Text("Today")
-                Spacer(modifier = GlanceModifier.height(4.dp))
-                for (schedule in todayEvents) {
-                    val darkerColor = getDarkerColor(schedule.color?.let { Color(it).copy(alpha = 0.7f) }
-                        ?: MaterialTheme.colorScheme.primary)
+                Column(
+                    modifier = GlanceModifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.Horizontal.Start
+                ){
+                    Text(
+                        style = TextStyle(
+                            fontSize = MaterialTheme.typography.titleMedium.fontSize,
+                        ),
+                        text = "${LocalDate.now()}"
+//                        text = "${LocalDate.now().dayOfMonth}"
+                    )
+                    Text(
+                        style = TextStyle(
+                            fontSize = MaterialTheme.typography.labelMedium.fontSize,
+                        ),
+                        text = LocalDate.now().dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, Locale.getDefault())
+                    )
+                    Spacer(modifier = GlanceModifier.height(4.dp))
+                }
+//                ColumnHeader("Today")
+//                Text(
+//                    style = TextStyle(
+//                        fontSize = MaterialTheme.typography.labelSmall.fontSize,
+//                    ),
+//                    text = "${LocalDate.now()}"
+//                )
 
-                    Box(
-                        modifier = GlanceModifier
-                            .fillMaxWidth()
-                            .background(color = darkerColor)
-                            .cornerRadius(8.dp)
-                            .padding(2.dp),
+                LazyColumn(
+                    modifier = GlanceModifier
+                        .fillMaxSize()
 
-                        ) {
-                        Text(
-                            maxLines = 1,
-                            style = TextStyle(
-                                fontSize = MaterialTheme.typography.labelSmall.fontSize,
-                                color = ColorProvider(Color.White)
-                            ),
-                            text = "${schedule.title}",
-
-                            )
+                ) {
+                    items(totalTodayEvents) { schedule ->
+                        TodayEventGroup(schedule, widgetAction)
                     }
-                    Spacer(modifier = GlanceModifier.height(2.dp))
                 }
             }
 
@@ -121,50 +154,20 @@ class SchedyWidget : GlanceAppWidget() {
                 Column(
                     modifier = GlanceModifier.fillMaxSize().padding(4.dp)
                         .defaultWeight(),
-                    verticalAlignment = Alignment.Vertical.Top,
                     horizontalAlignment = Alignment.Horizontal.CenterHorizontally
                 ) {
-                    Text("Upcoming")
-                    Spacer(modifier = GlanceModifier.height(4.dp))
-
-                    for ((date, eventsOnDate) in nextEvents) {
-                        if (eventsOnDate.isEmpty()) continue
-                        for ((idx, schedule) in eventsOnDate.withIndex()) {
-                            val darkerColor = getDarkerColor(schedule.color?.let { Color(it).copy(alpha = 0.7f) }
-                                ?: MaterialTheme.colorScheme.primary)
-
-                            Column(
-                                modifier = GlanceModifier.fillMaxWidth(),
-                            ) {
-                                if (idx == 0) {
-                                    Text(
-                                        style = TextStyle(
-                                            fontSize = MaterialTheme.typography.labelSmall.fontSize,
-                                        ),
-                                        text = "${date}"
-                                    )
+//                    Text("Upcoming")
+//                    Spacer(modifier = GlanceModifier.height(4.dp))
+                    LazyColumn(
+                        modifier = GlanceModifier.fillMaxSize()
+                    ) {
+                        items(nextEvents.toList()) { (date, eventsOnDate) ->
+                            if (eventsOnDate.isNotEmpty()) {
+                                Column {
+                                    for ((idx, schedule) in eventsOnDate.withIndex()) {
+                                        DateEventGroup(schedule, idx, date, eventsOnDate, widgetAction)
+                                    }
                                 }
-                                Spacer(modifier = GlanceModifier.height(2.dp))
-                                Box(
-                                    modifier = GlanceModifier
-                                        .fillMaxWidth()
-                                        .background(color = darkerColor)
-                                        .cornerRadius(8.dp)
-                                        .padding(2.dp),
-
-                                    ) {
-
-                                    Text(
-                                        style = TextStyle(
-                                            fontSize = MaterialTheme.typography.labelSmall.fontSize,
-                                            color = ColorProvider(Color.White)
-                                        ),
-                                        text = "${schedule.title}"
-                                    )
-                                }
-                            }
-                            if (idx == eventsOnDate.size - 1) {
-                                Spacer(modifier = GlanceModifier.height(4.dp))
                             }
                         }
                     }
@@ -172,10 +175,124 @@ class SchedyWidget : GlanceAppWidget() {
             }
         }
     }
+
+    @Composable
+    private fun TodayEventGroup(schedule: BaseSchedule, widgetAction: Action) {
+
+        val darkerColor = getDarkerColor(schedule.color?.let { Color(it).copy(alpha = 0.7f) }
+            ?: MaterialTheme.colorScheme.primary)
+        Column(
+            modifier = GlanceModifier.clickable(widgetAction)
+        ) {
+            Box(
+                modifier = GlanceModifier
+                    .fillMaxWidth()
+                    .background(color = darkerColor)
+                    .cornerRadius(8.dp)
+                    .padding(2.dp),
+
+                ) {
+                Text(
+                    maxLines = 1,
+                    style = TextStyle(
+                        fontSize = MaterialTheme.typography.labelSmall.fontSize,
+                        color = ColorProvider(Color.White)
+                    ),
+                    text = "${schedule.title}",
+
+                    )
+            }
+            Spacer(modifier = GlanceModifier.height(2.dp))
+        }
+    }
+
+    @Composable
+    private fun DateEventGroup(
+        schedule: RecurringData,
+        idx: Int,
+        date: LocalDate,
+        eventsOnDate: List<RecurringData>,
+        widgetAction: Action
+    ) {
+        val darkerColor = getDarkerColor(schedule.color?.let { Color(it).copy(alpha = 0.7f) }
+            ?: MaterialTheme.colorScheme.primary)
+
+        Column(
+            modifier = GlanceModifier
+                .fillMaxWidth()
+                .clickable(widgetAction),
+            horizontalAlignment = Alignment.Horizontal.CenterHorizontally
+        ) {
+            if (idx == 0) {
+                Text(
+                    style = TextStyle(
+                        fontSize = MaterialTheme.typography.labelSmall.fontSize,
+                    ),
+                    text = "${date}"
+                )
+            }
+            Spacer(modifier = GlanceModifier.height(2.dp))
+            Box(
+                modifier = GlanceModifier
+                    .fillMaxWidth()
+                    .background(color = darkerColor)
+                    .cornerRadius(8.dp)
+                    .padding(2.dp),
+
+                ) {
+
+                Text(
+                    style = TextStyle(
+                        fontSize = MaterialTheme.typography.labelSmall.fontSize,
+                        color = ColorProvider(Color.White)
+                    ),
+                    maxLines = 1,
+                    text = "${schedule.title}"
+                )
+            }
+        }
+
+        if (idx == eventsOnDate.size - 1) {
+            Spacer(modifier = GlanceModifier.height(4.dp))
+        }
+    }
+
+    @Composable
+    fun ColumnHeader(label: String) {
+        Column(
+            modifier = GlanceModifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.Horizontal.CenterHorizontally
+        ) {
+            Text(label)
+            Spacer(modifier = GlanceModifier.height(4.dp))
+        }
+    }
+}
+
+fun getTodaySchedules(
+    scheduleMap: Map<LocalDate, List<RecurringData>>,
+    holidayMap: Map<LocalDate, List<HolidayData>>
+): List<BaseSchedule> {
+    val today: LocalDate = LocalDate.now()
+    val now: LocalDateTime = LocalDateTime.now()
+    val todayEvents: List<RecurringData> = (scheduleMap[today] ?: emptyList())
+        .filter { ev ->
+            // 이벤트의 종료 시각
+            val endDateTime = ev.end.date.atTime(ev.end.time)
+            !endDateTime.isBefore(now)  // endDateTime >= now 인 것만 남김
+        }
+        .sortedBy { ev ->
+            ev.start.date.atTime(ev.start.time)
+        }
+    val todayHolidays: List<BaseSchedule> =
+        (holidayMap[today] ?: emptyList()).map { it.toBaseSchedule() }
+    val totalTodayEvents = todayHolidays + todayEvents
+    return totalTodayEvents
 }
 
 fun getNextWeekSchedules(
-    scheduleMap: Map<LocalDate, List<RecurringData>>
+    scheduleMap: Map<LocalDate, List<RecurringData>>,
+    holidayMap: Map<LocalDate, List<HolidayData>>
 ): Map<LocalDate, List<RecurringData>> {
     val today = LocalDate.now()
     val tomorrow = today.plusDays(1)
@@ -184,23 +301,33 @@ fun getNextWeekSchedules(
     val result = mutableMapOf<LocalDate, List<RecurringData>>()
     var d = tomorrow
     while (!d.isAfter(weekLater)) {
-        // scheduleMap[d]에 이미 “d 날짜에 걸쳐 있는 이벤트들”이 있다면 꺼내오고,
-        // 없으면 빈 리스트로 처리
-        result[d] = scheduleMap[d]
-            ?.sortedBy { ev ->
-                ev.start.date.atTime(ev.start.time)
-            }
+        // 1) 원래 스케줄 이벤트 리스트
+        val eventsOnDate: List<RecurringData> = (scheduleMap[d] ?: emptyList()).sortedBy { ev ->
+            ev.start.date.atTime(ev.start.time)
+        }
+
+        // 2) 해당 날짜의 HolidayData를 RecurringData로 변환 (HolidayData.toRecurringData() 사용)
+        //    HolidayData.toRecurringData() 확장 함수는 아래 파일에서 확인할 수 있음
+        val holidaysOnDate: List<RecurringData> = holidayMap[d]
+            ?.map { it.toRecurringData() }
             ?: emptyList()
+
+        // 3) 두 리스트를 합쳐서, 시작 시각(LocalDateTime) 기준으로 오름차순 정렬
+        val combinedSorted: List<RecurringData> = holidaysOnDate + eventsOnDate
+
+        result[d] = combinedSorted
         d = d.plusDays(1)
     }
-    return result.toSortedMap() // 키(날짜)를 오름차순으로 정렬해 줌
+    // 4) 키(날짜)를 오름차순 정렬하여 최종 맵 반환
+    return result.toSortedMap()
 }
 
 fun getDarkerColor(color: Color): Color {
     return color.copy(
         red = (color.red * (1 - 0.3f)),
         green = (color.green * (1 - 0.3f)),
-        blue = (color.blue * (1 - 0.3f)))
+        blue = (color.blue * (1 - 0.3f))
+    )
 }
 
 //@OptIn(ExperimentalGlancePreviewApi::class)

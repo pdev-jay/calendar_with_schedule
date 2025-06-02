@@ -2,7 +2,9 @@ package com.pdevjay.calendar_with_schedule
 
 import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
+import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -16,8 +18,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.animation.doOnEnd
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.glance.appwidget.updateAll
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
+import androidx.work.WorkManager
 import com.pdevjay.calendar_with_schedule.app.AppNavGraph
 import com.pdevjay.calendar_with_schedule.notification.AlarmScheduler
 import com.pdevjay.calendar_with_schedule.features.calendar.intents.CalendarIntent
@@ -28,13 +35,25 @@ import com.pdevjay.calendar_with_schedule.core.utils.extensions.AppVersionUtils
 import com.pdevjay.calendar_with_schedule.core.utils.extensions.PermissionUtils
 import com.pdevjay.calendar_with_schedule.core.utils.SharedPreferencesUtil
 import com.pdevjay.calendar_with_schedule.core.utils.other_viewmodels.SplashViewModel
+import com.pdevjay.calendar_with_schedule.features.widget.SchedyWidget
+import com.pdevjay.calendar_with_schedule.works.AlarmRegisterWorker
+import com.pdevjay.calendar_with_schedule.works.WidgetWorker
 import com.pdevjay.calendar_with_schedule.works.WorkUtils
 import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import java.time.LocalDate
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject
+    @ApplicationContext
+    lateinit var appContext: Context
+
     private val splashViewModel: SplashViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
@@ -76,6 +95,25 @@ class MainActivity : ComponentActivity() {
                 AppRoot(navigateDateString)
             }
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+    }
+
+    override fun onStop() {
+        Log.e("MainActivity", "onStop called")
+        super.onStop()
+        val work = OneTimeWorkRequestBuilder<WidgetWorker>()
+            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+            .build()
+
+        WorkManager.getInstance(appContext).enqueue(work)
+
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
     }
 }
 
