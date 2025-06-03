@@ -1,6 +1,7 @@
 package com.pdevjay.calendar_with_schedule.features.widget
 
 import android.content.Context
+import android.content.Intent
 import android.util.Log
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -9,13 +10,17 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import androidx.glance.LocalContext
 import androidx.glance.LocalSize
 import androidx.glance.action.Action
+import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.SizeMode
+import androidx.glance.appwidget.action.ActionCallback
+import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.lazy.LazyColumn
 import androidx.glance.appwidget.lazy.items
@@ -106,45 +111,49 @@ class SchedyWidget : GlanceAppWidget() {
         val totalTodayEvents = getTodaySchedules(scheduleMap, holidayMap)
         val nextEvents = getNextWeekSchedules(scheduleMap, holidayMap)
 
-        val widgetAction = actionStartActivity<MainActivity>()
+        val widgetAction = actionRunCallback<WidgetActionCallback>()
 
-            Row(
+        Row(
+            modifier = GlanceModifier
+                .fillMaxSize()
+                .clickable(widgetAction)
+                .background(Color(0xFFDCDCDC).copy(alpha = 0.7f)),
+        ) {
+            Column(
                 modifier = GlanceModifier
                     .fillMaxSize()
-                    .clickable(widgetAction)
-                    .background(Color(0xFFDCDCDC).copy(alpha = 0.7f)),
+                    .defaultWeight()
+                    .padding(8.dp),
+                verticalAlignment = Alignment.Vertical.Top,
+                horizontalAlignment = Alignment.Horizontal.CenterHorizontally
             ) {
                 Column(
+                    modifier = GlanceModifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.Horizontal.Start
+                ) {
+                    Text(
+                        style = TextStyle(
+                            fontSize = MaterialTheme.typography.titleMedium.fontSize,
+                        ),
+                        text = "${LocalDate.now()}"
+                    )
+                    Text(
+                        style = TextStyle(
+                            fontSize = MaterialTheme.typography.labelMedium.fontSize,
+                        ),
+                        text = LocalDate.now().dayOfWeek.getDisplayName(
+                            java.time.format.TextStyle.FULL,
+                            Locale.getDefault()
+                        )
+                    )
+                    Spacer(modifier = GlanceModifier.height(4.dp))
+                }
+
+                Box(
                     modifier = GlanceModifier
                         .fillMaxSize()
-                        .defaultWeight()
-                        .padding(8.dp),
-                    verticalAlignment = Alignment.Vertical.Top,
-                    horizontalAlignment = Alignment.Horizontal.CenterHorizontally
+                        .clickable(widgetAction)
                 ) {
-                    Column(
-                        modifier = GlanceModifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.Horizontal.Start
-                    ) {
-                        Text(
-                            style = TextStyle(
-                                fontSize = MaterialTheme.typography.titleMedium.fontSize,
-                            ),
-                            text = "${LocalDate.now()}"
-                            //                        text = "${LocalDate.now().dayOfMonth}"
-                        )
-                        Text(
-                            style = TextStyle(
-                                fontSize = MaterialTheme.typography.labelMedium.fontSize,
-                            ),
-                            text = LocalDate.now().dayOfWeek.getDisplayName(
-                                java.time.format.TextStyle.FULL,
-                                Locale.getDefault()
-                            )
-                        )
-                        Spacer(modifier = GlanceModifier.height(4.dp))
-                    }
-
                     LazyColumn(
                     ) {
                         items(totalTodayEvents) { schedule ->
@@ -160,21 +169,22 @@ class SchedyWidget : GlanceAppWidget() {
                             Text("No events")
                         }
                     }
-                    Box(
-                        modifier = GlanceModifier
-                            .fillMaxSize()
-                            .clickable(widgetAction)
-                    ){}
-                }
 
-                if (size.width >= HORIZONTAL_RECTANGLE.width) {
-                    Column(
-                        modifier = GlanceModifier
-                            .fillMaxSize()
-                            .defaultWeight()
-                            .padding(8.dp),
-                        horizontalAlignment = Alignment.Horizontal.CenterHorizontally
+                }
+            }
+
+            if (size.width >= HORIZONTAL_RECTANGLE.width) {
+                Column(
+                    modifier = GlanceModifier
+                        .fillMaxSize()
+                        .defaultWeight()
+                        .padding(8.dp),
+                    horizontalAlignment = Alignment.Horizontal.CenterHorizontally
+                ) {
+                    Box(
+                        modifier = GlanceModifier.fillMaxSize().clickable(widgetAction)
                     ) {
+
                         LazyColumn(
                         ) {
                             items(nextEvents.toList()) { (date, eventsOnDate) ->
@@ -193,12 +203,11 @@ class SchedyWidget : GlanceAppWidget() {
                                 }
                             }
                         }
-                        Box(
-                            modifier = GlanceModifier.fillMaxSize().clickable(widgetAction)
-                        ){}
+
                     }
                 }
             }
+        }
     }
 
     @Composable
@@ -360,6 +369,18 @@ class SchedyWidget : GlanceAppWidget() {
     }
 }
 
+class WidgetActionCallback : ActionCallback {
+    override suspend fun onAction(
+        context: Context, glanceId: GlanceId, parameters: ActionParameters
+    ) {
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        context.startActivity(intent)
+    }
+}
 
 //@OptIn(ExperimentalGlancePreviewApi::class)
 //@Preview(widthDp = 250, heightDp = 100)
