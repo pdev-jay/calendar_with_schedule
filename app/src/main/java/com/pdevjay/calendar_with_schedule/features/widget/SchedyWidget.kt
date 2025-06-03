@@ -30,7 +30,6 @@ import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
-import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
@@ -42,7 +41,6 @@ import com.pdevjay.calendar_with_schedule.features.calendar.data.toBaseSchedule
 import com.pdevjay.calendar_with_schedule.features.calendar.data.toRecurringData
 import com.pdevjay.calendar_with_schedule.features.schedule.data.BaseSchedule
 import com.pdevjay.calendar_with_schedule.features.schedule.data.RecurringData
-import com.pdevjay.calendar_with_schedule.ui.theme.AppTheme
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.flow.first
@@ -56,6 +54,20 @@ class SchedyWidgetReceiver : GlanceAppWidgetReceiver() {
 }
 
 class SchedyWidget : GlanceAppWidget() {
+
+//    companion object {
+//        private val SMALL_BOX = DpSize(90.dp, 90.dp)
+//        private val BIG_BOX = DpSize(180.dp, 180.dp)
+//        private val VERY_BIG_BOX = DpSize(300.dp, 300.dp)
+//        private val ROW = DpSize(180.dp, 48.dp)
+//        private val LARGE_ROW = DpSize(300.dp, 48.dp)
+//        private val COLUMN = DpSize(48.dp, 180.dp)
+//        private val LARGE_COLUMN = DpSize(48.dp, 300.dp)
+//    }
+//
+//    override val sizeMode =
+//        SizeMode.Responsive(setOf(SMALL_BOX, BIG_BOX, ROW, LARGE_ROW, COLUMN, LARGE_COLUMN))
+
     companion object {
         private val SMALL_SQUARE = DpSize(100.dp, 100.dp)
         private val HORIZONTAL_RECTANGLE = DpSize(250.dp, 100.dp)
@@ -77,10 +89,8 @@ class SchedyWidget : GlanceAppWidget() {
             ScheduleRepositoryEntryPoint::class.java
         )
         val repository: ScheduleRepository = entryPoint.getScheduleRepository()
-//        val scheduleMap = repository.scheduleMap.value
-//        val holidayMap = repository.holidayMap.value
         val scheduleMap = repository.scheduleMap.first { it.isNotEmpty() }
-        val holidayMap  = repository.holidayMap.first { it.isNotEmpty() }
+        val holidayMap = repository.holidayMap.first { it.isNotEmpty() }
 
         provideContent {
             WidgetContent(scheduleMap, holidayMap)
@@ -98,82 +108,97 @@ class SchedyWidget : GlanceAppWidget() {
 
         val widgetAction = actionStartActivity<MainActivity>()
 
-        Row(
-            modifier = GlanceModifier
-                .fillMaxSize()
-                .background(Color.LightGray.copy(alpha = 0.7f)),
-        ) {
-            Column(
+            Row(
                 modifier = GlanceModifier
                     .fillMaxSize()
-                    .defaultWeight()
-                    .padding(8.dp)
-                    .clickable(widgetAction),
-                verticalAlignment = Alignment.Vertical.Top,
-                horizontalAlignment = Alignment.Horizontal.CenterHorizontally
+                    .clickable(widgetAction)
+                    .background(Color(0xFFDCDCDC).copy(alpha = 0.7f)),
             ) {
                 Column(
-                    modifier = GlanceModifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.Horizontal.Start
-                ){
-                    Text(
-                        style = TextStyle(
-                            fontSize = MaterialTheme.typography.titleMedium.fontSize,
-                        ),
-                        text = "${LocalDate.now()}"
-//                        text = "${LocalDate.now().dayOfMonth}"
-                    )
-                    Text(
-                        style = TextStyle(
-                            fontSize = MaterialTheme.typography.labelMedium.fontSize,
-                        ),
-                        text = LocalDate.now().dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, Locale.getDefault())
-                    )
-                    Spacer(modifier = GlanceModifier.height(4.dp))
-                }
-//                ColumnHeader("Today")
-//                Text(
-//                    style = TextStyle(
-//                        fontSize = MaterialTheme.typography.labelSmall.fontSize,
-//                    ),
-//                    text = "${LocalDate.now()}"
-//                )
-
-                LazyColumn(
                     modifier = GlanceModifier
                         .fillMaxSize()
-
-                ) {
-                    items(totalTodayEvents) { schedule ->
-                        TodayEventGroup(schedule, widgetAction)
-                    }
-                }
-            }
-
-            if (size.width >= HORIZONTAL_RECTANGLE.width) {
-                Column(
-                    modifier = GlanceModifier.fillMaxSize().padding(4.dp)
-                        .defaultWeight(),
+                        .defaultWeight()
+                        .padding(8.dp),
+                    verticalAlignment = Alignment.Vertical.Top,
                     horizontalAlignment = Alignment.Horizontal.CenterHorizontally
                 ) {
-//                    Text("Upcoming")
-//                    Spacer(modifier = GlanceModifier.height(4.dp))
-                    LazyColumn(
-                        modifier = GlanceModifier.fillMaxSize()
+                    Column(
+                        modifier = GlanceModifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.Horizontal.Start
                     ) {
-                        items(nextEvents.toList()) { (date, eventsOnDate) ->
-                            if (eventsOnDate.isNotEmpty()) {
-                                Column {
-                                    for ((idx, schedule) in eventsOnDate.withIndex()) {
-                                        DateEventGroup(schedule, idx, date, eventsOnDate, widgetAction)
+                        Text(
+                            style = TextStyle(
+                                fontSize = MaterialTheme.typography.titleMedium.fontSize,
+                            ),
+                            text = "${LocalDate.now()}"
+                            //                        text = "${LocalDate.now().dayOfMonth}"
+                        )
+                        Text(
+                            style = TextStyle(
+                                fontSize = MaterialTheme.typography.labelMedium.fontSize,
+                            ),
+                            text = LocalDate.now().dayOfWeek.getDisplayName(
+                                java.time.format.TextStyle.FULL,
+                                Locale.getDefault()
+                            )
+                        )
+                        Spacer(modifier = GlanceModifier.height(4.dp))
+                    }
+
+                    LazyColumn(
+                    ) {
+                        items(totalTodayEvents) { schedule ->
+                            TodayEventGroup(schedule, widgetAction)
+                        }
+                    }
+
+                    if (totalTodayEvents.isEmpty()) {
+                        Column(
+                            modifier = GlanceModifier.fillMaxWidth().clickable(widgetAction),
+                            horizontalAlignment = Alignment.Horizontal.CenterHorizontally
+                        ) {
+                            Text("No events")
+                        }
+                    }
+                    Box(
+                        modifier = GlanceModifier
+                            .fillMaxSize()
+                            .clickable(widgetAction)
+                    ){}
+                }
+
+                if (size.width >= HORIZONTAL_RECTANGLE.width) {
+                    Column(
+                        modifier = GlanceModifier
+                            .fillMaxSize()
+                            .defaultWeight()
+                            .padding(8.dp),
+                        horizontalAlignment = Alignment.Horizontal.CenterHorizontally
+                    ) {
+                        LazyColumn(
+                        ) {
+                            items(nextEvents.toList()) { (date, eventsOnDate) ->
+                                if (eventsOnDate.isNotEmpty()) {
+                                    Column {
+                                        for ((idx, schedule) in eventsOnDate.withIndex()) {
+                                            DateEventGroup(
+                                                schedule,
+                                                idx,
+                                                date,
+                                                eventsOnDate,
+                                                widgetAction
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
+                        Box(
+                            modifier = GlanceModifier.fillMaxSize().clickable(widgetAction)
+                        ){}
                     }
                 }
             }
-        }
     }
 
     @Composable
@@ -189,7 +214,7 @@ class SchedyWidget : GlanceAppWidget() {
                     .fillMaxWidth()
                     .background(color = darkerColor)
                     .cornerRadius(8.dp)
-                    .padding(2.dp),
+                    .padding(horizontal = 8.dp, vertical = 2.dp),
 
                 ) {
                 Text(
@@ -228,7 +253,12 @@ class SchedyWidget : GlanceAppWidget() {
                     style = TextStyle(
                         fontSize = MaterialTheme.typography.labelSmall.fontSize,
                     ),
-                    text = "${date}"
+                    text = "${date} (${
+                        date.dayOfWeek.getDisplayName(
+                            java.time.format.TextStyle.SHORT,
+                            Locale.getDefault()
+                        )
+                    })"
                 )
             }
             Spacer(modifier = GlanceModifier.height(2.dp))
@@ -237,7 +267,7 @@ class SchedyWidget : GlanceAppWidget() {
                     .fillMaxWidth()
                     .background(color = darkerColor)
                     .cornerRadius(8.dp)
-                    .padding(2.dp),
+                    .padding(horizontal = 8.dp, vertical = 2.dp),
 
                 ) {
 
@@ -267,68 +297,69 @@ class SchedyWidget : GlanceAppWidget() {
             Spacer(modifier = GlanceModifier.height(4.dp))
         }
     }
-}
 
-fun getTodaySchedules(
-    scheduleMap: Map<LocalDate, List<RecurringData>>,
-    holidayMap: Map<LocalDate, List<HolidayData>>
-): List<BaseSchedule> {
-    val today: LocalDate = LocalDate.now()
-    val now: LocalDateTime = LocalDateTime.now()
-    val todayEvents: List<RecurringData> = (scheduleMap[today] ?: emptyList())
-        .filter { ev ->
-            // 이벤트의 종료 시각
-            val endDateTime = ev.end.date.atTime(ev.end.time)
-            !endDateTime.isBefore(now)  // endDateTime >= now 인 것만 남김
-        }
-        .sortedBy { ev ->
-            ev.start.date.atTime(ev.start.time)
-        }
-    val todayHolidays: List<BaseSchedule> =
-        (holidayMap[today] ?: emptyList()).map { it.toBaseSchedule() }
-    val totalTodayEvents = todayHolidays + todayEvents
-    return totalTodayEvents
-}
-
-fun getNextWeekSchedules(
-    scheduleMap: Map<LocalDate, List<RecurringData>>,
-    holidayMap: Map<LocalDate, List<HolidayData>>
-): Map<LocalDate, List<RecurringData>> {
-    val today = LocalDate.now()
-    val tomorrow = today.plusDays(1)
-    val weekLater = today.plusDays(7)
-
-    val result = mutableMapOf<LocalDate, List<RecurringData>>()
-    var d = tomorrow
-    while (!d.isAfter(weekLater)) {
-        // 1) 원래 스케줄 이벤트 리스트
-        val eventsOnDate: List<RecurringData> = (scheduleMap[d] ?: emptyList()).sortedBy { ev ->
-            ev.start.date.atTime(ev.start.time)
-        }
-
-        // 2) 해당 날짜의 HolidayData를 RecurringData로 변환 (HolidayData.toRecurringData() 사용)
-        //    HolidayData.toRecurringData() 확장 함수는 아래 파일에서 확인할 수 있음
-        val holidaysOnDate: List<RecurringData> = holidayMap[d]
-            ?.map { it.toRecurringData() }
-            ?: emptyList()
-
-        // 3) 두 리스트를 합쳐서, 시작 시각(LocalDateTime) 기준으로 오름차순 정렬
-        val combinedSorted: List<RecurringData> = holidaysOnDate + eventsOnDate
-
-        result[d] = combinedSorted
-        d = d.plusDays(1)
+    private fun getTodaySchedules(
+        scheduleMap: Map<LocalDate, List<RecurringData>>,
+        holidayMap: Map<LocalDate, List<HolidayData>>
+    ): List<BaseSchedule> {
+        val today: LocalDate = LocalDate.now()
+        val now: LocalDateTime = LocalDateTime.now()
+        val todayEvents: List<RecurringData> = (scheduleMap[today] ?: emptyList())
+            .filter { ev ->
+                // 이벤트의 종료 시각
+                val endDateTime = ev.end.date.atTime(ev.end.time)
+                !endDateTime.isBefore(now)  // endDateTime >= now 인 것만 남김
+            }
+            .sortedBy { ev ->
+                ev.start.date.atTime(ev.start.time)
+            }
+        val todayHolidays: List<BaseSchedule> =
+            (holidayMap[today] ?: emptyList()).map { it.toBaseSchedule() }
+        val totalTodayEvents = todayHolidays + todayEvents
+        return totalTodayEvents
     }
-    // 4) 키(날짜)를 오름차순 정렬하여 최종 맵 반환
-    return result.toSortedMap()
+
+    private fun getNextWeekSchedules(
+        scheduleMap: Map<LocalDate, List<RecurringData>>,
+        holidayMap: Map<LocalDate, List<HolidayData>>
+    ): Map<LocalDate, List<RecurringData>> {
+        val today = LocalDate.now()
+        val tomorrow = today.plusDays(1)
+        val weekLater = today.plusDays(7)
+
+        val result = mutableMapOf<LocalDate, List<RecurringData>>()
+        var d = tomorrow
+        while (!d.isAfter(weekLater)) {
+            // 1) 원래 스케줄 이벤트 리스트
+            val eventsOnDate: List<RecurringData> = (scheduleMap[d] ?: emptyList()).sortedBy { ev ->
+                ev.start.date.atTime(ev.start.time)
+            }
+
+            // 2) 해당 날짜의 HolidayData를 RecurringData로 변환 (HolidayData.toRecurringData() 사용)
+            //    HolidayData.toRecurringData() 확장 함수는 아래 파일에서 확인할 수 있음
+            val holidaysOnDate: List<RecurringData> = holidayMap[d]
+                ?.map { it.toRecurringData() }
+                ?: emptyList()
+
+            // 3) 두 리스트를 합쳐서, 시작 시각(LocalDateTime) 기준으로 오름차순 정렬
+            val combinedSorted: List<RecurringData> = holidaysOnDate + eventsOnDate
+
+            result[d] = combinedSorted
+            d = d.plusDays(1)
+        }
+        // 4) 키(날짜)를 오름차순 정렬하여 최종 맵 반환
+        return result.toSortedMap()
+    }
+
+    private fun getDarkerColor(color: Color): Color {
+        return color.copy(
+            red = (color.red * (1 - 0.3f)),
+            green = (color.green * (1 - 0.3f)),
+            blue = (color.blue * (1 - 0.3f))
+        )
+    }
 }
 
-fun getDarkerColor(color: Color): Color {
-    return color.copy(
-        red = (color.red * (1 - 0.3f)),
-        green = (color.green * (1 - 0.3f)),
-        blue = (color.blue * (1 - 0.3f))
-    )
-}
 
 //@OptIn(ExperimentalGlancePreviewApi::class)
 //@Preview(widthDp = 250, heightDp = 100)
