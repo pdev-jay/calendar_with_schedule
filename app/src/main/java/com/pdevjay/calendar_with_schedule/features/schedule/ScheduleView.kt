@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -172,34 +173,13 @@ fun ScheduleView(
                                             maxWidth,
                                             selectedDay,
                                             onEventClick = onEventClick,
-                                            onEventLongClick = { event, position ->
+                                            onEventLongClick = { event ->
                                                 currentEvent = event
-                                                anchorPosition = position
-                                                menuExpanded = true
+                                                showDeleteBottomSheet = true
                                             }
                                         )
                                     }
                                 }
-                            }
-                            DropdownMenu(
-                                expanded = menuExpanded,
-                                onDismissRequest = { menuExpanded = false },
-                                offset = with(LocalDensity.current) {
-                                    DpOffset(anchorPosition.x.toDp(), anchorPosition.y.toDp())
-                                },
-                                modifier = Modifier
-                                    .padding(4.dp)
-                            ) {
-                                DropdownMenuItem(
-                                    leadingIcon = { Icon(Icons.Default.Delete, contentDescription = "Menu") },
-                                    text = { Text(stringResource(R.string.delete_single_occurrence)) },
-                                    onClick = {
-                                        // 예: 편집
-                                        menuExpanded = false
-                                        currentEvent?.let {
-                                            showDeleteBottomSheet = true
-                                        }
-                                    })
                             }
                         }
 
@@ -218,6 +198,7 @@ fun ScheduleView(
             ConfirmBottomSheet(
                 title = stringResource(R.string.delete_schedule),
                 description = stringResource(R.string.delete_description_for_single_occurrence),
+                event = currentEvent!!,
                 single = stringResource(R.string.delete_single_occurrence),
                 isVisible = showDeleteBottomSheet,
                 onDismiss = { showDeleteBottomSheet = false },
@@ -239,6 +220,7 @@ fun ScheduleView(
             ConfirmBottomSheet(
                 title = stringResource(R.string.delete_schedule),
                 description = stringResource(R.string.delete_description),
+                event = currentEvent!!,
                 single = stringResource(R.string.delete_single),
                 future = stringResource(R.string.delete_future),
                 isVisible = showDeleteBottomSheet,
@@ -308,10 +290,8 @@ fun EventBlock(
     maxWidth: Dp,
     selectedDay: LocalDate,
     onEventClick: (BaseSchedule) -> Unit,
-    onEventLongClick: (BaseSchedule, Offset) -> Unit
+    onEventLongClick: (BaseSchedule) -> Unit
 ) {
-    var blockPosition by remember { mutableStateOf(Offset.Zero) }
-
     val startMinutes = if (event.start.date < selectedDay) {
         0  // 전날부터 이어진 이벤트는 오늘 0시부터 표시
     } else {
@@ -345,9 +325,6 @@ fun EventBlock(
 
     BoxWithConstraints(modifier = Modifier
         .offset(x = xOffset, y = startMinutes.dp)
-        .onGloballyPositioned { coords ->
-            blockPosition = coords.localToWindow(Offset.Zero)
-        }
         .width(blockWidth)
         .defaultMinSize(minHeight = 30.dp)
         .height(durationMinutes.dp)
@@ -359,7 +336,7 @@ fun EventBlock(
             },
             onLongClick = {
                 if (event !is HolidaySchedule) {
-                    onEventLongClick(event, blockPosition)
+                    onEventLongClick(event)
                 }
             },
             indication = null,

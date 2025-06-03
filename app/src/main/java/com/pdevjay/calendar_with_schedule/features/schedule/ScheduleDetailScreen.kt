@@ -310,6 +310,7 @@ fun ScheduleDetailScreen(
         ConfirmBottomSheet(
             title = stringResource(R.string.update_schedule),
             description = stringResource(R.string.update_description_for_single_occurrence),
+            event = schedule,
             single = stringResource(R.string.update_single_occurrence),
             isVisible = showUpdateBottomSheet,
             onDismiss = { showUpdateBottomSheet = false },
@@ -321,6 +322,7 @@ fun ScheduleDetailScreen(
         ConfirmBottomSheet(
             title = stringResource(R.string.delete_schedule),
             description = stringResource(R.string.delete_description_for_single_occurrence),
+            event = schedule,
             single = stringResource(R.string.delete_single_occurrence),
             isVisible = showDeleteBottomSheet,
             onDismiss = { showDeleteBottomSheet = false },
@@ -339,6 +341,7 @@ fun ScheduleDetailScreen(
         ConfirmBottomSheet(
             title = stringResource(R.string.update_schedule),
             description = stringResource(R.string.update_description),
+            event = schedule,
             single = stringResource(R.string.update_single),
             future = stringResource(R.string.update_future),
             isSingleAvailable = (schedule.repeatUntil == repeatUntil && schedule.repeatType == repeatType),
@@ -356,6 +359,7 @@ fun ScheduleDetailScreen(
         ConfirmBottomSheet(
             title = stringResource(R.string.delete_schedule),
             description = stringResource(R.string.delete_description),
+            event = schedule,
             single = stringResource(R.string.delete_single),
             future = stringResource(R.string.delete_future),
             isVisible = showDeleteBottomSheet,

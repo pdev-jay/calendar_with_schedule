@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.pdevjay.calendar_with_schedule.R
+import com.pdevjay.calendar_with_schedule.features.schedule.data.BaseSchedule
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,6 +27,7 @@ import kotlinx.coroutines.launch
 fun ConfirmBottomSheet(
     title: String,
     description: String,
+    event: BaseSchedule,
     single: String,
     future: String,
     isSingleAvailable: Boolean? = true,
@@ -50,8 +52,18 @@ fun ConfirmBottomSheet(
             ) {
                 Text(
                     text = title,
-//                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                Text(
+                    text = "${event.title}",
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+                Text(
+                    text = "${event.start.date} ${event.start.time} - ${event.end.date} ${event.end.time}",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(bottom = 16.dp)
                 )
 
                 Text(
@@ -59,6 +71,7 @@ fun ConfirmBottomSheet(
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
+
 
                 Button(
                     enabled = isSingleAvailable ?: true,
@@ -125,6 +138,7 @@ fun ConfirmBottomSheet(
 fun ConfirmBottomSheet(
     title: String,
     description: String,
+    event: BaseSchedule,
     single: String,
     isVisible: Boolean,
     onDismiss: () -> Unit,
@@ -149,6 +163,15 @@ fun ConfirmBottomSheet(
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
 
+                Text(
+                    text = "${event.title}",
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+                Text(
+                    text = "${event.start.date} ${event.start.time} - ${event.end.date} ${event.end.time}",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodyMedium,
