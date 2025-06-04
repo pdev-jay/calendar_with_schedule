@@ -15,8 +15,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.pdevjay.calendar_with_schedule.R
 import com.pdevjay.calendar_with_schedule.features.calendar.viewmodels.CalendarViewModel
 import java.time.LocalDate
 
@@ -24,7 +26,15 @@ import java.time.LocalDate
 fun WeekHeader(
     selectedDate: LocalDate?
 ) {
-    val daysOfWeek = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+    val daysOfWeek = listOf(
+        stringResource(R.string.day_sun),
+        stringResource(R.string.day_mon),
+        stringResource(R.string.day_tue),
+        stringResource(R.string.day_wed),
+        stringResource(R.string.day_thu),
+        stringResource(R.string.day_fri),
+        stringResource(R.string.day_sat),
+    )
     Column(
     ){
         Row(modifier = Modifier.fillMaxWidth()) {

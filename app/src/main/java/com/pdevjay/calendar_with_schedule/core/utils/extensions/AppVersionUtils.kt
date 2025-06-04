@@ -55,25 +55,25 @@ object AppVersionUtils {
         return 0
     }
 
-    private fun showUpdateDialog(activity: Activity, latestVersion: String, contents: String, appUrl: String? = null) {
+    private fun showUpdateDialog(activity: Activity, latestVersion: String, contents: String, appUrl: String?) {
         val context = activity.applicationContext
         val message = if (contents.isNotBlank()) {
-            "최신 버전: $latestVersion\n\n$contents"
+            context.getString(R.string.update_dialog_with_contents, latestVersion, contents)
         } else {
-            "최신 버전 ($latestVersion)으로 앱을 업데이트해주세요."
+            context.getString(R.string.update_dialog_simple, latestVersion)
         }
 
         AlertDialog.Builder(activity)
             .setTitle(context.getString(R.string.need_update))
             .setMessage(message)
-            .setPositiveButton(context.getString(R.string.update)) { _, _ ->
+            .setPositiveButton(context.getString(R.string.update_notice)) { _, _ ->
                 val intent = Intent(Intent.ACTION_VIEW).apply {
                     data = Uri.parse(appUrl)
                 }
                 activity.startActivity(intent)
             }
-            .setNegativeButton(context.getString(android.R.string.cancel)) { dialog, _ ->
-                dialog.dismiss() // 다이얼로그만 닫기
+            .setNegativeButton(context.getString(R.string.cancel)) { dialog, _ ->
+                dialog.dismiss()
             }
             .setCancelable(false)
             .show()

@@ -26,6 +26,7 @@
         android:roundIcon="@mipmap/ic_launcher_2_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.App.Starting"
+        android:localeConfig="@xml/locale_config"
         tools:targetApi="31">
         <activity
             android:name=".MainActivity"

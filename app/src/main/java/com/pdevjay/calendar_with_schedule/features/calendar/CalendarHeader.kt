@@ -52,7 +52,7 @@ fun CalendarHeader(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
         title = {
-            val formatter = DateTimeFormatter.ofPattern("MMMM", Locale.ENGLISH)
+            val formatter = DateTimeFormatter.ofPattern("MMMM", Locale.getDefault())
             Row(modifier = Modifier.fillMaxWidth()) {
 
                 Column {

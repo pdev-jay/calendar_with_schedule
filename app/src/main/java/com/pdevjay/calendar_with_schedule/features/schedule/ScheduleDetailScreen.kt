@@ -164,9 +164,9 @@ fun ScheduleDetailScreen(
                 // 반복 옵션
                 DropdownMenuSelector(
                     title = stringResource(R.string.repeat),
-                    options = RepeatType.entries.map { it.label },
-                    selectedOption = repeatType.label,
-                    onOptionSelected = { label -> repeatType = RepeatType.fromLabel(label) }
+                    options = RepeatType.entries.map { it.getLabel(context) },
+                    selectedOption = repeatType.getLabel(context),
+                    onOptionSelected = { label -> repeatType = RepeatType.fromLabel(context, label) }
                 )
 
                 // 반복 옵션을 선택하면 나타나는 반복 마지막 날 선택 옵션
@@ -192,10 +192,10 @@ fun ScheduleDetailScreen(
             GroupContainer {
                 DropdownMenuSelector(
                     title = stringResource(R.string.notification),
-                    options = AlarmOption.entries.map { it.label },
-                    selectedOption = alarmOption.label,
+                    options = AlarmOption.entries.map { it.getLabel(context) },
+                    selectedOption = alarmOption.getLabel(context),
                     onOptionSelected = { label ->
-                        val selected = AlarmOption.fromLabel(label)
+                        val selected = AlarmOption.fromLabel(context, label)
                         if (selected.requiresPermission()) {
                             if (PermissionUtils.hasNotificationPermission(context)) {
                                 alarmOption = selected
@@ -229,7 +229,7 @@ fun ScheduleDetailScreen(
                 },
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text(stringResource(R.string.update_schedule), style = MaterialTheme.typography.bodyLarge)
+                Text(stringResource(R.string.update), style = MaterialTheme.typography.bodyLarge)
             }
             Spacer(modifier = Modifier.height(8.dp))
             Button(

@@ -118,6 +118,17 @@ fun SettingsScreen(
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 GroupContainer {
+                    SwitchSelector(
+                        label = stringResource(R.string.show_lunar_date),
+                        option = showLunarDate,
+                        onSwitch = {
+                            showLunarDate = it
+                            SharedPreferencesUtil.putBoolean(context, SharedPreferencesUtil.KEY_SHOW_LUNAR_DATE, it)
+                        }
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                GroupContainer {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -171,34 +182,18 @@ fun sendFeedbackEmail(context: Context) {
         "Unknown"
     }
 
-    val deviceInfo = """
-        |앱 버전: $appVersion
-        |기기 모델: ${Build.MODEL}
-        |제조사: ${Build.MANUFACTURER}
-        |Android 버전: ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})
-    """.trimMargin()
+    val deviceInfoFormatted = context.getString(
+        R.string.email_body_template,
+        appVersion,
+        Build.MODEL,
+        Build.MANUFACTURER,
+        Build.VERSION.RELEASE,
+        Build.VERSION.SDK_INT
+    )
 
-    val body = """
-        |안녕하세요,
-        |
-        |---
-        |
-        |[문의 내용 입력]
-        |
-        |---
-        |
-        |아래는 자동으로 포함된 기기 정보입니다.
-        |
-        |---
-        |
-        |$deviceInfo
-        |
-        |---
-        """.trimMargin()
-
-
-    val recipient = "pdev.jay@gmail.com"
-    val subject = "[Schedy] 문의드립니다."
+    val recipient = context.getString(R.string.email_recipient)
+    val subject = context.getString(R.string.email_subject)
+    val body = deviceInfoFormatted
 
     val uri = Uri.parse("mailto:$recipient?subject=${Uri.encode(subject)}&body=${Uri.encode(body)}")
     val intent = Intent(Intent.ACTION_SENDTO, uri)
@@ -209,3 +204,4 @@ fun sendFeedbackEmail(context: Context) {
         Toast.makeText(context, context.getString(R.string.no_email_apps), Toast.LENGTH_SHORT).show()
     }
 }
+

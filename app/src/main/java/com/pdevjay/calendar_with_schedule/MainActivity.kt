@@ -44,6 +44,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.util.Locale
 import javax.inject.Inject
 
 @AndroidEntryPoint

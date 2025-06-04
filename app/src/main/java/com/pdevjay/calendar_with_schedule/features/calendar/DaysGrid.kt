@@ -109,7 +109,7 @@ fun DaysGrid(
                             ) {
                                 if (dayOrNull.date.dayOfMonth == 1) {
                                     val formatter =
-                                        DateTimeFormatter.ofPattern("MMM", Locale.ENGLISH)
+                                        DateTimeFormatter.ofPattern("MMM", Locale.getDefault())
                                     Text(
                                         text = dayOrNull.date.format(formatter),
                                         modifier = Modifier
