@@ -45,6 +45,9 @@ import com.pdevjay.calendar_with_schedule.core.utils.extensions.NotificationPerm
 import com.pdevjay.calendar_with_schedule.core.utils.extensions.PermissionUtils
 import com.pdevjay.calendar_with_schedule.core.utils.SharedPreferencesUtil
 import com.pdevjay.calendar_with_schedule.core.utils.extensions.AppVersionUtils
+import com.pdevjay.calendar_with_schedule.features.schedule.DropdownMenuSelector
+import com.pdevjay.calendar_with_schedule.features.schedule.enums.RepeatType
+import com.pdevjay.calendar_with_schedule.features.settings.enums.Countries
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,6 +63,9 @@ fun SettingsScreen(
 
     val isShowLunarDate = SharedPreferencesUtil.getBoolean(context, SharedPreferencesUtil.KEY_SHOW_LUNAR_DATE, false)
     var showLunarDate by remember { mutableStateOf(isShowLunarDate) }
+
+    val selectedCountryForHoliday = SharedPreferencesUtil.getString(context, SharedPreferencesUtil.KEY_SELECTED_COUNTRY_FOR_HOLIDAY, Countries.NONE.name)
+    var holidaysForCountry by remember { mutableStateOf(Countries.fromLabel(context, selectedCountryForHoliday!!)) }
 
     BackHandler {
         navController.popBackStack()
@@ -105,17 +111,18 @@ fun SettingsScreen(
                         }
                     )
                 }
-                Spacer(modifier = Modifier.height(16.dp))
-                GroupContainer {
-                    SwitchSelector(
-                        label = stringResource(R.string.show_lunar_date),
-                        option = showLunarDate,
-                        onSwitch = {
-                            showLunarDate = it
-                            SharedPreferencesUtil.putBoolean(context, SharedPreferencesUtil.KEY_SHOW_LUNAR_DATE, it)
-                        }
-                    )
-                }
+//                Spacer(modifier = Modifier.height(16.dp))
+//                GroupContainer {
+//                    DropdownMenuSelector(
+//                        title = stringResource(R.string.show_holidays_for_selected_country),
+//                        options = Countries.entries.map { it.getLabel(context) },
+//                        selectedOption = holidaysForCountry.getLabel(context),
+//                        onOptionSelected = { label ->
+//                            holidaysForCountry = Countries.fromLabel(context, label)
+//                            SharedPreferencesUtil.putString(context, SharedPreferencesUtil.KEY_SELECTED_COUNTRY_FOR_HOLIDAY, label)
+//                        }
+//                    )
+//                }
                 Spacer(modifier = Modifier.height(16.dp))
                 GroupContainer {
                     SwitchSelector(

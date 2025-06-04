@@ -153,5 +153,12 @@ Android 버전: %4$s (API %5$d)\n
     <string name="no_email_apps">이메일 앱이 설치되어 있지 않습니다.</string>
 
 
+<!--    countries   -->
+
+    <string name="show_holidays_for_selected_country">공휴일 표시</string>
+    <string name="countries">국가</string>
+    <string name="none">없음</string>
+    <string name="korea">대한민국</string>
+
 </resources>
 

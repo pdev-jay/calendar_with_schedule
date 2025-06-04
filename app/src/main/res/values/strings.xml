@@ -140,4 +140,12 @@ Android Version: %4$s (API %5$d)\n
 ---
     </string>
     <string name="no_email_apps">No email apps installed.</string>
+
+    <!--    countries   -->
+    <string name="show_holidays_for_selected_country">Show holidays</string>
+    <string name="countries">Countries</string>
+
+    <string name="none">None</string>
+    <string name="korea">South Korea</string>
+
 </resources>
